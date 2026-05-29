@@ -40,7 +40,7 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-// Digini always use Write  and IO_Ctrl
+// Digini always use Write and IO_Ctrl
 #define _USE_WRITE                     	1           // 1: Enable FatFS disk_write function
 #define _USE_IOCTL                      1           // 1: Enable FatFs disk_ioctl function
 

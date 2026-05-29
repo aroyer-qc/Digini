@@ -32,8 +32,7 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if (DIGINI_FATFS_USE_SPI_MEMORY == DEF_ENABLED)
- #if (USE_SPI_DRIVER == DEF_ENABLED)
+#if (USE_SPI_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Class definition(s)
@@ -58,8 +57,7 @@ class FatFS_SPI_Memory : public DiskIO_DeviceInterface
 
 //-------------------------------------------------------------------------------------------------
 
- #endif // (USE_SPI_DRIVER == DEF_ENABLED)
-#endif  // (DIGINI_FATFS_USE_SPI_MEMORY == DEF_ENABLED)
+#endif // (USE_SPI_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 

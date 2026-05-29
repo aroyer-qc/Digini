@@ -30,6 +30,8 @@
 
 #ifdef __cplusplus
 
+//-------------------------------------------------------------------------------------------------
+
 class DiskIO_DeviceInterface
 {
     public:
@@ -43,6 +45,8 @@ class DiskIO_DeviceInterface
         virtual DRESULT             Write                   (const uint8_t*, uint32_t, uint16_t)    = 0;
         virtual DRESULT             IO_Ctrl                 (uint8_t, void*)                        = 0;
 };
+
+//-------------------------------------------------------------------------------------------------
 
 #endif
 

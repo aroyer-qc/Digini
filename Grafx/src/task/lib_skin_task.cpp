@@ -475,7 +475,7 @@ SystemState_e SKIN_myClassTask::DeCompressAllImage(void)
         pInput     = new RAW_Array(m_pRawInputBuffer);
 
         // Increment free pointer
-        pFreePointer += m_pDecompress->Process(pOutput, pInput, m_pDataSize[i], m_pCompressionMethod[i]);
+        pFreePointer += m_pDecompress->Process(pOutput, pInput, m_pDataSize[i], Compression_e(m_pCompressionMethod[i]));
 
         delete pInput;
         delete pOutput;
@@ -571,7 +571,7 @@ SystemState_e SKIN_myClassTask::DeCompressAllFont(void)
                     // Save memory pointer
                     FontDescriptor.pAddress = pFreePointer;
                     // Decompress the data
-                    pFreePointer += m_pDecompress->Process(pOutput, pInput, FontDescriptor.TotalSize, m_pCompressionMethod[OffsetCompression]);
+                    pFreePointer += m_pDecompress->Process(pOutput, pInput, FontDescriptor.TotalSize, Compression_e(m_pCompressionMethod[OffsetCompression]));
                     // Save total size for this font
                     FontDescriptor.TotalSize = uint16_t(FontDescriptor.WidthPixel) * uint16_t(FontDescriptor.HeightPixel);
                     DB_Central.Set(&FontDescriptor, GFX_FONT_DESC_INFO, i + NB_SYSTEM_FONTS, Character);

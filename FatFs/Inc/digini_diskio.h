@@ -43,8 +43,8 @@
 // Expanding Macro(s)
 //-------------------------------------------------------------------------------------------------
 
-#define EXPAND_X_DRIVE_AS_ENUM(ENUM_ID, CLASS_, DISK_OBJ, ARG)                          ENUM_ID,
-#define EXPAND_X_DRIVE_AS_DISK_CLASS_OBJECT_DECLARATION(ENUM_ID, CLASS_, DISK_OBJ, ARG) CLASS_ DISK_OBJ;
+#define EXPAND_X_DRIVE_AS_ENUM(ENUM_ID, CLASS_, DISK_OBJ, ARG)                              ENUM_ID,
+#define EXPAND_X_DRIVE_AS_DISK_CLASS_OBJECT_DECLARATION(ENUM_ID, CLASS_, DISK_OBJ, ARG)     CLASS_ DISK_OBJ;
 
 //-------------------------------------------------------------------------------------------------
 // X-Macro example
@@ -79,7 +79,7 @@ class DiskIO    // Singleton
         DSTATUS             Status              (DiskMedia_e Disk);
         DRESULT             Read                (DiskMedia_e Disk, uint8_t* pBuffer, uint32_t Sector, uint16_t Count);
         DRESULT             Write               (DiskMedia_e Disk, const uint8_t* pBuffer, uint32_t Sector, uint16_t Count);
-         DRESULT            IO_Ctrl             (DiskMedia_e Disk, uint8_t Command, void* pBuffer);
+        DRESULT             IO_Ctrl             (DiskMedia_e Disk, uint8_t Command, void* pBuffer);
 
     private:
 

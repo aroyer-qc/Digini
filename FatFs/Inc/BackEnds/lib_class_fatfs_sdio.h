@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_STM32F4_fatfs_sdio.h
+//  File : lib_class_fatfs_sdio.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -27,8 +27,6 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Define(s)
-//-------------------------------------------------------------------------------------------------
 
 #ifdef __cplusplus
 
@@ -36,46 +34,31 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-//#include "ff.h"
-//#include "diskio.h"
-#include "diskio_interface.h"
-
-//-------------------------------------------------------------------------------------------------
-
-#if (DIGINI_FATFS_USE_SDIO_SD_CARD == DEF_ENABLED)
+#include "ff.h"
 
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class CFatFS_SDIO : public DiskIO_DeviceInterface
+class FatFS_SDIO : public DiskIO_DeviceInterface
 {
+    public:
 
-                        CFatFS_SDIO         ();
-                       ~CFatFS_SDIO         (){}
+//                       ~FatFS_SDIO          (){}
 
-        DSTATUS         Initialize          (void);
+        DSTATUS         Initialize          (void* pParameter);
         DSTATUS         Status              (void);
         DRESULT         Read                (uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors);
         DRESULT         Write               (const uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors);
         DRESULT         IO_Ctrl             (uint8_t Control, void* pBuffer);
-        void            Configure           (uint8_t* pBuffer, size_t Size);
+
+        FRESULT         GetDriveSize        (char* pDriveName, FatFS_Size_t* SizeStruct);
 
     private:
 
-        DRESULT         CheckError          (uint32_t Sector, uint16_t NumberOfSectors);
-
-        bool                        m_IsItInitialize;
-        DSTATUS                     m_Status;
-        uint8_t*                    m_pBuffer;
-        size_t                      m_Size;                       // size of the disk, is a multiple of 512
+        DSTATUS         m_Status            = STA_NODISK;
+        SDIO_Driver*    m_pSDIO_Driver;
 };
-
-//-------------------------------------------------------------------------------------------------
-// Global variable(s) and constant(s)
-//-------------------------------------------------------------------------------------------------
-
-#endif // (DIGINI_FATFS_USE_SDIO_SD_CARD == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 

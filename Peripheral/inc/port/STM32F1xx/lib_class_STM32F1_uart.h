@@ -77,9 +77,6 @@
     #define UART_DRIVER_USE_CALLBACK_CFG     DEF_ENABLED
 #endif
 
-#define UART_WAIT_ON_BUSY                    true
-#define UART_DONT_WAIT_ON_BUSY               false
-
 //-------------------------------------------------------------------------------------------------
 //  Typedef(s)
 //-------------------------------------------------------------------------------------------------
@@ -235,7 +232,6 @@ class UART_Driver
       #if ((UART_DRIVER_RX_ERROR_CFG          == DEF_ENABLED) || \
            (UART_DRIVER_RX_NOT_EMPTY_CFG      == DEF_ENABLED) || \
            (UART_DRIVER_RX_IDLE_CFG           == DEF_ENABLED))
-
         void                EnableRX_ISR                    (uint8_t Mask);
         void                DisableRX_ISR                   (uint8_t Mask);
       #endif

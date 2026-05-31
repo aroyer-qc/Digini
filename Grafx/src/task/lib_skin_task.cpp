@@ -673,7 +673,8 @@ void SKIN_myClassTask::StaticLoad(void)
     DB_Central.Get(&pFreePointer, GFX_FREE_RAM_POINTER, 0, 0);
 
     // load all static image, (Decompressed and store in RAM)
-    for(int StaticImage = 1; StaticImage < NUMBER_OF_STATIC_IMAGE; StaticImage++)
+    //for(int StaticImage = 1; StaticImage < NUMBER_OF_STATIC_IMAGE; StaticImage++)
+    for(int StaticImage = 0; StaticImage < NUMBER_OF_STATIC_IMAGE; StaticImage++)
     {
 
         Image.Size.Width  = SII_Array[StaticImage]->Info.Size.Width;

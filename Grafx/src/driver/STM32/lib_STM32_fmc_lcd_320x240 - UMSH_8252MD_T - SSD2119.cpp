@@ -216,33 +216,7 @@ void GrafxDriver::DrawRectangle(Box_t* pBox)
         GrafxGenDriver::DrawRectangle(pBox);
     }
 }
-/*
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           Copy
-//
-//  Parameter(s):   void*           pSrc
-//                  Box_t*          pBox
-//                  Cartesian_t*    pDstPos
-//                  PixelFormat_e   SrcPixelFormat
-//                  BlendMode_e     BlendMode
-//  Return:         None
-//
-//  Description:    Copy a rectangle region from square memory region to another square memory
-//                  region
-//
-//  Note(s):        Source is linear
-//
-//-------------------------------------------------------------------------------------------------
-void GrafxDriver::Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)
-{
-    VAR_UNUSED(pSrc);
-    VAR_UNUSED(pBox);
-    VAR_UNUSED(pDstPos);
-    VAR_UNUSED(SrcPixelFormat);
-    VAR_UNUSED(BlendMode);
-}
-*/
+
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           BlockCopy
@@ -292,43 +266,6 @@ void GrafxDriver::BlockCopy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, Pixel
 
         DMA2D->NLR     = (Width << 16) | Height;                                            // Size configuration of area to be transfered
     }
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           CopyLinear
-//
-//  Parameter(s):   void*           pSrc
-//                  Box_t*          pBox
-//                  PixelFormat_e   SrcPixelFormat)
-//                  BlendMode_e     BlendMode
-//  Return:         None
-//
-//   Description:   Copy a rectangle region from linear memory region to square memory area
-//
-//  Note(s):        Source is linear like an array
-//
-//-------------------------------------------------------------------------------------------------
-void GrafxDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)
-{
-    VAR_UNUSED(pSrc);
-    VAR_UNUSED(pBox);
-    VAR_UNUSED(SrcPixelFormat);
-    VAR_UNUSED(BlendMode);
-}
-
-void GrafxDriver::CopyLinear(void* pSrc, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height, PixelFormat_e PixelFormat, BlendMode_e BlendMode)
-{
-//    Not supported for now
-
-    VAR_UNUSED(pSrc);
-    VAR_UNUSED(PosX);
-    VAR_UNUSED(PosY);
-    VAR_UNUSED(pSrc);
-    VAR_UNUSED(Width);
-    VAR_UNUSED(Height);
-    VAR_UNUSED(PixelFormat);
-    VAR_UNUSED(BlendMode);
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -290,10 +290,7 @@ void UART_Driver::Disable(void)
         CLEAR_BIT(m_pUart->CR1, USART_CR1_TXEIE);
       #endif
 
-      #if (UART_DRIVER_TX_COMPLETED_CFG == DEF_ENABLED)
         CLEAR_BIT(m_pUart->CR1, USART_CR1_TCIE);
-      #endif
-
         DMA_DisableRX();
         DMA_DisableTX();
         CLEAR_BIT(m_pUart->CR1, USART_CR1_UE);    // Disable the UART
@@ -505,8 +502,6 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
                 m_DMA_TX.Enable();                    // Transmission starts as soon as TXE is detected
                 DMA_EnableTX();
             }
-          #if ((UART_DRIVER_TX_COMPLETED_CFG == DEF_ENABLED) || \
-               (UART_DRIVER_TX_EMPTY_CFG     == DEF_ENABLED))
             else
             {
 				m_TX_Transfer.StaticSize = *pSizeTX;
@@ -514,7 +509,6 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
                 ClearFlag();
 				EnableTX_ISR(UART_ISR_TX_EMPTY_MASK | UART_ISR_TX_COMPLETED_MASK);
             }
-          #endif
 
 			while(m_IsItBusyTX == true)
 			{
@@ -638,10 +632,7 @@ void UART_Driver::DMA_EnableTX(void)
 {
     if((m_pUart != nullptr) &&(m_pInfo->DMA_TX.ConfigAndChannel != DMA_DISABLED))
     {
-      #if (UART_DRIVER_TX_COMPLETED_CFG == DEF_ENABLED)
         EnableTX_ISR(UART_ISR_TX_COMPLETED_MASK);
-      #endif
-
         m_pUart->CR3 |= USART_CR3_DMAT;
     }
 }
@@ -807,11 +798,6 @@ void UART_Driver::DisableRX_ISR(uint8_t Mask)
 #endif
 
 //-------------------------------------------------------------------------------------------------
-
-#if ((UART_DRIVER_TX_COMPLETED_CFG == DEF_ENABLED) || \
-     (UART_DRIVER_TX_EMPTY_CFG     == DEF_ENABLED))
-
-//-------------------------------------------------------------------------------------------------
 //
 //   Function:      EnableTX_ISR
 //
@@ -834,12 +820,10 @@ void UART_Driver::EnableTX_ISR(uint8_t Mask)
         }
       #endif
 
-      #if (UART_DRIVER_TX_COMPLETED_CFG == DEF_ENABLED)
         if((Mask & UART_ISR_TX_COMPLETED_MASK) != 0)
         {
             m_pUart->CR1 |= USART_CR1_TCIE;
         }
-      #endif
     }
 }
 
@@ -866,16 +850,12 @@ void UART_Driver::DisableTX_ISR(uint8_t Mask)
         }
       #endif
 
-      #if (UART_DRIVER_TX_COMPLETED_CFG == DEF_ENABLED)
         if((Mask & UART_ISR_TX_COMPLETED_MASK) != 0)
         {
             CLEAR_BIT(m_pUart->CR1, USART_CR1_TCIE);
         }
-      #endif
     }
 }
-
-#endif
 
 //-------------------------------------------------------------------------------------------------
 
@@ -938,12 +918,10 @@ void UART_Driver::EnableCallbackType(int CallBackType)
     }
   #endif
 
-  #if (UART_DRIVER_TX_COMPLETED_CFG == DEF_ENABLED)
     if((CallBackType & UART_CALLBACK_TX_COMPLETED) != 0)
     {
         Mask = UART_ISR_TX_COMPLETED_MASK;
     }
-  #endif
 
     if(Mask != 0)
     {
@@ -1017,7 +995,6 @@ void UART_Driver::IRQ_Handler(void)
         }
       #endif
 
-      #if (UART_DRIVER_TX_COMPLETED_CFG == DEF_ENABLED)
         if((Status & USART_ISR_TC) != 0)
         {
             m_pUart->ICR = USART_ICR_TCCF;
@@ -1037,7 +1014,6 @@ void UART_Driver::IRQ_Handler(void)
 
             return;
         }
-      #endif
 
       #if (UART_DRIVER_TX_EMPTY_CFG == DEF_ENABLED)
         if((Status & USART_ISR_TXE) != 0)

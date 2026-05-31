@@ -570,22 +570,6 @@ void Console::CallbackFunction(int Type, void* pContext)
 {
     switch(Type)
     {
-        // When DMA transfert is complete.
-      #if (UART_DRIVER_DMA_TX_COMPLETED_CFG == DEF_ENABLED)
-        case UART_CALLBACK_TX_DMA:
-        {
-        }
-        break;
-      #endif
-
-        // TX from uart is completed then release memory.
-      #if (UART_DRIVER_TX_COMPLETED_CFG == DEF_ENABLED)
-        case UART_CALLBACK_TX_COMPLETED:
-        {
-        }
-        break;
-      #endif
-
       #if (UART_DRIVER_RX_NOT_EMPTY_CFG == DEF_ENABLED)                         // Don't know if we need to keep this... this mode is never use!!
         case UART_CALLBACK_RX_NOT_EMPTY:
         {
@@ -606,6 +590,8 @@ void Console::CallbackFunction(int Type, void* pContext)
         break;
       #endif
 
+        case UART_CALLBACK_TX_DMA:
+        case UART_CALLBACK_TX_COMPLETED:
         case UART_CALLBACK_RX_ERROR:
         {
             __asm("nop");

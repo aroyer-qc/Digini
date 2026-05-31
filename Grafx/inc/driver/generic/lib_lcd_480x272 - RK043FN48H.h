@@ -58,9 +58,6 @@ class GrafxDriver : public GrafxGenDriver
         void        Initialize      (const void* pArg)  override;
         void        DisplayOn       (void)              override;
         void        DisplayOff      (void)              override;
-
-        // todo!!!!
-        void       ImageCopy        (ImageID_e Image, uint16_t PosX, uint16_t PosY) override {};
 };
 
 //-------------------------------------------------------------------------------------------------

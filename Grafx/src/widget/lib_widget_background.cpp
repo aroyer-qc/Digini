@@ -148,15 +148,41 @@ void WidgetBackground::Draw(ServiceReturn_t* pService)
 {
     DisplayLayer::PushDrawing();
 
-  #if (GRAFX_DEBUG_GUI == DEF_ENABLED) || (GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER == DEF_DISABLED)
+
+  #if (GRAFX_USE_STATIC_IMAGE_ONLY == DEF_ENABLED)
+
+   #if (GRAFX_DEBUG_GUI == DEF_ENABLED) || (GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER == DEF_DISABLED)
     DisplayLayer::SetDrawing(BACKGROUND_DISPLAY_LAYER_0);
-    //pLayer = &LayerTable[BACKGROUND_DISPLAY_LAYER_0];
-  #else
+   #else
     DisplayLayer::SetDrawing(CONSTRUCTION_BACKGROUND_LAYER);
-    //pLayer = &LayerTable[CONSTRUCTION_BACKGROUND_LAYER];
+   #endif
+    myGrafx->ImageCopy(m_pBackground->Image.ID_List[pService->IndexState], m_pBackground->Pos.X, m_pBackground->Pos.Y);
+
+  #else
+    ImageInfo_t   ImageInfo;
+    DisplayLayer* pLayer;
+
+  #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
+        DisplayLayer::SetDrawing(BACKGROUND_DISPLAY_LAYER_0);
+        pLayer = &LayerTable[BACKGROUND_DISPLAY_LAYER_0];
+  #else
+    {
+        DisplayLayer::SetDrawing(CONSTRUCTION_BACKGROUND_LAYER);
+        pLayer = &LayerTable[CONSTRUCTION_BACKGROUND_LAYER];
+    }
   #endif
 
-    myGrafx->ImageCopy(m_pBackground->Image.ID_List[pService->IndexState], m_pBackground->Pos.X, m_pBackground->Pos.Y);
+    DB_Central.Get(&ImageInfo, GFX_IMAGE_INFO, uint16_t(m_pBackground->Image.ID_List[pService->IndexState]), 0);
+    myGrafx->BlockCopy(ImageInfo.pPointer,
+                       m_pBackground->Pos.X,
+                       m_pBackground->Pos.Y,
+                       ImageInfo.Size.Width,
+                       ImageInfo.Size.Height,
+                       m_pBackground->Pos.X,
+                       m_pBackground->Pos.Y,
+                       pLayer->GetPixelFormat(),
+                       CLEAR_BLEND);
+  #endif
 
   #if (GRAFX_DEBUG_GUI == DEF_DISABLED)
    #if (GRAFX_DRIVER_USE_V_SYNC == DEF_ENABLED)

@@ -68,7 +68,6 @@
      (UART_DRIVER_RX_OVERRUN_ERROR_CFG  != DEF_ENABLED) && \
      (UART_DRIVER_RX_IDLE_CFG           != DEF_ENABLED) && \
      (UART_DRIVER_RX_NOT_EMPTY_CFG      != DEF_ENABLED) && \
-     (UART_DRIVER_TX_COMPLETED_CFG      != DEF_ENABLED) && \
      (UART_DRIVER_TX_EMPTY_CFG          != DEF_ENABLED))
 
     #define UART_DRIVER_USE_CALLBACK_CFG     DEF_DISABLED
@@ -261,11 +260,8 @@ class UART_Driver
         void                DisableRX_ISR                   (uint8_t Mask);
       #endif
 
-      #if ((UART_DRIVER_TX_COMPLETED_CFG == DEF_ENABLED) || \
-           (UART_DRIVER_TX_EMPTY_CFG     == DEF_ENABLED))
         void                EnableTX_ISR                    (uint8_t Mask);
         void                DisableTX_ISR                   (uint8_t Mask);
-      #endif
 
         UART_ID_e                   m_UartID;
         static const uint32_t       m_BaudRate[NB_OF_BAUD];

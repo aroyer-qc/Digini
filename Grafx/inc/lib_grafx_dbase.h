@@ -39,13 +39,6 @@
     #define DBASE_MAX_SKIN_FONT_QTY             32                                  // this is max the number of font in database
 #endif
 
-#if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
-  #define GFX_SKIN_RAM_DBASE_DEF(X_GFX_RAM_DBASE) \
-    X_GFX_RAM_DBASE(  GFX_FREE_RAM_POINTER,    1,                         1,                           sizeof(void*)               )   \
-    X_GFX_RAM_DBASE(  GFX_FREE_RELOAD_POINTER, 1,                         1,                           sizeof(void*)               )   \
-
-#endif
-
 #if (GRAFX_USE_QUAD_SPI_DATABASE == DEF_ENABLED)  // this is not yet develop.. is it directly like GRAFX_USE_ROM_DATABASE ??
   #define GFX_QSPI_DBASE_DEF(X_GFX_QSPI_DBASE) \
     X_GFX_QSPI_DBASE( GFX_FONT_INFO,          DBASE_MAX_SKIN_FONT_QTY,    1,                           sizeof(FontInfo_t)          )   \
@@ -59,7 +52,10 @@
     X_GFX_RAM_DBASE( GFX_FONT_INFO,           DBASE_MAX_SKIN_FONT_QTY,    1,                           sizeof(FontInfo_t)          )   \
     X_GFX_RAM_DBASE( GFX_FONT_DESC_INFO,      DBASE_MAX_SKIN_FONT_QTY,    FONT_CHARACTER_PER_FONT_MAX, sizeof(FontDescriptor_t)    )   \
     X_GFX_RAM_DBASE( GFX_IMAGE_INFO,          DBASE_MAX_SKIN_IMAGE_QTY,   1,                           sizeof(ImageInfo_t)         )   \
-
+   IF_USE(GRAFX_USE_LOAD_SKIN,                                                                                                         \
+    X_GFX_RAM_DBASE(  GFX_FREE_RAM_POINTER,    1,                         1,                           sizeof(void*)               )   \
+    X_GFX_RAM_DBASE(  GFX_FREE_RELOAD_POINTER, 1,                         1,                           sizeof(void*)               )   \
+   )
 #endif
 
 #if (GRAFX_USE_ROM_DATABASE == DEF_ENABLED)

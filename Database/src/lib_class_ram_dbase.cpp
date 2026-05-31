@@ -42,14 +42,6 @@
 #define EXPAND_X_RAM_DBASE_AS_ITEMS_SUB_QTY(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)     ITEMS_SubQTY,
 #define EXPAND_X_RAM_DBASE_AS_ITEM_SIZE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)         ITEM_SIZE,
 
-#define EXPAND_X_GFX_RAM_DBASE_AS_ITEMS_QTY(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)     ITEMS_QTY,
-#define EXPAND_X_GFX_RAM_DBASE_AS_ITEMS_SUB_QTY(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE) ITEMS_SubQTY,
-#define EXPAND_X_GFX_RAM_DBASE_AS_ITEM_SIZE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)     ITEM_SIZE,
-
-#define EXPAND_X_NV_RAM_DBASE_AS_ITEMS_QTY(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)      ITEMS_QTY,
-#define EXPAND_X_NV_RAM_DBASE_AS_ITEMS_SUB_QTY(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)  ITEMS_SubQTY,
-#define EXPAND_X_NV_RAM_DBASE_AS_ITEM_SIZE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)      ITEM_SIZE,
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Class: RAM_DataBase
@@ -67,11 +59,11 @@ const uint16_t RAM_DataBase::m_ItemsQTY[NB_RAM_DBASE_ITEMS_CONST]=              
   #endif
 
   #ifdef GFX_RAM_DBASE_DEF
-    GFX_RAM_DBASE_DEF(EXPAND_X_GFX_RAM_DBASE_AS_ITEMS_QTY)
+    GFX_RAM_DBASE_DEF(EXPAND_X_RAM_DBASE_AS_ITEMS_QTY)
   #endif
 
   #ifdef NV_RAM_DBASE_DEF
-    NV_RAM_DBASE_DEF(EXPAND_X_NV_RAM_DBASE_AS_ITEMS_QTY)
+    NV_RAM_DBASE_DEF(EXPAND_X_RAM_DBASE_AS_ITEMS_QTY)
   #endif
 };
 
@@ -83,11 +75,11 @@ const uint16_t RAM_DataBase::m_ItemsSubQTY[NB_RAM_DBASE_ITEMS_CONST] =          
   #endif
 
   #ifdef GFX_RAM_DBASE_DEF
-    GFX_RAM_DBASE_DEF(EXPAND_X_GFX_RAM_DBASE_AS_ITEMS_SUB_QTY)
+    GFX_RAM_DBASE_DEF(EXPAND_X_RAM_DBASE_AS_ITEMS_SUB_QTY)
   #endif
 
   #ifdef NV_RAM_DBASE_DEF
-    NV_RAM_DBASE_DEF(EXPAND_X_NV_RAM_DBASE_AS_ITEMS_SUB_QTY)
+    NV_RAM_DBASE_DEF(EXPAND_X_RAM_DBASE_AS_ITEMS_SUB_QTY)
   #endif
 };
 
@@ -103,7 +95,7 @@ const size_t RAM_DataBase::m_ItemSize[NB_RAM_DBASE_ITEMS_CONST] =               
   #endif
 
   #ifdef NV_RAM_DBASE_DEF
-    NV_RAM_DBASE_DEF(EXPAND_X_NV_RAM_DBASE_AS_ITEM_SIZE)
+    NV_RAM_DBASE_DEF(EXPAND_X_RAM_DBASE_AS_ITEM_SIZE)
   #endif
 };
 
@@ -118,12 +110,11 @@ const size_t RAM_DataBase::m_ItemSize[NB_RAM_DBASE_ITEMS_CONST] =               
 //   Description:   Initialize the RAM database
 //
 //-------------------------------------------------------------------------------------------------
+/*
 SystemState_e RAM_DataBase::Initialize(void* pConfig, size_t ObjectSize)
 {
     uint16_t    i;
-  #ifdef GFX_RAM_DBASE_DEF
     size_t      RecordTotalSize;
-  #endif
 
     if(ObjectSize > sizeof(RAM_DBaseRegionPointer_t*)) return SYS_WRONG_SIZE;
     if(ObjectSize < sizeof(RAM_DBaseRegionPointer_t*)) return SYS_WRONG_SIZE;
@@ -160,6 +151,60 @@ SystemState_e RAM_DataBase::Initialize(void* pConfig, size_t ObjectSize)
         // Precalculate offset for each record
         RecordTotalSize = (size_t)m_ItemsQTY[i] * (size_t)m_ItemsSubQTY[i] * m_ItemSize[i];
         m_ItemsPointer[i + 1] = (uint8_t*)((size_t)(m_ItemsPointer[i]) + RecordTotalSize);
+    }
+  #endif
+
+    return SYS_READY;
+}
+*/
+SystemState_e RAM_DataBase::Initialize(void* pConfig, size_t ObjectSize)
+{
+    uint16_t i = 0;
+    size_t   RecordTotalSize;
+
+    // FIX: compare against struct size, not pointer size
+    //if(ObjectSize != sizeof(RAM_DBaseRegionPointer_t))
+    //{
+    //    return SYS_WRONG_SIZE;
+    //}
+
+    RAM_DBaseRegionPointer_t* pRegionPointer = (RAM_DBaseRegionPointer_t*)pConfig;
+
+  #ifdef RAM_DBASE_DEF
+    // FIX: initialize the first pointer of the RAM section
+    m_ItemsPointer[i] = pRegionPointer->pRam;
+
+    // Clear the rest of the RAM section
+    for(; i < ((END_RAM_INDEX - START_RAM_INDEX) - 1); i++)
+    {
+        m_ItemsPointer[i + 1] = nullptr;
+    }
+
+    if(pRegionPointer->pRam != nullptr)
+    {
+        this->SetDB_Address((void**)&pRegionPointer->pRam);
+    }
+  #endif
+
+  #ifdef GFX_RAM_DBASE_DEF
+    // Base pointer for GFX section
+    m_ItemsPointer[i] = pRegionPointer->pGFX_Ram;
+
+    for(; i < ((END_GFX_RAM_INDEX - START_GFX_RAM_INDEX) - 1); i++)
+    {
+        RecordTotalSize = (size_t)m_ItemsQTY[i] * (size_t)m_ItemsSubQTY[i] * m_ItemSize[i];
+        m_ItemsPointer[i + 1] = (uint8_t*)((size_t)m_ItemsPointer[i] + RecordTotalSize);
+    }
+  #endif
+
+  #ifdef NV_RAM_DBASE_DEF
+    // Base pointer for NV section
+    m_ItemsPointer[i] = pRegionPointer->pNV_Ram;
+
+    for(; i < ((END_NV_RAM_INDEX - START_NV_RAM_INDEX) - 1); i++)
+    {
+        RecordTotalSize = (size_t)m_ItemsQTY[i] * (size_t)m_ItemsSubQTY[i] * m_ItemSize[i];
+        m_ItemsPointer[i + 1] = (uint8_t*)((size_t)m_ItemsPointer[i] + RecordTotalSize);
     }
   #endif
 
@@ -372,4 +417,4 @@ SystemState_e RAM_DataBase::CheckRange(uint16_t Record, uint16_t Number, uint16_
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // #if defined(RAM_DBASE_DEF) || defined(GFX_RAM_DBASE_DEF) || defined(NV_RAM_DBASE_DEF)
+#endif // #if defined(RAM_DBASE_DEF) || defined(GFX_RAM_DBASE_DEF) || defined(NV_RAM_DBASE_DEF) || defined(GFX_SKIN_RAM_DBASE_DEF)

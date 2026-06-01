@@ -33,7 +33,7 @@
 
 #define SUB_SERVICE_CFG                             (uint16_t)0xFFFF
 
-#define _USE_BACKGROUD_TEXT_ON_LABEL				true
+#define _USE_BACKGROUND_TEXT_ON_LABEL				true
 
 // Justification of the GRAFX_Printf
 #define _X_CENTER_Y_CENTER                          (uint8_t)0x11

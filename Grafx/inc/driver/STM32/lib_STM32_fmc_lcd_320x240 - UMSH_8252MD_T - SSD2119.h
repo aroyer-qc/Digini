@@ -152,8 +152,8 @@ class GrafxDriver : public GrafxGenDriver
         void        ClearLayer      (Layer_e Layer)        override;
         void        BlockCopy       (void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode) override;
        // void        Copy            (void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode) override;
-/*Old*/ void        CopyLinear      (void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode) override;
-/*Old*/ void        CopyLinear      (void* pSrc, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height, PixelFormat_e PixelFormat, BlendMode_e BlendMode) override;
+/*Old*/ //void        CopyLinear      (void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode) override;
+/*Old*/// void        CopyLinear      (void* pSrc, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height, PixelFormat_e PixelFormat, BlendMode_e BlendMode) override;
         void        DrawBox         (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Height, uint16_t Thickness) override;
         void        DrawLine        (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Thickness, DrawMode_e Direction) override;
         void        DrawPixel       (uint16_t PosX, uint16_t PosY) override;

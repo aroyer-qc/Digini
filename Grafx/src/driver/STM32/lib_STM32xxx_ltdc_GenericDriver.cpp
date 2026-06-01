@@ -477,48 +477,41 @@ void GrafxGenDriver::DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uin
 //-------------------------------------------------------------------------------------------------
 void GrafxGenDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
 {
-    uint32_t PixelFormat;
-    uint8_t  PixelSize;
-    uint32_t Address;
-    DisplayLayer*  pLayer;
-    uint32_t AreaConfig;
-    uint32_t Offset;
+    if(DisplayLayer::GetDrawing() == CONSTRUCTION_FOREGROUND_LAYER)
+    {
+        uint32_t    Address;
 
-    pLayer      = &LayerTable[DisplayLayer::GetDrawing()];
-    PixelFormat = m_PixelFormatTable[pLayer->GetPixelFormat()];
-    PixelSize   = pLayer->GetPixelSize();
-    Address     = pLayer->GetAddress() + (((pPos->Y * GRAFX_DRIVER_SIZE_X) + pPos->X) * (uint32_t)PixelSize);
-    AreaConfig  = (uint32_t(pDescriptor->WidthPixel) << 16) | (uint32_t(pDescriptor->HeightPixel));
-    Offset      = pDescriptor->WidthPixel;
+        DisplayLayer* pLayer = &LayerTable[DisplayLayer::GetDrawing()];
+        Address     = pLayer->GetAddress() + (((pPos->Y * GRAFX_DRIVER_SIZE_X) + pPos->X) * pLayer->GetPixelSize());
 
-  #ifdef DMA2D
+        uint32_t Width               = uint32_t(pDescriptor->WidthPixel);
+        uint32_t Height              = uint32_t(pDescriptor->HeightPixel);
+        uint32_t Offset              = uint32_t(pLayer->GetSize().X) - Width;
 
-    DMA2D->CR      = DMA2D_M2M_BLEND | DMA2D_CR_TCIE;                               // Memory to memory and TCIE
+        DMA2D->CR = DMA2D_M2M_BLEND;                                                        // Memory to memory and TCIE blending BG + Source
 
-    // Font layer in Alpha blending linear (A8)
-    DMA2D->FGMAR   = (uint32_t)pDescriptor->pAddress;                               // Source address 1
-    DMA2D->FGOR    = 0;                                                             // Font source line offset - none as we are linear
-    DMA2D->FGCOLR  = pLayer->GetTextColor();
-    DMA2D->FGPFCCR = PIXEL_FORMAT_A8;                                               // Defines the number of pixels to be transfered
+        //Source of the image to blend
+        DMA2D->FGMAR   = uint32_t(pDescriptor->pAddress);
+        DMA2D->FGOR    = 0;                                                                 // Source line offset so none as we are linear
+        DMA2D->FGCOLR  = pLayer->GetTextColor();
+        DMA2D->FGPFCCR = DMA2D_CONVERSION_A8;                                               // Defines the size of pixel.
 
-    DMA2D->BGMAR   = Address;                                                       // Source address 2
-    DMA2D->BGOR    = (uint32_t)GRAFX_DRIVER_SIZE_X - Offset;                        // Font source line offset - none as we are linear
-    DMA2D->BGPFCCR = PixelFormat;                                                   // Defines the number of pixels to be transfered
+        // Source in construction layer of the previous blended image or just background
+        DMA2D->BGMAR   = Address;                                                           // Source address
+        DMA2D->BGOR    = Offset;                                                            // Source line offset
+        DMA2D->BGPFCCR = DMA2D_CONVERSION_ARGB8888;                                         // Defines the size of pixel.
 
-    // Output Layer
-    DMA2D->OMAR    = Address;
-    DMA2D->OOR     = (uint32_t)GRAFX_DRIVER_SIZE_X - Offset;                        // Destination line offset
-    DMA2D->OPFCCR  = PixelFormat;
+        //Destination write back to construction layer
+        DMA2D->OMAR    = Address;                                                           // Destination address
+        DMA2D->OOR     = Offset;                                                            // Destination line offset
+        DMA2D->OPFCCR  = DMA2D_CONVERSION_ARGB8888;                                         // Defines the size of pixel.
 
-    // Area
-    DMA2D->NLR     = AreaConfig;                                                    // Size configuration of area to be transfered
+        DMA2D->NLR     = (Width << 16) | Height;                                            // Size configuration of area to be transfered
 
-    SET_BIT(DMA2D->CR, DMA2D_CR_START);                                             // Start operation
-    while(DMA2D->CR & DMA2D_CR_START);                                              // Wait until transfer is done
-
-  #else
-
-  #endif
+        SET_BIT(DMA2D->CR, DMA2D_CR_START);                                                 // Start operation
+        while ((DMA2D->ISR & DMA2D_ISR_ALL_FLAG) == 0);                                     // Wait for transfer complete
+        DMA2D->IFCR = DMA2D_IFCR_ALL_FLAG;                                                  // Clear flag
+    }
 
 }
 

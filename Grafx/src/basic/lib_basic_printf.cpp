@@ -341,15 +341,17 @@ void GPrintf::ParseString(void)
 
         for(j = 0; j < m_SubLineSizeChar[i]; j++, m_pMovingUsedFontPtr++)                   // Parse all character in this line
         {
-            if(*(m_pSubLineString[i] + j) != ASCII_CARRIAGE_RETURN)                         // Do all normal font parsing
+            char LoadChar = *(m_pSubLineString[i] + j);
+
+            if(LoadChar != ASCII_CARRIAGE_RETURN)                                           // Do all normal font parsing
             {
-// TODO find the use of this.. probably on multi line print (* see. old version)                char LoadChar = *(m_pSubLineString[i] + j);  // why it is working... ghost ???
+                DB_Central.Get(&FontInfo, GFX_FONT_INFO, *m_pMovingUsedFontPtr);
 
               #ifdef GFX_ROM_DBASE_DEF
-                //DB_Central.Get(&FontInfo, GFX_FONT_INFO, 0, LoadChar);           // need the font number here
+                //DB_Central.Get(&FontInfo, GFX_FONT_INFO, 0, LoadChar);                    // need the font number here
                 memcpy(&m_FontDescriptor, FontInfo.pDescriptor, sizeof(FontDescriptor_t));
               #else
-                //DB_Central.Get(&m_FontDescriptor, GFX_FONT_DESC_INFO, *m_pMovingUsedFontPtr, LoadChar);
+                DB_Central.Get(&m_FontDescriptor, GFX_FONT_DESC_INFO, *m_pMovingUsedFontPtr, LoadChar);
               #endif
               //  *m_pMovingUsedFontPtr = m_FontDescriptor[LoadChar];  TODO fix
 
@@ -386,12 +388,11 @@ void GPrintf::ParseString(void)
 
         if(LoadChar != ASCII_CARRIAGE_RETURN)
         {
-          #ifdef GFX_ROM_DBASE_DEF
             FontInfo_t FontInfo;
-
-            DB_Central.Get(&FontInfo, GFX_FONT_INFO, *m_pMovingUsedFontPtr, LoadChar);           // TODO validate
+          #ifdef GFX_ROM_DBASE_DEF
             memcpy(&m_FontDescriptor, FontInfo.pDescriptor, sizeof(FontDescriptor_t));
           #else
+            DB_Central.Get(&FontInfo, GFX_FONT_INFO, *m_pMovingUsedFontPtr, LoadChar);           // TODO validate
             DB_Central.Get(&m_FontDescriptor, GFX_FONT_DESC_INFO, *m_pMovingUsedFontPtr, LoadChar);
           #endif
           //  *m_pMovingUsedFontPtr = m_FontDescriptor[LoadChar];  TODO fix

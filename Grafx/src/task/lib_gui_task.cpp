@@ -159,7 +159,7 @@ void GUI_myClassTask::Run()
               #if (GRAFX_USE_POINTING_DEVICE == DEF_ENABLED)
                 PDI_pTask->ClearAllZone();
               #endif
-                //GUI_ClearWidgetLayer();   this may be already done in the driver...
+                GUI_ClearWidgetLayer();
 
                 // TODO (Alain#2#) maybe do a stack of previous link... now only one level is active
                 if(m_ForceRefresh == false)
@@ -195,28 +195,23 @@ void GUI_myClassTask::Run()
 
          #if (GRAFX_DEBUG_GUI == DEF_DISABLED)
           #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
-           #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
-            if(SKIN_pTask->IsSkinLoaded() == true)
-           #endif
+            if(NewLink == INVALID_LINK)         // Only make the copy if it's not an immediate redirection
             {
-                if(NewLink == INVALID_LINK)         // Only make the copy if it's not an immediate redirection
+
+              #if (GRAFX_DRIVER_USE_V_SYNC == DEF_ENABLED)
+                myGrafx->WaitFor_V_Sync();
+              #endif
+
+              #if (GRAFX_USE_CONSTRUCTION_ON_SINGLE_LAYER == DEF_DISABLED)
+                myGrafx->CopyLayerToLayer(CONSTRUCTION_FOREGROUND_LAYER, FOREGROUND_DISPLAY_LAYER_0, 0, 0, GRAFX_DRIVER_SIZE_X, GRAFX_DRIVER_SIZE_Y);
+              #endif
+
+              #if (GRAFX_USE_SLIDING_PAGE == DEF_ENABLED)
+                if(IsPageWasSliding == true)
                 {
-
-                  #if (GRAFX_DRIVER_USE_V_SYNC == DEF_ENABLED)
-                    myGrafx->WaitFor_V_Sync();
-                  #endif
-
-                  #if (GRAFX_USE_CONSTRUCTION_ON_SINGLE_LAYER == DEF_DISABLED)
-                    myGrafx->CopyLayerToLayer(CONSTRUCTION_FOREGROUND_LAYER, FOREGROUND_DISPLAY_LAYER_0, 0, 0, GRAFX_DRIVER_SIZE_X, GRAFX_DRIVER_SIZE_Y);
-                  #endif
-
-                  #if (GRAFX_USE_SLIDING_PAGE == DEF_ENABLED)
-                    if(IsPageWasSliding == true)
-                    {
-                        DisplayLayer::SetActiveLayer(LAYER_FOREGROUND, FOREGROUND_DISPLAY_LAYER_0);
-                    }
-                  #endif
+                    DisplayLayer::SetActiveLayer(LAYER_FOREGROUND, FOREGROUND_DISPLAY_LAYER_0);
                 }
+              #endif
             }
           #endif
          #endif

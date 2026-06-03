@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #include "./lib_digini.h"
-#include ./../inc/lib_rotation.h"
+#include "./../inc/lib_rotation.h"
 
 //-------------------------------------------------------------------------------------------------
 
@@ -189,7 +189,7 @@ static const int RotationTableSize[ROTATION_TABLE_COUNT] =
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           RotateA8_Q8
+//  Name:           ImageRotation8_Q8, ImageRotation16_Q8, ImageRotation32_Q8,
 //
 //  Parameter(s):   const uint8_t*  pSrc
 //                  uint8_t*        pDst
@@ -214,7 +214,7 @@ static const int RotationTableSize[ROTATION_TABLE_COUNT] =
 //					This is mostly for bitmap for font.
 //
 //-------------------------------------------------------------------------------------------------
-void ImageRotationA8_Q8(const uint8_t* pSrc, uint8_t* pDst, int Width, int Height, int AngleStep, RotationID_e RotationID)
+void ImageRotation8_Q8(const uint8_t* pSrc, uint8_t* pDst, int Width, int Height, int AngleStep, RotationID_e RotationID)
 {
     if(RotationTableSize[RotationID] <= AngleStep)
 	{
@@ -253,6 +253,86 @@ void ImageRotationA8_Q8(const uint8_t* pSrc, uint8_t* pDst, int Width, int Heigh
 			}
 		}
 	}
+}
+
+void ImageRotation16_Q8(const uint16_t* pSrc, uint16_t* pDst, int Width, int Height, int AngleStep, RotationID_e RotationID)
+{
+    if(AngleStep < RotationTableSize[RotationID])
+    {
+        int CenterX = Width  / 2;
+        int CenterY = Height / 2;
+
+        int16_t CosQ = pRotationTable[RotationID][AngleStep].CosQ;
+        int16_t SinQ = pRotationTable[RotationID][AngleStep].SinQ;
+
+        for(int y = 0; y < Height; y++)
+        {
+            int DeltaY = y - CenterY;
+
+            int RotatedX_Q = (((-CenterX) * CosQ) + (DeltaY * SinQ)) + (CenterX << 8);
+            int RotatedY_Q = (  (CenterX  * SinQ) + (DeltaY * CosQ)) + (CenterY << 8);
+
+            uint16_t* pDstPtr = pDst + y * Width;
+
+            for(int x = 0; x < Width; x++)
+            {
+                int RotatedX = RotatedX_Q >> 8;
+                int RotatedY = RotatedY_Q >> 8;
+
+                if((unsigned)RotatedX < (unsigned)Width && (unsigned)RotatedY < (unsigned)Height)
+                {
+                    pDstPtr[x] = pSrc[RotatedY * Width + RotatedX];
+                }
+                else
+                {
+                    pDstPtr[x] = 0;   // pixel noir / transparent selon format
+                }
+
+                RotatedX_Q += CosQ;
+                RotatedY_Q -= SinQ;
+            }
+        }
+    }
+}
+
+void ImageRotation32_Q8(const uint32_t* pSrc, uint32_t* pDst, int Width, int Height, int AngleStep, RotationID_e RotationID)
+{
+    if(AngleStep < RotationTableSize[RotationID])
+    {
+        int CenterX = Width  / 2;
+        int CenterY = Height / 2;
+
+        int16_t CosQ = pRotationTable[RotationID][AngleStep].CosQ;
+        int16_t SinQ = pRotationTable[RotationID][AngleStep].SinQ;
+
+        for(int y = 0; y < Height; y++)
+        {
+            int DeltaY = y - CenterY;
+
+            int RotatedX_Q = (((-CenterX) * CosQ) + (DeltaY * SinQ)) + (CenterX << 8);
+            int RotatedY_Q = (  (CenterX  * SinQ) + (DeltaY * CosQ)) + (CenterY << 8);
+
+            uint32_t* pDstPtr = pDst + y * Width;
+
+            for(int x = 0; x < Width; x++)
+            {
+                int RotatedX = RotatedX_Q >> 8;
+                int RotatedY = RotatedY_Q >> 8;
+
+                if((unsigned)RotatedX < (unsigned)Width && (unsigned)RotatedY < (unsigned)Height)
+                {
+                    pDstPtr[x] = pSrc[RotatedY * Width + RotatedX];
+                }
+                else
+                {
+                    pDstPtr[x] = 0; // transparent
+                }
+
+                RotatedX_Q += CosQ;
+                RotatedY_Q -= SinQ;
+            }
+        }
+    }
 }
 
 //-------------------------------------------------------------------------------------------------

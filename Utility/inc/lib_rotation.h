@@ -87,13 +87,15 @@ enum RotationID_e
 {
 	ROTATION_TABLE_DEF(EXPAND_X_TABLE_AS_ENUM)
 	ROTATION_TABLE_COUNT
-}
+};
 
 //-------------------------------------------------------------------------------------------------
 // Function prototype(s) c++ only
 //-------------------------------------------------------------------------------------------------
 
-void 	ImageRotationA8_Q8			(const uint8_t* pSrc, uint8_t* pDst, int Width, int Height, int AngleStep, RotationID_e RotationID);
+void 	ImageRotation8_Q8			(const uint8_t*  pSrc, uint8_t*  pDst, int Width, int Height, int AngleStep, RotationID_e RotationID);
+void 	ImageRotation16_Q8			(const uint16_t* pSrc, uint16_t* pDst, int Width, int Height, int AngleStep, RotationID_e RotationID);
+void 	ImageRotation32_Q8			(const uint32_t* pSrc, uint32_t* pDst, int Width, int Height, int AngleStep, RotationID_e RotationID);
 void 	ComputeCircularPlacement	(int CenterX, int CenterY, int Radius, int AngleStep, int BitmapWidth, int BitmapHeight, int* pOutX,  int* pOutY, RotationID_e RotationID);
 
 //-------------------------------------------------------------------------------------------------

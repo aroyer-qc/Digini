@@ -31,16 +31,21 @@
 #include "./lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
-// Define(s)
+
+#if (USE_ROTATION == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------
+// define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define ROTATION_TABLE_COUNT   (sizeof(RotationTableList)/sizeof(RotationTableList[0]))
+#define EXPAND_X_TABLE_AS_SIZE(ENUM_ID, POINTER, SIZE)			SIZE,
+#define EXPAND_X_TABLE_AS_PTR(ENUM_ID, POINTER, SIZE)			POINTER,
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-struct RotationLookUp_t
+struct RotationLookup_t
 {
     int16_t CosQ;
     int16_t SinQ;
@@ -51,7 +56,8 @@ struct RotationLookUp_t
 //-------------------------------------------------------------------------------------------------
 
 // every 3°
-const RotationLookUp_t RotationTable3[120] =
+#if (USE_ROTATION_TABLE_3 == DEF_ENABLED)
+const RotationLookup_t RotationTable3[120] =
 {
     {  256,    0 }, {  256,   13 }, {  255,   27 }, {  253,   40 }, {  250,   53 }, {  246,   66 }, {  241,   79 }, {  235,   92 },
     {  228,  104 }, {  220,  116 }, {  212,  128 }, {  202,  140 }, {  192,  151 }, {  181,  162 }, {  169,  172 }, {  156,  181 },
@@ -69,9 +75,11 @@ const RotationLookUp_t RotationTable3[120] =
     {  255,  -13 }, {  256,    0 }, {  256,   13 }, {  255,   27 }, {  253,   40 }, {  250,   53 }, {  246,   66 }, {  241,   79 },
     {  235,   92 }, {  228,  104 }, {  220,  116 }, {  212,  128 }, {  202,  140 }, {  192,  151 }, {  181,  162 }, {  169,  172 }
 };
+#endif
 
 //every 5°
-const RotationLookUp_t RotationTable5[72] =
+#if (USE_ROTATION_TABLE_5 == DEF_ENABLED)
+const RotationLookup_t RotationTable5[72] =
 {   {  256,    0 }, {  255,   22 }, {  252,   44 }, {  247,   66 }, {  239,   88 }, {  228,  109 }, {  216,  128 }, {  200,  147 },
     {  182,  165 }, {  162,  181 }, {  140,  195 }, {  116,  208 }, {   90,  218 }, {   63,  226 }, {   34,  232 }, {    4,  235 },
     {  -26,  236 }, {  -56,  234 }, {  -85,  230 }, { -113,  223 }, { -140,  214 }, { -165,  202 }, { -188,  188 }, { -209,  171 },
@@ -82,9 +90,11 @@ const RotationLookUp_t RotationTable5[72] =
     {  297, -116 }, {  309,  -90 }, {  319,  -63 }, {  326,  -34 }, {  330,   -4 }, {  331,   26 }, {  329,   56 }, {  324,   85 },
     {  316,  113 }, {  305,  140 }, {  291,  165 }, {  274,  188 }, {  255,  209 }, {  233,  228 }, {  209,  244 }, {  183,  258 }
 };
+#endif
 
 // every 9°
-const RotationLookUp_t RotationTable9[40] =
+#if (USE_ROTATION_TABLE_9 == DEF_ENABLED)
+const RotationLookup_t RotationTable9[40] =
 {
     {  256,    0 }, {  253,   40 }, {  244,   79 }, {  228,  117 }, {  207,  154 }, {  181,  181 }, {  154,  207 }, {  117,  228 },
     {   79,  244 }, {   40,  253 }, {    0,  256 }, {  -40,  253 }, {  -79,  244 }, { -117,  228 }, { -154,  207 }, { -181,  181 },
@@ -92,43 +102,28 @@ const RotationLookUp_t RotationTable9[40] =
     { -207, -154 }, { -181, -181 }, { -154, -207 }, { -117, -228 }, {  -79, -244 }, {  -40, -253 }, {    0, -256 }, {   40, -253 },
     {   79, -244 }, {  117, -228 }, {  154, -207 }, {  181, -181 }, {  207, -154 }, {  228, -117 }, {  244,  -79 }, {  253,  -40 }
 };
-
-static const RotationLookUp_t* const RotationTableList[] =
-{
-  #if (USE_ROTATION_TABLE_3 == DEF_ENABLED)
-    RotationTable3,
-  #endif
-  #if (USE_ROTATION_TABLE_5 == DEF_ENABLED)
-    RotationTable5,
-  #endif
-  #if (USE_ROTATION_TABLE_9 == DEF_ENABLED)
-    RotationTable9,
 #endif
+
+static const RotationLookup_t* pRotationTable[] =
+{
+	ROTATION_TABLE_DEF(EXPAND_X_TABLE_AS_PTR)
 };
 
-static const int RotationTableSizeList[] =
+static const int RotationTableSize[] =
 {
-#if defined(USE_ROTATION_TABLE_3)
-    (sizeof(RotationTable3)/sizeof(RotationTable3[0])),
-#endif
-#if defined(USE_ROTATION_TABLE_5)
-    (sizeof(RotationTable5)/sizeof(RotationTable5[0])),
-#endif
-#if defined(USE_ROTATION_TABLE_9)
-    (sizeof(RotationTable9)/sizeof(RotationTable9[0])),
-#endif
+	ROTATION_TABLE_DEF(EXPAND_X_TABLE_AS_SIZE)
 };
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           RotateA8_Q8
 //
-//  Parameter(s):   const uint8_t*     		pSrc
-//                  uint8_t*           		pDst
-//                  int                		Width
-//                  int                		Height
-//                  int                		AngleIndex
-//                  const RotationLookUp_t* pRotationTable
+//  Parameter(s):   const uint8_t*  pSrc
+//                  uint8_t*        pDst
+//                  int             Width
+//                  int             Height
+//                  int             AngleStep
+//                  RotationID_e 	RotationID
 //
 //  Return:         none
 //
@@ -136,65 +131,70 @@ static const int RotationTableSizeList[] =
 //                  Rotation is performed around the center of the box. The inner loop is fully
 //                  incremental (no multiplications), making it extremely fast on Cortex-M.
 //
-//  Note(s):        - AngleIndex = angleDeg / step   (step = 3°, 5°, 9°, etc.)
+//  Note(s):        - AngleStep = angleDeg / step   (step = 3°, 5°, 9°, etc.)
 //                  - RotationTable[] must contain Q8.8 cos/sin values
 //                  - Out-of-bounds samples are written as 0
 //                  - Designed for MCU: no float, no FPU required
 //                  - IMPORTANT: The destination buffer SHOULD BE SQUARE (Width == Height) to
 //                    avoid clipping of rotated corners.
 //
+//					This is mostly for bitmap for font.
+//
 //-------------------------------------------------------------------------------------------------
-void ImageRotationA8_Q8(const uint8_t* pSrc, uint8_t* pDst, int Width, int Height, int AngleIndex, const RotationLookUp_t* pRotationTable)
+void ImageRotationA8_Q8(const uint8_t* pSrc, uint8_t* pDst, int Width, int Height, int AngleStep, RotationID_e RotationID)
 {
-    int CenterX = Width  / 2;
-    int CenterY = Height / 2;
+    if(RotationTableSize[RotationID] <= AngleStep)
+	{
+		int CenterX = Width  / 2;
+		int CenterY = Height / 2;
 
-    int16_t CosQ = pRotationTable[AngleIndex].CosQ;
-    int16_t SinQ = pRotationTable[AngleIndex].SinQ;
+		int16_t CosQ = pRotationTable[RotationID][AngleIndex].CosQ;
+		int16_t SinQ = pRotationTable[RotationID][AngleIndex].SinQ;
 
-    for(int y = 0; y < Height; y++)
-    {
-        int DeltaY = y - CenterY;
+		for(int y = 0; y < Height; y++)
+		{
+			int DeltaY = y - CenterY;
 
-        // Starting point (x = 0) in Q8.8
-        int RotatedX_Q = (((-CenterX) * CosQ) + (DeltaY * SinQ)) + (CenterX << 8);
-        int RotatedY_Q = (  (CenterX  * SinQ) + (DeltaY * CosQ)) + (CenterY << 8);
+			// Starting point (x = 0) in Q8.8
+			int RotatedX_Q = (((-CenterX) * CosQ) + (DeltaY * SinQ)) + (CenterX << 8);
+			int RotatedY_Q = (  (CenterX  * SinQ) + (DeltaY * CosQ)) + (CenterY << 8);
 
-        uint8_t* pDstPtr = pDst + y * Width;
+			uint8_t* pDstPtr = pDst + y * Width;
 
-        for(int x = 0; x < Width; x++)
-        {
-            int RotatedX = RotatedX_Q >> 8;
-            int RotatedY = RotatedY_Q >> 8;
+			for(int x = 0; x < Width; x++)
+			{
+				int RotatedX = RotatedX_Q >> 8;
+				int RotatedY = RotatedY_Q >> 8;
 
-            if((unsigned)RotatedX < (unsigned)Width && (unsigned)RotatedY < (unsigned)Height)
-            {
-                pDstPtr[x] = pSrc[RotatedY * Width + RotatedX];
-            }
-            else
-            {
-                pDstPtr[x] = 0;
-            }
+				if((unsigned)RotatedX < (unsigned)Width && (unsigned)RotatedY < (unsigned)Height)
+				{
+					pDstPtr[x] = pSrc[RotatedY * Width + RotatedX];
+				}
+				else
+				{
+					pDstPtr[x] = 0;
+				}
 
-            RotatedX_Q += CosQ;
-            RotatedY_Q -= SinQ;
-        }
-    }
+				RotatedX_Q += CosQ;
+				RotatedY_Q -= SinQ;
+			}
+		}
+	}
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           ComputeCircularPlacement
 //
-//  Parameter(s):   int                		CenterX
-//                  int                		CenterY
-//                  int                		Radius
-//                  int                		AngleIndex
-//                  int                		BitmapWidth
-//                  int                		BitmapHeight
-//                  int*               		pOutX
-//                  int*               		pOutY
-//                  const RotationLookUp_t* pRotationTable
+//  Parameter(s):   int             CenterX
+//                  int             CenterY
+//                  int             Radius
+//                  int             AngleStep
+//                  int             BitmapWidth
+//                  int             BitmapHeight
+//                  int*            pOutX
+//                  int*            pOutY
+//                  RotationID_e 	RotationID
 //
 //  Return:         none
 //
@@ -202,26 +202,31 @@ void ImageRotationA8_Q8(const uint8_t* pSrc, uint8_t* pDst, int Width, int Heigh
 //                  circumference of a virtual circle. The angle uses the same Q8.8 LUT as the
 //                  rotation function.
 //
-//  Note(s):        - AngleIndex = angleDeg / step   (step = 3°, 5°, 9°, etc.)
+//  Note(s):        - AngleStep = angleDeg / step   (step = 3°, 5°, 9°, etc.)
 //                  - RotationTable[] must contain Q8.8 cos/sin values
 //                  - (pOutX, pOutY) receive the top-left corner where the bitmap must be drawn
 //                  - The bitmap is centered on the circle point
 //
 //-------------------------------------------------------------------------------------------------
-void ComputeCircularPlacement(int CenterX, int CenterY, int Radius, int AngleIndex, int BitmapWidth, int BitmapHeight, int* pOutX,  int* pOutY, const RotationLookUp_t* pRotationTable)
+void ComputeCircularPlacement(int CenterX, int CenterY, int Radius, int AngleStep, int BitmapWidth, int BitmapHeight, int* pOutX,  int* pOutY, RotationID_e RotationID)
 {
-    int16_t CosQ = pRotationTable[AngleIndex].CosQ;
-    int16_t SinQ = pRotationTable[AngleIndex].SinQ;
+    if(RotationTableSize[RotationID] <= AngleStep)
+	{
+		int16_t CosQ = pRotationTable[RotationID][AngleIndex].CosQ;
+		int16_t SinQ = pRotationTable[RotationID][AngleIndex].SinQ;
 
-    // Bitmap position of the bitmap on the circle
-    int PosX = CenterX + ((Radius * CosQ) >> 8);
-    int PosY = CenterY + ((Radius * SinQ) >> 8);
+		// Bitmap position of the bitmap on the circle
+		int PosX = CenterX + ((Radius * CosQ) >> 8);
+		int PosY = CenterY + ((Radius * SinQ) >> 8);
 
-    // Top-Left corner adjustment
-    *pOutX = PosX - (BitmapWidth  / 2);
-    *pOutY = PosY - (BitmapHeight / 2);
+		// Top-Left corner adjustment
+		*pOutX = PosX - (BitmapWidth  / 2);
+		*pOutY = PosY - (BitmapHeight / 2);
+	}
 }
 
-#endif
+//-------------------------------------------------------------------------------------------------
+
+#endif // USE_ROTATION
 
 //-------------------------------------------------------------------------------------------------

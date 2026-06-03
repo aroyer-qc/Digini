@@ -26,27 +26,53 @@
 
 #pragma once
 
+//-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
 
-#define USE_ROTATION_TABLE_3			DEF_ENABLED
-#define USE_ROTATION_TABLE_5			DEF_ENABLED
-#define USE_ROTATION_TABLE_9			DEF_ENABLED
+#ifndef USE_ROTATION_TABLE_3
+  #define USE_ROTATION_TABLE_3			DEF_DISABLED
+#endif
+#ifndef USE_ROTATION_TABLE_5
+  #define USE_ROTATION_TABLE_5			DEF_DISABLED
+#endif
+#ifndef USE_ROTATION_TABLE_9
+  #define USE_ROTATION_TABLE_9			DEF_DISABLED
+#endif
+
+#if (USE_ROTATION_TABLE_3 == DEF_ENABLED) || \
+    (USE_ROTATION_TABLE_5 == DEF_ENABLED) || \
+	(USE_ROTATION_TABLE_9 == DEF_ENABLED)
+  #define USE_ROTATION					DEF_ENABLED
+#endif
+
+#define ROTATION_TABLE_DEF(X_TABLE) \
+	IF_USE(USE_ROTATION_TABLE_3, X_TABLE(ROTATION_TABLE_3, RotationTable3, 120)) \
+	IF_USE(USE_ROTATION_TABLE_5, X_TABLE(ROTATION_TABLE_5, RotationTable5, 72))  \
+	IF_USE(USE_ROTATION_TABLE_9, X_TABLE(ROTATION_TABLE_9, RotationTable9, 40))  \
+
+#define EXPAND_X_TABLE_AS_ENUM(ENUM_ID, POINTER, SIZE)			ENUM_ID,
+
+//-------------------------------------------------------------------------------------------------
+// Typedef(s)
+//-------------------------------------------------------------------------------------------------
+
+enum RotationID_e
+{
+	ROTATION_TABLE_DEF(EXPAND_X_TABLE_AS_ENUM)
+	ROTATION_TABLE_COUNT
+}
 
 //-------------------------------------------------------------------------------------------------
 // Function prototype(s) c++ only
 //-------------------------------------------------------------------------------------------------
 
-void 	ImageRotationA8_Q8			(const uint8_t* pSrc, uint8_t* pDst, int Width, int Height, int AngleIndex, const RotationLookUp_t* pRotationTable);
-void 	ComputeCircularPlacement	(int CenterX, int CenterY, int Radius, int AngleIndex, int BitmapWidth, int BitmapHeight, int* pOutX,  int* pOutY, const RotationLookUp_t* pRotationTable);
+void 	ImageRotationA8_Q8			(const uint8_t* pSrc, uint8_t* pDst, int Width, int Height, int AngleStep, RotationID_e RotationID);
+void 	ComputeCircularPlacement	(int CenterX, int CenterY, int Radius, int AngleStep, int BitmapWidth, int BitmapHeight, int* pOutX,  int* pOutY, RotationID_e RotationID);
 
 //-------------------------------------------------------------------------------------------------
 
-
 // usage
-//int angleIndex = angleDeg / 9;   // 0..39
-//RotateA8_Q8(srcA8, dstA8, w, h, angleIndex);
-
-
-
-
-// Placement sur un bitmap
+//int AngleStep = angleDeg / 9;   // 0..39
+//RotateA8_Q8(srcA8, dstA8, w, h, AngleStep);
 

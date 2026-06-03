@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_energy_meter.h
+//  File :  lib_rotation.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2025 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -26,32 +26,27 @@
 
 #pragma once
 
-//-------------------------------------------------------------------------------------------------
-// Define(s)
-//-------------------------------------------------------------------------------------------------
 
-#define TIME_SECONDS_PER_HOUR               3600                // use lib_define.h 
-
-#define EM_SAMPLES_PER_SECOND               10
-#define EM_BUFFER_SIZE                      (SAMPLES_PER_SECOND * NUMBER_OF_SECOND_PER_HOUR)
+#define USE_ROTATION_TABLE_3			DEF_ENABLED
+#define USE_ROTATION_TABLE_5			DEF_ENABLED
+#define USE_ROTATION_TABLE_9			DEF_ENABLED
 
 //-------------------------------------------------------------------------------------------------
+// Function prototype(s) c++ only
+//-------------------------------------------------------------------------------------------------
 
-class EnergyMeter
-{
-
-    public:
-    
-        void        AddSample           (float Voltage, float Current);
-        float       GetWhLastSecond     (void);
-        float       GetWhLastHour       (void);
-
-    private:
-    
-        float       VoltageBuffer[EM_BUFFER_SIZE];
-        float       CurrentBuffer[EM_BUFFER_SIZE];
-        uint32_t    Index;
-        bool        Filled;
-};
+void 	ImageRotationA8_Q8			(const uint8_t* pSrc, uint8_t* pDst, int Width, int Height, int AngleIndex, const RotationLookUp_t* pRotationTable);
+void 	ComputeCircularPlacement	(int CenterX, int CenterY, int Radius, int AngleIndex, int BitmapWidth, int BitmapHeight, int* pOutX,  int* pOutY, const RotationLookUp_t* pRotationTable);
 
 //-------------------------------------------------------------------------------------------------
+
+
+// usage
+//int angleIndex = angleDeg / 9;   // 0..39
+//RotateA8_Q8(srcA8, dstA8, w, h, angleIndex);
+
+
+
+
+// Placement sur un bitmap
+

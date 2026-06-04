@@ -30,6 +30,12 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
+#ifndef USE_ROTATION_TABLE_1
+  #define USE_ROTATION_TABLE_1		   	DEF_DISABLED
+#endif
+#ifndef USE_ROTATION_TABLE_1
+  #define USE_ROTATION_TABLE_1		   	DEF_DISABLED
+#endif
 #ifndef USE_ROTATION_TABLE_3
   #define USE_ROTATION_TABLE_3		   	DEF_DISABLED
 #endif
@@ -56,7 +62,9 @@
 #endif
 
 
-#if (USE_ROTATION_TABLE_3  == DEF_ENABLED) || \
+#if (USE_ROTATION_TABLE_1  == DEF_ENABLED) || \
+    (USE_ROTATION_TABLE_2  == DEF_ENABLED) || \
+    (USE_ROTATION_TABLE_3  == DEF_ENABLED) || \
     (USE_ROTATION_TABLE_4  == DEF_ENABLED) || \
     (USE_ROTATION_TABLE_5  == DEF_ENABLED) || \
     (USE_ROTATION_TABLE_6  == DEF_ENABLED) || \
@@ -68,6 +76,8 @@
 #endif
 
 #define ROTATION_TABLE_DEF(X_TABLE) \
+    IF_USE(USE_ROTATION_TABLE_1,  X_TABLE(ROTATION_TABLE_1,  RotationTable1,  360)) \
+    IF_USE(USE_ROTATION_TABLE_2,  X_TABLE(ROTATION_TABLE_2,  RotationTable3,  180)) \
     IF_USE(USE_ROTATION_TABLE_3,  X_TABLE(ROTATION_TABLE_3,  RotationTable3,  120)) \
     IF_USE(USE_ROTATION_TABLE_4,  X_TABLE(ROTATION_TABLE_4,  RotationTable4,   90)) \
     IF_USE(USE_ROTATION_TABLE_5,  X_TABLE(ROTATION_TABLE_5,  RotationTable5,   72)) \
@@ -100,7 +110,7 @@ void 	ComputeCircularPlacement	(int CenterX, int CenterY, int Radius, int AngleS
 
 //-------------------------------------------------------------------------------------------------
 
-// usage
+// usage example
 //int AngleStep = angleDeg / 9;   // 0..39
-//RotateA8_Q8(srcA8, dstA8, w, h, AngleStep);
+//ImageRotation8_Q8(srcA8, dstA8, w, h, AngleStep, USE_ROTATION_TABLE_9);
 

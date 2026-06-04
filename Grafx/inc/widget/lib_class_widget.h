@@ -373,7 +373,7 @@ class WidgetProgress : public CWidgetInterface
 };
 #endif
 
-#ifdef ROTARY_DIAL_DEF  // TODO
+#ifdef ROTARY_DIAL_DEF
 class WidgetRotaryDial : public CWidgetInterface
 {
     public:
@@ -388,7 +388,8 @@ class WidgetRotaryDial : public CWidgetInterface
 
         void                    Draw                        (ServiceReturn_t* pService);
 
-        Pie_t*                  m_pPie;
+        RotaryDial_t*           m_pRotaryDial;
+        uint16_t                m_Value;
         ServiceEvent_e          m_ServiceState;
         PageWidget_t*           m_pPageWidget;
 };
@@ -409,7 +410,7 @@ class WidgetRoundMeter : public CWidgetInterface
 
         void                    Draw                        (ServiceReturn_t* pService);
 
-        Pie_t*                  m_pPie;
+        RoundMeter_t*           m_pRoundMeter;
         ServiceEvent_e          m_ServiceState;
         PageWidget_t*           m_pPageWidget;
 

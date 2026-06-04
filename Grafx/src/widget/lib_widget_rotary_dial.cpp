@@ -48,7 +48,7 @@ WidgetRotaryDial::WidgetRotaryDial(RotaryDial_t* pRotaryDial)
 {
     m_pRotaryDial = pRotaryDial;
     m_Value       = 0;
-    m_pRotaryDial->Text.Blend = ALPHA_BLEND;
+    //m_pRotaryDial->Text.Blend = ALPHA_BLEND;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -194,12 +194,8 @@ void WidgetRotaryDial::Finalize()
 //      Upon completion, the drawing state is restored to its previous configuration.
 //
 //-------------------------------------------------------------------------------------------------
-struct Box_t
-{
-    Cartesian_t    Pos;
-    BoxSize_t      Size;
-};
 
+/*
 struct RotaryDial_t
 {
     Service_t      Service;
@@ -214,15 +210,17 @@ struct RotaryDial_t
     Font_e         FontID;						// Font ID to use on this widget
     uint16_t       Options;						// Drawing option.
 };
-
+*/
 void WidgetRotaryDial::Draw(ServiceReturn_t* pService)
 {
-    uint16_t    StartAngle;
-    uint16_t    EndAngle;
+    int16_t     StartAngle;
+    int16_t     EndAngle;
     uint16_t    DisplayAngle;
     BlendMode_e BlendMode;
+    uint16_t    Range;
+    uint16_t    Radius;
 
-    BlendMode = ((m_pRotaryDial->Options & OPTION_BLEND_CLEAR) != 0) ? CLEAR_BLEND : ALPHA_BLEND;
+    BlendMode = ((m_pRotaryDial->Options & GRAFX_OPTION_BLEND_CLEAR) != 0) ? CLEAR_BLEND : ALPHA_BLEND;
     DisplayLayer::PushDrawing();
 
   #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
@@ -241,33 +239,32 @@ void WidgetRotaryDial::Draw(ServiceReturn_t* pService)
 
     StartAngle   = m_pRotaryDial->StartAngle;					    // Display of number start at this angle.	0 degree is at the top of the arc
     EndAngle     = m_pRotaryDial->EndAngle;							// Display of number end at that angle.
-	Range        = m_pRotaryDial->Range;							// The range of the rotary dial is 0 to range  
+	Range        = m_pRotaryDial->Range;							// The range of the rotary dial is 0 to range
 	DisplayAngle = pService->IndexState;							// This is the angle of rotation
 	Radius       = m_pRotaryDial->Radius;
 
-    for(int16_t Element = StartValue; Element < EndValue; Element++)
+    for(int16_t Element = StartAngle; Element < EndAngle; Element++)
 	{
 	  // calculate the pos of this element
-	  
+
 	  #if (GRAFX_USE_CONSTRUCTION_ON_SINGLE_LAYER == DEF_ENABLED)
-		CopyBackgroundToConstruction(Position of this element);			// Copy part of the background into the construction layer
+	//	CopyBackgroundToConstruction(Position of this element);			// Copy part of the background into the construction layer
 	  #endif
 
-		We need to construct the bitmap of the print for this element (Maybe more than one character)
-		Get the font character for each element
-		
-		uint8_t* pDestination = (uint8_t*)pMemoryPool->Alloc(ImageSize, MEM_DBG_GRAFX_CL1);
+//		We need to construct the bitmap of the print for this element (Maybe more than one character)
+//		Get the font character for each element
 
-		ImageRotationA8_Q8(const uint8_t* pSrc, uint8_t* pDestination, int Width, int Height, int AngleIndex)
-		ComputeCircularPlacement(int CenterX, int CenterY, Radius, int AngleIndex, int BitmapWidth, int BitmapHeight, int* pOutX,  int* pOutY)
+//		uint8_t* pDestination = (uint8_t*)pMemoryPool->Alloc(ImageSize, MEM_DBG_GRAFX_CL1);
 
-		copy the element onto the the construction layer
+//		ImageRotation8_Q8(const uint8_t* pSrc, uint8_t* pDestination, int Width, int Height, int AngleIndex, USE_ROTATION_TABLE_9);
+//		ComputeCircularPlacement(int CenterX, int CenterY, Radius, int AngleIndex, int BitmapWidth, int BitmapHeight, int* pOutX,  int* pOutY);
+//		copy the element onto the the construction layer
 
-		pMemoryPool->Free((void**)&pImageDestination);
+//		pMemoryPool->Free((void**)&pDestination);
 	}
 
       #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
-        myGrafx->CopyWidgetToDevice(Dimension of this element,  Position of this element);
+  //      myGrafx->CopyWidgetToDevice(Dimension of this element,  Position of this element);
       #endif
 
     DisplayLayer::PopDrawing();

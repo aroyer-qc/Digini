@@ -90,6 +90,16 @@ const int32_t GrafxGenDriver::m_PixelFormatTable[PIXEL_FORMAT_COUNT] =
 void GrafxGenDriver::Initialize(const void* pArg)
 {
     VAR_UNUSED(pArg);
+    
+   #ifdef STM32H7xx
+    RCC->AHB3ENR |= RCC_AHB3ENR_DMA2DEN;
+   #else
+    RCC->AHB1ENR |= RCC_AHB1ENR_DMA2DEN;
+   #endif
+
+//??
+    LayerConfig(BACKGROUND_DISPLAY_LAYER_0);
+    LayerConfig(FOREGROUND_DISPLAY_LAYER_0);
 }
 
 //-------------------------------------------------------------------------------------------------

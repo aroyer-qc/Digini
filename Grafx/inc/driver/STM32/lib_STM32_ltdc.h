@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_STM32xxx_ltdc_lcd_480x272 - RK043FN48H.cpp
+//  File : lib_STM32_ltdc.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2025 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -24,70 +24,23 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-//-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
-
-#define LIB_RK043FN48H_GLOBAL
-#include "./lib_digini.h"
-#include "./Grafx/inc/driver/STM32/lib_stm32_ltdc.h"
-#undef  LIB_RK043FN48H_GLOBAL
+#pragma once
 
 //-------------------------------------------------------------------------------------------------
 
-#if (DIGINI_USE_GRAFX == DEF_ENABLED)
+#ifdef DIGINI_USE_GRAFX
 
 //-------------------------------------------------------------------------------------------------
-//
-//  Name:           Initialize
-//
-//  Parameter(s):   pArg
-//  Return:         None
-//
-//  Description:    LCD configuration specific for the LCD and processor used by this driver
-//
+// Define(s)
 //-------------------------------------------------------------------------------------------------
-void GrafxDriver::Initialize(const void* pArg)
-{
-	LTDC_Initialize();
-    GrafxGenDriver::Initialize(pArg);
-    DisplayOn();
-}
+
+  #define LTDC_BLENDING_FACTOR1_PAxCA       0x00000600              // Blending factor: Cte Alpha x Pixel Alpha
+  #define LTDC_BLENDING_FACTOR2_PAxCA       0x00000007              // Blending factor: Cte Alpha x Pixel Alpha
 
 //-------------------------------------------------------------------------------------------------
-//
-//  Name:           DisplayOn
-//
-//  Parameter(s):   None
-//  Return:         None
-//
-//  Description:    Enables the Display
-//
-//-------------------------------------------------------------------------------------------------
-void GrafxDriver::DisplayOn(void)
-{
-    LTDC->GCR |= LTDC_GCR_LTDCEN;
-    IO_SetPinHigh(IO_LCD_TFT_DISPLAY);
-    IO_SetPinHigh(IO_LCD_TFT_BL_CTRL);
-}
 
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           DisplayOff
-//
-//  Parameter(s):   None
-//  Return:         None
-//
-//  Description:    Disables the Display
-//
-//-------------------------------------------------------------------------------------------------
-void GrafxDriver::DisplayOff(void)
-{
-    LTDC->GCR &= ~(LTDC_GCR_LTDCEN);
-    IO_SetPinLow(IO_LCD_TFT_DISPLAY);
-    IO_SetPinLow(IO_LCD_TFT_BL_CTRL);
-}
-
-//-------------------------------------------------------------------------------------------------
+void LTDC_Initialize(void);
+//void LTDC_LayerConfig(DisplayLayer* pLayer);
+void LTDC_WaitFor_V_Sync(void);
 
 #endif // DIGINI_USE_GRAFX

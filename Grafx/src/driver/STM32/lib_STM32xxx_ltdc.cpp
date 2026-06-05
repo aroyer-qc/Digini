@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_STM32xxx_ltdc_Grafx_GenDriver.cpp
+//  File : lib_STM32xxx_ltdc.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2025 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -38,7 +38,7 @@
 //-------------------------------------------------------------------------------------------------
 // const(s)
 //-------------------------------------------------------------------------------------------------
-
+/*
 const int32_t GrafxGenDriver::m_PixelFormatTable[PIXEL_FORMAT_COUNT] =
 {
   #if (GRAFX_COLOR_ARGB8888 == DEF_ENABLED)
@@ -76,28 +76,24 @@ const int32_t GrafxGenDriver::m_PixelFormatTable[PIXEL_FORMAT_COUNT] =
   #endif
     -1
 };
-
+*/
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           Initialize
 //
-//  Parameter(s):   pArg
+//  Parameter(s):   None
 //  Return:         None
 //
 //  Description:    LCD configuration specific for the LCD and processor used by this driver
 //
 //-------------------------------------------------------------------------------------------------
-void GrafxGenDriver::Initialize(const void* pArg)
+void LTDC_Initialize(void)
 {
-    VAR_UNUSED(pArg);
 
-  #ifdef LTDC
    #ifdef STM32H7xx
     RCC->APB3ENR |= RCC_APB3ENR_LTDCEN;
-    RCC->AHB3ENR |= RCC_AHB3ENR_DMA2DEN;
    #else
     RCC->APB2ENR |= RCC_APB2ENR_LTDCEN;
-    RCC->AHB1ENR |= RCC_AHB1ENR_DMA2DEN;
    #endif
 
     // Configures the HS, VS, DE and PC polarity
@@ -127,54 +123,6 @@ void GrafxGenDriver::Initialize(const void* pArg)
     CLEAR_BIT(LTDC->BCCR, (LTDC_BCCR_BCBLUE | LTDC_BCCR_BCGREEN | LTDC_BCCR_BCRED));    // Sets the background color value to zero for all
     SET_BIT(LTDC->IER, LTDC_IER_TERRIE | LTDC_IER_FUIE);                                // Enable the transfer Error interrupt and FIFO underrun
     SET_BIT(LTDC->GCR, LTDC_GCR_LTDCEN);                                                // Enable LTDC by setting LTDCEN bit
-
-    LayerConfig(BACKGROUND_DISPLAY_LAYER_0);
-    LayerConfig(FOREGROUND_DISPLAY_LAYER_0);
-
-  #endif
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           ClearLayer
-//
-//  Parameter(s):   Layer_e 		Layer
-//  Return:         None
-//
-//  Description:    LCD configuration specific for the LCD and processor used by this driver
-//
-//-------------------------------------------------------------------------------------------------
-void GrafxGenDriver::ClearLayer(Layer_e Layer)
-{
-    DisplayLayer*  pLayer  = &LayerTable[Layer];
-    uint32_t Address = pLayer->GetAddress();
-
-  #ifdef DMA2D
-
-    uint32_t  PixelFormat = m_PixelFormatTable[pLayer->GetPixelFormat()];
-    uint32_t  AreaConfig  = (pLayer->GetSize().X << 16) | pLayer->GetSize().Y;
-
-    // Configure DMA2D for Register-to-Memory (constant color fill)
-    DMA2D->CR      = DMA2D_R2M | DMA2D_CR_TCIE;
-    DMA2D->OCOLR   = pLayer->GetColor();                        // Constant color
-    DMA2D->OMAR    = Address;                                   // Destination address
-    DMA2D->OOR     = 0;                                         // No line offset
-    DMA2D->OPFCCR  = PixelFormat;                               // Pixel format
-    DMA2D->NLR     = AreaConfig;                                // Width + Height
-
-    SET_BIT(DMA2D->CR, DMA2D_CR_START);                         // Start operation
-    while (DMA2D->CR & DMA2D_CR_START);                         // Wait for completion
-
-  #else // some F4xx doesn't have DMA2D
-
-    uint32_t PixelSize = pLayer->GetPixelSize();
-    uint32_t Color     = pLayer->GetColor();
-    uint32_t Size      = (pLayer->GetSize().X << 16) | pLayer->GetSize().Y * PixelSize;
-
-    // Clear using DMA memory-to-memory (increment only the destination)
-    DMA_Memcpy(&Color, (void*)Address, Size, DMA_SxCR_MINC);
-
-  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -192,6 +140,7 @@ void GrafxGenDriver::ClearLayer(Layer_e Layer)
 //                  region
 //
 //-------------------------------------------------------------------------------------------------
+/* may need to copy this into a none dma2d file
 void GrafxGenDriver::BlockCopy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)
 {
 	//if(DisplayLayer::GetDrawing() == CONSTRUCTION_FOREGROUND_LAYER)   // why??
@@ -210,38 +159,10 @@ void GrafxGenDriver::BlockCopy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, Pi
         Address        = pLayer->GetAddress() + (((pDstPos->Y * GRAFX_DRIVER_SIZE_X) + pDstPos->X) * (uint32_t)PixelSize);
         AreaConfig     = (uint32_t(pBox->Size.Width)  << 16) | (uint32_t(pBox->Size.Height));
 
-      #ifdef DMA2D
-
-        DMA2D->CR      = ((BlendMode == CLEAR_BLEND) ? DMA2D_M2M : DMA2D_M2M_BLEND) | DMA2D_CR_TCIE;                        // Memory to memory and TCIE blending BG + Source
-
-        //Source
-        DMA2D->FGMAR   = (uint32_t)(pSrc) + (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);    // Source address
-        DMA2D->FGOR    = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;                                        // Source line offset none as we are linear
-        DMA2D->FGPFCCR = PixelFormatSrc;                                                                                    // Defines the size of pixel
-
-        // Source
-        DMA2D->BGMAR   = Address;                                                                                           // Source address
-        DMA2D->BGOR    = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;                                        // Source line offset
-        DMA2D->BGPFCCR = PixelFormatDst;                                                                                    // Defines the size of pixel
-
-        //Destination
-        DMA2D->OMAR    = Address;                                                                                           // Destination address
-        DMA2D->OOR     = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;                                        // Destination line offset none as we are linear
-        DMA2D->OPFCCR  = PixelFormatDst;                                                                                    // Defines the size of pixel
-
-        DMA2D->NLR     = AreaConfig;                                                                                        // Size configuration of area to be transfered
-
-        SET_BIT(DMA2D->CR, DMA2D_CR_START);                                                                                 // Start operation
-        while(DMA2D->CR & DMA2D_CR_START);                                                                                  // Wait until transfer is done
-
-      #else
-
         uint8_t* pLocalSrc = (uint8_t*)pSrc;
         uint32_t* pDst = (uint32_t*)Address;
         pLocalSrc += (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
         DMA_Memcpy(pLocalSrc, pDst, size_t(AreaConfig));
-
-      #endif
     }
  //   else
     {
@@ -280,44 +201,10 @@ void GrafxGenDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelF
     Address        = pLayer->GetAddress() + (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
     AreaConfig     = (uint32_t(pBox->Size.Width) << 16) | (uint32_t(pBox->Size.Height));
 
-  #ifdef DMA2D
-    if(PixelFormatSrc == PixelFormatDst)
-    {
-        DMA2D->CR = ((BlendMode == CLEAR_BLEND) ? DMA2D_M2M : DMA2D_M2M_BLEND) | DMA2D_CR_TCIE; // Memory to memory or M2M with blending BG + Source
-    }
-    else
-    {
-        DMA2D->CR = DMA2D_M2M_PFC | DMA2D_CR_TCIE;                                              // Memory to memory with pixel conversion
-    }
-
-    // Source 1
-    DMA2D->FGMAR   = (uint32_t)pSrc;                                                            // Source address
-    DMA2D->FGOR    = 0;                                                                         // Source line offset none as we are linear
-    DMA2D->FGPFCCR = PixelFormatSrc;                                                            // Defines the size of pixel
-
-    // Source 2 (Source2 vs Destination = Read modify write)
-    DMA2D->BGMAR   = Address;                                                                   // Source address
-    DMA2D->BGOR    = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;                // Source line offset
-    DMA2D->BGPFCCR = PixelFormatDst;                                                            // Defines the size of pixel
-
-    // Destination
-    DMA2D->OMAR    = Address;                                                                   // Destination address
-    DMA2D->OOR     = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;                // Destination line offset
-    DMA2D->OPFCCR  = PixelFormatDst;                                                            // Defines the size of pixel
-
-    DMA2D->NLR     = AreaConfig;                                                                // Size configuration of area to be transfered
-
-    SET_BIT(DMA2D->CR, DMA2D_CR_START);                                                         // Start operation
-    while(DMA2D->CR & DMA2D_CR_START);                                                          // Wait until transfer is done
-
-  #else
-
     uint8_t* pLocalSrc = (uint8_t*)pSrc;
     uint32_t* pDst = (uint32_t*)Address;
     pLocalSrc += (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
     DMA_Memcpy(pLocalSrc, pDst, size_t(AreaConfig));
-
-  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -346,21 +233,7 @@ void GrafxGenDriver::DrawRectangle(Box_t* pBox)
     Color       = pLayer->GetColor();
     AreaConfig  = (uint32_t(pBox->Size.Width) << 16) | (uint32_t(pBox->Size.Height));
 
-  #if defined(DMA2D)
-
-    DMA2D->CR     = DMA2D_R2M | DMA2D_CR_TCIE;                                     // Register to memory and TCIE
-    DMA2D->OCOLR  = Color;                                                         // Color to be used
-    DMA2D->OMAR   = Address;                                                       // Destination address
-    DMA2D->OOR    = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;    // Destination line offset
-    DMA2D->OPFCCR = PixelFormat;                                                   // Defines the number of pixels to be transfered
-    DMA2D->NLR    = AreaConfig;                                                    // Size configuration of area to be transfered
-
-    SET_BIT(DMA2D->CR, DMA2D_CR_START);                                            // Start operation
-    while(DMA2D->CR & DMA2D_CR_START);                                             // Wait until transfer is done
-
-  #else
     // TODO if needed
-  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -388,19 +261,7 @@ void GrafxGenDriver::DrawPixel(uint16_t PosX, uint16_t PosY)
     Address        = pLayer->GetAddress() + (((PosY * GRAFX_DRIVER_SIZE_X) + PosX) * (uint32_t)PixelSize);
     Color          = pLayer->GetColor();
 
-  #ifdef DMA2D
-
-    DMA2D->CR      = DMA2D_R2M | DMA2D_CR_TCIE;                 // Register to memory and TCIE
-    DMA2D->OCOLR   = Color;                                     // Color to be used
-    DMA2D->OMAR    = Address;                                   // Destination address
-    DMA2D->OPFCCR  = PixelFormat;                               // Defines the number of pixels to be transfered
-    DMA2D->NLR     = TRANSFERT_ONE_PIXEL;                       // Size configuration of area to be transfered
-    SET_BIT(DMA2D->CR, DMA2D_CR_START);                         // Start operation
-    while(DMA2D->CR & DMA2D_CR_START);                          // Wait until transfer is done
-
-  #else
-
-  #endif
+    // TODO if needed
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -447,23 +308,10 @@ void GrafxGenDriver::DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uin
         Offset     = Thickness;
     }
 
-  #ifdef DMA2D
-
-    DMA2D->CR      = DMA2D_R2M | DMA2D_CR_TCIE;                 // Register to memory and TCIE
-    DMA2D->OCOLR   = Color;                                     // Color to be used
-    DMA2D->OMAR    = Address;                                   // Destination address
-    DMA2D->OOR     = (uint32_t)GRAFX_DRIVER_SIZE_X - Offset;    // Destination line offset
-    DMA2D->OPFCCR  = PixelFormat;                               // Defines the number of pixels to be transfered
-    DMA2D->NLR     = AreaConfig;                                // Size configuration of area to be transfered
-
-    SET_BIT(DMA2D->CR, DMA2D_CR_START);                         // Start operation
-    while(DMA2D->CR & DMA2D_CR_START);                          // Wait until transfer is done
-
-  #else
-
-  #endif
+// todo more
 }
 
+*/
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           LayerConfig
@@ -474,9 +322,9 @@ void GrafxGenDriver::DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uin
 //  Description:    Configuration for layer
 //
 //-------------------------------------------------------------------------------------------------
-void GrafxGenDriver::LayerConfig(DisplayLayer* pLayer)
+/*
+void LTDC_LayerConfig(DisplayLayer* pLayer)
 {
-  #ifdef DMA2D
     uint32_t            PixelFormat;
     uint32_t            PixelSize;
     LayerType_e         ActiveLayer;
@@ -504,11 +352,8 @@ void GrafxGenDriver::LayerConfig(DisplayLayer* pLayer)
         SET_BIT(pActiveLayer->CR, LTDC_LxCR_LEN);                                               // Enable LTDC_Layer by setting LEN bit
         LTDC->SRCR = LTDC_SRCR_IMR;                                                             // Reload
     }
-  #else
-    VAR_UNUSED(pLayer);
-  #endif
 }
-
+*/
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           WaitFor_V_Sync
@@ -522,11 +367,9 @@ void GrafxGenDriver::LayerConfig(DisplayLayer* pLayer)
 //
 //-------------------------------------------------------------------------------------------------
 #if (GRAFX_DRIVER_USE_V_SYNC == DEF_ENABLED)
-void GrafxGenDriver::WaitFor_V_Sync(void)
+void LTDC_WaitFor_V_Sync(void)
 {
-  #ifdef DMA2D
     while(LTDC_GetCDStatus(LTDC_CDSR_VSYNCS) != SET);           // Wait for Vertical sync to occur
-  #endif
 }
 #endif
 

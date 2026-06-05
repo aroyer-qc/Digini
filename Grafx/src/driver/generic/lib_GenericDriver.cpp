@@ -222,6 +222,26 @@ void GrafxGenDriver::BlendFromImage(ImageID_e ImageID, Cartesian_t Position, Ble
 
 //-------------------------------------------------------------------------------------------------
 //
+//  Name:           PrintFont
+//
+//  Parameter(s):   FontDescriptor_t*   pDescriptor
+//                  sCartesian*         pPos
+//  Return:         none
+//
+//  Description:    This function will print a font to drawing layer with the drawing color
+//
+//-------------------------------------------------------------------------------------------------
+void GrafxGenDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
+{
+	uint32_t Address;
+
+	DisplayLayer* pLayer = &LayerTable[DisplayLayer::GetDrawing()];
+	Address     = pLayer->GetAddress() + (((pPos->Y * GRAFX_DRIVER_SIZE_X) + pPos->X) * pLayer->GetPixelSize());
+	_PrintFont(pDescriptor, Address, pLayer->GetSize().X, pPos, pLayer->GetTextColor());
+}
+
+//-------------------------------------------------------------------------------------------------
+//
 //  Name:           CopyLinear
 //
 //  Parameter(s):   void*           pSrc
@@ -463,7 +483,7 @@ void GrafxGenDriver::DrawDLine(float X1, float Y1, float X2, float Y2)
 //-------------------------------------------------------------------------------------------------
 void GrafxGenDriver::DrawCircle(Circle_t* pCircle, PolygonMode_e PolygonMode)
 {
-    DrawCircle(pCircle->Pos.X, pCircle->Pos.Y, pCircle->R, PolygonMode);
+    DrawCircle(pCircle->Pos.X, pCircle->Pos.Y, pCircle->Radius, PolygonMode);
 }
 
 //-------------------------------------------------------------------------------------------------

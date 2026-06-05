@@ -466,57 +466,6 @@ void GrafxGenDriver::DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uin
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           PrintFont
-//
-//  Parameter(s):   FontDescriptor_t*   pDescriptor
-//                  sCartesian*         pPos
-//  Return:         none
-//
-//  Description:    This function will print a font to drawing layer with the drawing color
-//
-//-------------------------------------------------------------------------------------------------
-void GrafxGenDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
-{
-    if(DisplayLayer::GetDrawing() == CONSTRUCTION_FOREGROUND_LAYER)
-    {
-        uint32_t    Address;
-
-        DisplayLayer* pLayer = &LayerTable[DisplayLayer::GetDrawing()];
-        Address     = pLayer->GetAddress() + (((pPos->Y * GRAFX_DRIVER_SIZE_X) + pPos->X) * pLayer->GetPixelSize());
-
-        uint32_t Width               = uint32_t(pDescriptor->WidthPixel);
-        uint32_t Height              = uint32_t(pDescriptor->HeightPixel);
-        uint32_t Offset              = uint32_t(pLayer->GetSize().X) - Width;
-
-        DMA2D->CR = DMA2D_M2M_BLEND;                                                        // Memory to memory and TCIE blending BG + Source
-
-        //Source of the image to blend
-        DMA2D->FGMAR   = uint32_t(pDescriptor->pAddress);
-        DMA2D->FGOR    = 0;                                                                 // Source line offset so none as we are linear
-        DMA2D->FGCOLR  = pLayer->GetTextColor();
-        DMA2D->FGPFCCR = DMA2D_CONVERSION_A8;                                               // Defines the size of pixel.
-
-        // Source in construction layer of the previous blended image or just background
-        DMA2D->BGMAR   = Address;                                                           // Source address
-        DMA2D->BGOR    = Offset;                                                            // Source line offset
-        DMA2D->BGPFCCR = DMA2D_CONVERSION_ARGB8888;                                         // Defines the size of pixel.
-
-        //Destination write back to construction layer
-        DMA2D->OMAR    = Address;                                                           // Destination address
-        DMA2D->OOR     = Offset;                                                            // Destination line offset
-        DMA2D->OPFCCR  = DMA2D_CONVERSION_ARGB8888;                                         // Defines the size of pixel.
-
-        DMA2D->NLR     = (Width << 16) | Height;                                            // Size configuration of area to be transfered
-
-        SET_BIT(DMA2D->CR, DMA2D_CR_START);                                                 // Start operation
-        while ((DMA2D->ISR & DMA2D_ISR_ALL_FLAG) == 0);                                     // Wait for transfer complete
-        DMA2D->IFCR = DMA2D_IFCR_ALL_FLAG;                                                  // Clear flag
-    }
-
-}
-
-//-------------------------------------------------------------------------------------------------
-//
 //  Name:           LayerConfig
 //
 //  Parameter(s):   DisplayLayer* pLayer

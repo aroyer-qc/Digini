@@ -42,6 +42,7 @@
 #endif
 
 #include "./Utility/inc/lib_compression.h"
+#include "./Utility/inc/lib_rotation.h"
 #include "./Digini/inc/lib_label.h"
 #include "./Grafx/inc/lib_grafx_define.h"
 #include "./Grafx/inc/lib_grafx_font.h"

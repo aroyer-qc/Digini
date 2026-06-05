@@ -297,8 +297,8 @@ void ImageRotation8_Q8(const uint8_t* pSrc, uint8_t* pDst, int Width, int Height
 		int CenterX = Width  / 2;
 		int CenterY = Height / 2;
 
-		int16_t CosQ = pRotationTable[RotationID][AngleIndex].CosQ;
-		int16_t SinQ = pRotationTable[RotationID][AngleIndex].SinQ;
+		int16_t CosQ = pRotationTable[RotationID][AngleStep].CosQ;
+		int16_t SinQ = pRotationTable[RotationID][AngleStep].SinQ;
 
 		for(int y = 0; y < Height; y++)
 		{
@@ -441,8 +441,8 @@ void ComputeCircularPlacement(int CenterX, int CenterY, int Radius, int AngleSte
 {
     if(RotationTableSize[RotationID] <= AngleStep)
 	{
-		int16_t CosQ = pRotationTable[RotationID][AngleIndex].CosQ;
-		int16_t SinQ = pRotationTable[RotationID][AngleIndex].SinQ;
+		int16_t CosQ = pRotationTable[RotationID][AngleStep].CosQ;
+		int16_t SinQ = pRotationTable[RotationID][AngleStep].SinQ;
 
 		// Bitmap position of the bitmap on the circle
 		int PosX = CenterX + ((Radius * CosQ) >> 8);

@@ -49,12 +49,12 @@ class GrafxGenDriver
           #endif
 
           #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
-            virtual    void     CopyWidgetToDevice    			(ImageID_e Image, Cartesian_t Position) = 0;
-            virtual    void     CopyWidgetToDevice    			(BoxSize_t Box, Cartesian_t Position) = 0;
+            virtual     void    CopyWidgetToDevice    			(ImageID_e Image, Cartesian_t Position) = 0;
+            virtual     void    CopyWidgetToDevice    			(BoxSize_t Box, Cartesian_t Position) = 0;
           #endif
 
 		  #if (GRAFX_USE_CONSTRUCTION_ON_SINGLE_LAYER == DEF_ENABLED)
-			virtual    void     CopyBackgroundToConstruction	(Cartesian_t Position) = 0;
+			virtual     void    CopyBackgroundToConstruction	(Cartesian_t Position) = 0;
 		  #endif
 
             virtual	    void    BlockCopy             			(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
@@ -76,6 +76,7 @@ class GrafxGenDriver
             virtual	    void    DrawPixel             			(uint16_t PosX, uint16_t PosY);
             virtual	    void    DrawVLine             			(uint16_t PosX, uint16_t PosY1, uint16_t PosY2, uint16_t Thickness);
             virtual	    void    PrintFont             			(FontDescriptor_t* pDescriptor, Cartesian_t* pPos);
+			virtual     void    _PrintFont						(FontDescriptor_t* pDescriptor, uint32_t Address, uint32_t BufferSizeX, Cartesian_t* pPos, uint32_t Color);
           #if (GRAFX_DRIVER_USE_V_SYNC == DEF_ENABLED)
             virtual	    void    WaitFor_V_Sync                  (void);
           #endif

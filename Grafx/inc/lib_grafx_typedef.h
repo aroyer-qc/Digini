@@ -51,10 +51,10 @@ struct Box_t
 struct Circle_t
 {
    Cartesian_t     Pos;
-   uint16_t        R;
+   uint16_t        Radius;
 };
 
-struct Pie_t
+struct Arc_t
 {
    Circle_t        Circle;
    int16_t         StartAngle;
@@ -441,22 +441,18 @@ struct Progress_t
     uint16_t       Options;
 };
 
-//#define EXPAND_X_ROTARY_DIAL_AS_ENUM(ENUM_ID, SERVICE, SUB_SERVICE, POS_X, POS_Y, SIZE_X, SIZE_Y, RADIUS, START_ANGLE, END_ANGLE, STEP_ANGLE, RANGE, MINIMUM, TEXT_COLOR, FONT_ID, OPTIONS) ENUM_ID,
-
-
 struct RotaryDial_t
 {
-    Service_t      Service;
-    Box_t          Box;							// This is the box position and dimension for this widget construction
-    int            Radius;						// Radius offset where to draw element
-    int16_t        StartAngle;					// Static position of the display start angle (number outside angle range cover by StartAngle and EndAngle are not drawed)
-    int16_t        EndAngle;					// Static position of the display end angle
-    uint16_t       StepAngle;					// Static value of the step angle    Ex. 20 Degree tell this widget to draw a number at every 20 degrees
-    uint16_t       Range;
-    int16_t        Minimum;
-    uint32_t       Color;
-	Font_e         FontID;						// Font ID to use on this widget
-    uint16_t       Options;						// Drawing option.
+    Service_t      	Service;
+    Box_t          	Box;							// This is the box position and dimension for this widget construction
+    Arc_t		   	Arc;							// Center of circle + Radius + plus Arc
+    uint16_t       	StepAngle;						// Step angle for animation, each change is this angle.
+    uint16_t       	RangeMin;
+    uint16_t       	RangeMax;
+	RotationID_e	RotationTable;
+    uint32_t       	Color;
+	Font_e          FontID;							// Font ID to use on this widget
+    uint16_t        Options;						// Drawing option.
 };
 
 struct Spectrum_t

@@ -183,6 +183,8 @@
 
 #define GRAFX_OPTION_CLEAR                          (uint16_t)0x2000
 
+#define GRAFX_OPTION_CLIPPING                       (uint16_t)0x4000
+
 #define GRAFX_INIT_DONE                             (uint16_t)0x8000
 
 //-------------------------------------------------------------------------------------------------

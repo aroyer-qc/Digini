@@ -23,6 +23,54 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //-------------------------------------------------------------------------------------------------
+//
+//  Requirement(s):
+//
+//                 270°
+//                   │
+//           180° ───┼─── 0°
+//                   │
+//                  90°
+//
+//   Standard
+//      - Need widget ID
+//      - Need Service
+//      - optional SubService(At user discretion)
+//   Widget specific
+//      - Widget Position and Size:                 PosX, PosY, SizeX, SizeY    ( Box_t )
+//      - Rotary Center Position and Radius:        PosX, PosY, CircleRadius    ( Circle_t )
+//      - Arc Shape (Sector):                       Start Angle, End Angle      ( int16_t )
+//      - Range (This is the number to print):      Minimum, Maximum            ( int16_t )
+//      - Rotation Type:                            Bitmap Rotation Type        ( RotationID_e )
+//      - Step Angle:                               Animation Step Angle        ( uint16_t )
+//      - Text:                                     FontID, Text Color          ( Text_t )
+//      - Options:                                  Option                      ( uint16_t )
+//
+//              Example:    Start angle = 270° and End Angle = 90°
+//                              Then:   We have a vertical Dial
+//                          Range Minimum is 1 and Range Max is 10.
+//                              Then:   Around the 360° there is a number at every 36°
+//                          For Rotation Type USE_ROTATION_TABLE_6 is chosen because 6° it is a
+//                          divisor of 36°. It give 6 positions for animation.
+//                          Difference (270°, 90°) = 180°
+//                          Step Angle: 6°
+//
+//
+//          ┌──────────────┐
+//          │ *            │
+//          │       *      │
+//          │          *   │
+//          │            * │
+//          │             *│
+//          │ ○           *│
+//          │             *│
+//          │            * │
+//          │          *   │
+//          │       *      │
+//          │ *            │
+//          └──────────────┘
+//
+//-------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
@@ -143,8 +191,8 @@ void WidgetRotaryDial::Finalize()
 //
 //  Name:           Draw
 //
-//  Parameter(s):   ServiceReturn_t* pService	Pointer to the service structure providing the
-//												current dial state.  pService->IndexState contains
+//  Parameter(s):   ServiceReturn_t* pService   Pointer to the service structure providing the
+//                                              current dial state.  pService->IndexState contains
 //                                              the dynamic rotation angle of the dial, expressed
 //                                              in degrees, where a positive value represents a
 //                                              clockwise visual rotation. Since the internal
@@ -154,34 +202,34 @@ void WidgetRotaryDial::Finalize()
 //
 //  Return:         None
 //
-//  Description:	Render the rotary dial widget onto the active drawing layer.
+//  Description:    Render the rotary dial widget onto the active drawing layer.
 //
-//      			The rotary dial consists of a sequence of elements (numbers, ticks, labels)
-//      			distributed along a circular arc defined by StartAngle and EndAngle. The
-//                  angular	spacing between two consecutive elements is StepAngle. For example, a
+//                  The rotary dial consists of a sequence of elements (numbers, ticks, labels)
+//                  distributed along a circular arc defined by StartAngle and EndAngle. The
+//                  angular spacing between two consecutive elements is StepAngle. For example, a
 //                  StepAngle of 20° places elements at 0°, 20°, 40°, 60°, etc.
 //
-//      			For each element in the range [StartValue, EndValue):
-//          			- Compute its base angular position:
-//                		  BaseAngle = StartAngle + (ElementIndex - StartValue) * StepAngle
+//                  For each element in the range [StartValue, EndValue):
+//                      - Compute its base angular position:
+//                        BaseAngle = StartAngle + (ElementIndex - StartValue) * StepAngle
 //
-//          			- Apply the dynamic rotation offset:
-//                		  FinalAngle = BaseAngle - pService->IndexState
+//                      - Apply the dynamic rotation offset:
+//                        FinalAngle = BaseAngle - pService->IndexState
 //                        (The subtraction ensures that a positive IndexState rotates the dial
 //                        clockwise on screen, matching visual expectations.)
 //
-//          	        - Convert FinalAngle to Cartesian coordinates on the dial radius.
+//                      - Convert FinalAngle to Cartesian coordinates on the dial radius.
 //
-//          			- Generate the bitmap for the element text
+//                      - Generate the bitmap for the element text
 //                        (may contain multiple characters).
 //
-//          			- Rotate the bitmap using the Q8.8 rotation engine.
+//                      - Rotate the bitmap using the Q8.8 rotation engine.
 //
-//          			- Compute the top‑left placement of the rotated bitmap using
-//            			  ComputeCircularPlacement(), ensuring proper alignment on the circular
+//                      - Compute the top‑left placement of the rotated bitmap using
+//                        ComputeCircularPlacement(), ensuring proper alignment on the circular
 //                        path.
 //
-//          			- Blend the rotated bitmap onto the construction or foreground layer,
+//                      - Blend the rotated bitmap onto the construction or foreground layer,
 //                        depending on the active rendering mode.
 //
 //      When construction layers are enabled, the function restores the background region
@@ -199,16 +247,16 @@ void WidgetRotaryDial::Finalize()
 struct RotaryDial_t
 {
     Service_t      Service;
-    Box_t          Box;							// This is the box position and dimension for this widget construction
-    int            Radius;						// Radius offset where to draw element
-    uint16_t       StartAngle;					// Static position of the display start angle (number outside angle range cover by StartAngle and EndAngle are not drawed)
-    uint16_t       EndAngle;					// Static position of the display end angle
-    uint16_t       StepAngle;					// Static value of the step angle    Ex. 20 Degree tell this widget to draw a number at every 20 degrees
-    int16_t        StartValue;					// Static value to tell this widget to draw from 0 Degree with this value. Signed value.
-    int16_t        EndValue;					// Static value to tell this widget to draw up to X Degree with this end value. Signed value.
-    uint16_t       MovingStepAngle;				// This is the angle of the moving dial versus 0 degree at top of the circle
-    Font_e         FontID;						// Font ID to use on this widget
-    uint16_t       Options;						// Drawing option.
+    Box_t          Box;                         // This is the box position and dimension for this widget construction
+    int            Radius;                      // Radius offset where to draw element
+    uint16_t       StartAngle;                  // Static position of the display start angle (number outside angle range cover by StartAngle and EndAngle are not drawed)
+    uint16_t       EndAngle;                    // Static position of the display end angle
+    uint16_t       StepAngle;                   // Static value of the step angle    Ex. 20 Degree tell this widget to draw a number at every 20 degrees
+    int16_t        StartValue;                  // Static value to tell this widget to draw from 0 Degree with this value. Signed value.
+    int16_t        EndValue;                    // Static value to tell this widget to draw up to X Degree with this end value. Signed value.
+    uint16_t       MovingStepAngle;             // This is the angle of the moving dial versus 0 degree at top of the circle
+    Font_e         FontID;                      // Font ID to use on this widget
+    uint16_t       Options;                     // Drawing option.
 };
 */
 void WidgetRotaryDial::Draw(ServiceReturn_t* pService)
@@ -234,34 +282,34 @@ void WidgetRotaryDial::Draw(ServiceReturn_t* pService)
   #endif
 
   #if (GRAFX_USE_CONSTRUCTION_ON_SINGLE_LAYER == DEF_ENABLED)
-	// need to copy part of the background to erase previous dial (m_pRotaryDial->Box);			// Copy part of the background into the construction layer
+    // need to copy part of the background to erase previous dial (m_pRotaryDial->Box);         // Copy part of the background into the construction layer
   #endif
 
-    StartAngle   = m_pRotaryDial->StartAngle;					    // Display of number start at this angle.	0 degree is at the top of the arc
-    EndAngle     = m_pRotaryDial->EndAngle;							// Display of number end at that angle.
-	Range        = m_pRotaryDial->Range;							// The range of the rotary dial is 0 to range
-	DisplayAngle = pService->IndexState;							// This is the angle of rotation
-	Radius       = m_pRotaryDial->Radius;
+    StartAngle   = m_pRotaryDial->Arc.StartAngle;                   // Display of number start at this angle.   0 degree is at the top of the arc
+    EndAngle     = m_pRotaryDial->Arc.EndAngle;                     // Display of number end at that angle.
+    //Range        = m_pRotaryDial->Range;                            // The range of the rotary dial is 0 to range
+    DisplayAngle = pService->IndexState;                            // This is the angle of rotation
+    Radius       = m_pRotaryDial->Arc.Circle.Radius;
 
     for(int16_t Element = StartAngle; Element < EndAngle; Element++)
-	{
-	  // calculate the pos of this element
+    {
+      // calculate the pos of this element
 
-	  #if (GRAFX_USE_CONSTRUCTION_ON_SINGLE_LAYER == DEF_ENABLED)
-	//	CopyBackgroundToConstruction(Position of this element);			// Copy part of the background into the construction layer
-	  #endif
+      #if (GRAFX_USE_CONSTRUCTION_ON_SINGLE_LAYER == DEF_ENABLED)
+    //  CopyBackgroundToConstruction(Position of this element);         // Copy part of the background into the construction layer
+      #endif
 
-//		We need to construct the bitmap of the print for this element (Maybe more than one character)
-//		Get the font character for each element
+//      We need to construct the bitmap of the print for this element (Maybe more than one character)
+//      Get the font character for each element
 
-//		uint8_t* pDestination = (uint8_t*)pMemoryPool->Alloc(ImageSize, MEM_DBG_GRAFX_CL1);
+//      uint8_t* pDestination = (uint8_t*)pMemoryPool->Alloc(ImageSize, MEM_DBG_GRAFX_CL1);
 
-//		ImageRotation8_Q8(const uint8_t* pSrc, uint8_t* pDestination, int Width, int Height, int AngleIndex, USE_ROTATION_TABLE_9);
-//		ComputeCircularPlacement(int CenterX, int CenterY, Radius, int AngleIndex, int BitmapWidth, int BitmapHeight, int* pOutX,  int* pOutY);
-//		copy the element onto the the construction layer
+//      ImageRotation8_Q8(const uint8_t* pSrc, uint8_t* pDestination, int Width, int Height, int AngleIndex, USE_ROTATION_TABLE_9);
+//      ComputeCircularPlacement(int CenterX, int CenterY, Radius, int AngleIndex, int BitmapWidth, int BitmapHeight, int* pOutX,  int* pOutY);
+//      copy the element onto the the construction layer
 
-//		pMemoryPool->Free((void**)&pDestination);
-	}
+//      pMemoryPool->Free((void**)&pDestination);
+    }
 
       #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
   //      myGrafx->CopyWidgetToDevice(Dimension of this element,  Position of this element);
@@ -274,3 +322,77 @@ void WidgetRotaryDial::Draw(ServiceReturn_t* pService)
 
 #endif // ROTARY_DIAL_DEF
 #endif // DIGINI_USE_GRAFX
+
+
+
+
+/*
+class ImageRotatorQ8
+{
+    public:
+            
+            void RotateAlphaIntoScreen(const uint8_t*  srcAlpha,     // 8-bit alpha mask (font/shape)
+                                       BoxSize_t       srcSize,      // srcW, srcH
+                                       uint32_t*       dstScreen,    // ARGB8888 construction layer
+									   BoxSize_t       screenSize,   // screenW, screenH
+									   uint32_t        fgColorARGB,  // solid color to apply with alpha
+									   int16_t         angleQ8,      // Q8.8 angle
+								       Cartesian_t     centerScreen, // rotation center in SCREEN coords
+									   const Box_t&    clipBox       // widget box in SCREEN coords
+    );
+};
+
+I will need to print the font into into a temporary box (buffer) using DMA2D..  then do the rotation and check clipping before writing pixel.
+
+struct TempBox_t
+{
+    uint8_t*  AlphaBuf;   // or uint32_t* if you let DMA2D render ARGB
+    BoxSize_t Size;       // width/height in pixels
+};
+
+class ImageRotatorQ8
+{
+public:
+    void RotateAlphaBoxIntoScreen(
+        const uint8_t*  srcAlpha,     // temp box buffer (local coords)
+        BoxSize_t       srcSize,      // temp box size
+
+        uint32_t*       dstScreen,    // ARGB8888 construction layer
+        BoxSize_t       screenSize,   // full screen size
+
+        uint32_t        fgColorARGB,  // color to apply with alpha
+
+        int16_t         angleQ8,      // Q8.8 angle
+
+        Cartesian_t     centerScreen, // rotation center in SCREEN coords
+
+        const Box_t&    clipBox       // widget box in SCREEN coords
+    );
+};
+
+void RotaryDial::Draw(uint32_t* screenBuf, BoxSize_t screenSize)
+{
+    // 1) Ask DMA2D to render font/shape into temp alpha box
+    //    TempBox_t Temp;  // owned by RotaryDial or shared pool
+    //    DMA2D_RenderGlyphToAlpha(Temp.AlphaBuf, Temp.Size, ...);
+
+    int16_t angleQ8 = AngleDeg << 8;
+
+    Cartesian_t centerScreen;
+    centerScreen.X = WidgetBox.Pos.X + CenterInWidget.X;
+    centerScreen.Y = WidgetBox.Pos.Y + CenterInWidget.Y;
+
+    Rotator.RotateAlphaBoxIntoScreen(
+        Temp.AlphaBuf,
+        Temp.Size,
+        screenBuf,
+        screenSize,
+        DialColorARGB,
+        angleQ8,
+        centerScreen,
+        WidgetBox   // clip to widget box
+    );
+}
+
+
+*/

@@ -44,23 +44,23 @@ static void DrawSector(ImageID_e Image, Circle_t* pCircle, uint16_t StartAngle, 
 //
 //   Function Name: DrawPie
 //
-//   Parameter(s):  ImageID_e               Image
-//                  Pie_t*               pPie
+//   Parameter(s):  ImageID_e            Image
+//                  Arc_t*               pArc
 //                  BlendMode_e          BlendMode
 //   Return Value:  none
 //
 //   Description:   Copy a part of a circle from linear memory region to pie shape in destination
 //
 //-------------------------------------------------------------------------------------------------
-void DrawPie(ImageID_e Image, Pie_t* pPie, BlendMode_e BlendMode)
+void DrawPie(ImageID_e Image, Arc_t* pArc, BlendMode_e BlendMode)
 {
     uint16_t   SectorStartAngle;
     uint16_t   SectorEndAngle;
     uint8_t    SectorNumber;
 
-    if(pPie->EndAngle < pPie->StartAngle) pPie->EndAngle += 360;                                            // So we can work in positive direction
+    if(pArc->EndAngle < pArc->StartAngle) pArc->EndAngle += 360;                                            // So we can work in positive direction
 
-    for(uint16_t Angle = pPie->StartAngle; Angle < pPie->EndAngle; )                                        // Copy each sector that pie is crossing in part or in full
+    for(uint16_t Angle = pArc->StartAngle; Angle < pArc->EndAngle; )                                        // Copy each sector that pie is crossing in part or in full
     {
         // This sector number
         SectorNumber = Angle / 90;
@@ -70,12 +70,12 @@ void DrawPie(ImageID_e Image, Pie_t* pPie, BlendMode_e BlendMode)
 
         // This sector angle end
         SectorEndAngle = 90;
-        if(pPie->EndAngle < (SectorEndAngle + (SectorNumber * 90)))
+        if(pArc->EndAngle < (SectorEndAngle + (SectorNumber * 90)))
         {
-           SectorEndAngle = pPie->EndAngle % 90;                                                            // Check if the pie end angle is in this sector
+           SectorEndAngle = pArc->EndAngle % 90;                                                            // Check if the pie end angle is in this sector
         }
 
-        _DrawSector(Image, &pPie->Circle, SectorStartAngle, SectorEndAngle, SectorNumber % 4, BlendMode);  // Draw one the the 4 sector in full or partially
+        _DrawSector(Image, &pArc->Circle, SectorStartAngle, SectorEndAngle, SectorNumber % 4, BlendMode);  // Draw one the the 4 sector in full or partially
 
         // Increment angle for next sector
         Angle += (SectorEndAngle - SectorStartAngle);
@@ -86,25 +86,25 @@ void DrawPie(ImageID_e Image, Pie_t* pPie, BlendMode_e BlendMode)
 //
 //   Function Name: DrawPie
 //
-//   Parameter(s):  ImageID_e               Image
-//                  Cartesian_t          Position
+//   Parameter(s):  ImageID_e           Image
+//                  Cartesian_t         Position
 //                  uint16_t            Radius
 //                  uint16_t            StartAngle
 //                  uint16_t            EndAngle
-//                  BlendMode_e          BlendMode
+//                  BlendMode_e         BlendMode
 //   Return Value:  none
 //
-//   Description:   Copy a part of a circle from linear memory region to pie shape in destination
+//   Description:   Copy a part of a circle from linear memory region to Arc shape in destination
 //
 //-------------------------------------------------------------------------------------------------
 void DrawPie(ImageID_e Image, Cartesian_t Position, uint16_t Radius, uint16_t StartAngle, uint16_t EndAngle, BlendMode_e BlendMode)
 {
-    Pie_t Pie;
+    Arc_t Arc;
 
-    Pie.Circle.Pos         = Position;
-    Pie.Circle.R           = Radius;
-    Pie.StartAngle         = StartAngle;
-    Pie.EndAngle           = EndAngle;
+    Arc.Circle.Pos         = Position;
+    Arc.Circle.R           = Radius;
+    Arc.StartAngle         = StartAngle;
+    Arc.EndAngle           = EndAngle;
 
     DrawPie(Image, &Pie, BlendMode);
 }
@@ -114,11 +114,11 @@ void DrawPie(ImageID_e Image, Cartesian_t Position, uint16_t Radius, uint16_t St
 //   Function Name: _DrawSector
 //
 //   Parameter(s):  ImageID_e          Image
-//                  Circle_t*            pCircle
-//                  uint16_t            StartAngle
-//                  uint16_t            EndAngle
-//                  uint16_t            SectorNumber
-//                  BlendMode_e          BlendMode
+//                  Circle_t*          pCircle
+//                  uint16_t           StartAngle
+//                  uint16_t           EndAngle
+//                  uint16_t           SectorNumber
+//                  BlendMode_e        BlendMode
 //   Return Value:  none
 //
 //   Description:   Draw one sector of the pie (4 sectors in full circle)

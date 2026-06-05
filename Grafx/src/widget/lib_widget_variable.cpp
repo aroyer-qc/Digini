@@ -213,12 +213,14 @@
         (uint16_t)OPTIONS,                                                              \
     },
 
-#define EXPAND_X_ROTARY_DIAL_AS_STRUCT(ENUM_ID, SERVICE, SUB_SERVICE, POS_X, POS_Y, SIZE_X, SIZE_Y, RADIUS, START_ANGLE, END_ANGLE, STEP_ANGLE, RANGE, MINIMUM, TEXT_COLOR, FONT_ID, OPTIONS) \
+#define EXPAND_X_ROTARY_DIAL_AS_STRUCT(ENUM_ID, SERVICE, SUB_SERVICE, POS_X, POS_Y, SIZE_X, SIZE_Y, C_POS_X, C_POS_Y, RADIUS, START_ANGLE, END_ANGLE, STEP_ANGLE, RANGE_MIN, RANGE_MAX, ROTATION_TABLE, TEXT_COLOR, FONT_ID, OPTIONS) \
 \
     {                                                                                                          \
         {(uint32_t)SERVICE, (uint16_t)SUB_SERVICE},                                                            \
         {{(int16_t)POS_X, (int16_t)POS_Y}, {(uint16_t)SIZE_X, (uint16_t)SIZE_Y}},                              \
-        RADIUS, START_ANGLE, END_ANGLE, STEP_ANGLE, RANGE, MINIMUM, TEXT_COLOR, FONT_ID,                       \
+		{{{(int16_t)C_POS_X, (int16_t)C_POS_Y}, RADIUS}, START_ANGLE, END_ANGLE},                              \
+		STEP_ANGLE, RANGE_MIN, RANGE_MAX, ROTATION_TABLE,                                                      \
+		TEXT_COLOR, FONT_ID,                                                                                   \
         (uint16_t)OPTIONS,                                                                                     \
     },
 

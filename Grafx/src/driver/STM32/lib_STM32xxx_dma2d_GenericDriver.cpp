@@ -348,60 +348,6 @@ void GrafxGenDriver::DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uin
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           PrintFont
-//
-//  Parameter(s):   FontDescriptor_t*   pDescriptor
-//                  sCartesian*         pPos
-//  Return:         none
-//
-//  Description:    This function will print a font to drawing layer with the drawing color
-//
-//-------------------------------------------------------------------------------------------------
-void GrafxGenDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
-{
-    uint32_t      PixelFormat;
-    uint8_t       PixelSize;
-    uint32_t      Address;
-    DisplayLayer* pLayer;
-    uint32_t      AreaConfig;
-    uint32_t      Offset;
-    uint32_t      SizeX;
-
-    pLayer      = &LayerTable[DisplayLayer::GetDrawing()];
-    PixelFormat = m_PixelFormatTable[pLayer->GetPixelFormat()];
-    PixelSize   = pLayer->GetPixelSize();
-    SizeX       = uint32_t(pLayer->GetSize().X);
-    Address     = pLayer->GetAddress() + (((pPos->Y * SizeX) + pPos->X) * (uint32_t)PixelSize);
-    AreaConfig  = (uint32_t(pDescriptor->WidthPixel) << 16) | uint32_t(pDescriptor->HeightPixel);
-    Offset      = pDescriptor->WidthPixel;
-
-    DMA2D->CR      = DMA2D_M2M_BLEND;                                   // Memory to memory
-
-    // Font layer in Alpha blending linear (A8)
-    DMA2D->FGMAR   = (uint32_t)pDescriptor->pAddress;                   // Source address 1
-    DMA2D->FGOR    = 0;                                                 // Font source line offset - none as we are linear
-    DMA2D->FGCOLR  = pLayer->GetTextColor();
-    DMA2D->FGPFCCR = DMA2D_CONVERSION_A8;                               // Defines the number of pixels to be transfered
-
-    DMA2D->BGMAR   = Address;                                           // Source address 2
-    DMA2D->BGOR    = SizeX - Offset;                                    // Font source line offset - none as we are linear
-    DMA2D->BGPFCCR = PixelFormat;                                       // Defines the number of pixels to be transfered
-
-    // Output Layer
-    DMA2D->OMAR    = Address;
-    DMA2D->OOR     = SizeX - Offset;                                    // Destination line offset
-    DMA2D->OPFCCR  = PixelFormat;
-
-    // Area
-    DMA2D->NLR     = AreaConfig;                                        // Size configuration of area to be transfered
-
-    SET_BIT(DMA2D->CR, DMA2D_CR_START);                                 // Start operation
-    while((DMA2D->ISR & DMA2D_ISR_ALL_FLAG) == 0);                      // Wait for transfer complete
-    DMA2D->IFCR = DMA2D_IFCR_ALL_FLAG;                                  // Clear flag
-}
-
-//-------------------------------------------------------------------------------------------------
-//
 //  Name:           LayerConfig
 //
 //  Parameter(s):   DisplayLayer* pLayer
@@ -504,6 +450,55 @@ void GrafxGenDriver::DrawPixel(uint16_t PosX, uint16_t PosY)
     VAR_UNUSED(BlendMode);
 }
 */
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           PrintFont
+//
+//  Parameter(s):   FontDescriptor_t*   pDescriptor
+//					uint32_t			Address				Address of the buffer
+//					uint32_t			BufferSizeX			SizeX of the buffer
+//                  sCartesian*         pPos
+//					Uint32_t 			Color				Color to use
+//
+//
+//  Return:         none
+//
+//  Description:    This function will print a font to drawing layer with the drawing color
+//
+//  Note(s):		This is by label widget, and also from font rotation
+//
+//-------------------------------------------------------------------------------------------------
+void GrafxGenDriver::_PrintFont(FontDescriptor_t* pDescriptor, uint32_t Address, uint32_t BufferSizeX, Cartesian_t* pPos, uint32_t Color)
+{
+	uint32_t Offset = uint32_t(BufferSizeX) - uint32_t(pDescriptor->WidthPixel);
+
+	DMA2D->CR = DMA2D_M2M_BLEND;                                                        // Memory to memory and TCIE blending BG + Source
+
+	//Source of the image to blend
+	DMA2D->FGMAR   = uint32_t(pDescriptor->pAddress);
+	DMA2D->FGOR    = 0;                                                                 // Source line offset so none as we are linear
+	DMA2D->FGCOLR  = Color;
+	DMA2D->FGPFCCR = DMA2D_CONVERSION_A8;                                               // Defines the size of pixel.
+
+	// Source in construction layer of the previous blended image or just background
+	DMA2D->BGMAR   = Address;                                                           // Source address
+	DMA2D->BGOR    = Offset;                                                            // Source line offset
+	DMA2D->BGPFCCR = DMA2D_CONVERSION_ARGB8888;                                         // Defines the size of pixel.
+
+	//Destination write back to construction layer
+	DMA2D->OMAR    = Address;                                                           // Destination address
+	DMA2D->OOR     = Offset;                                                            // Destination line offset
+	DMA2D->OPFCCR  = DMA2D_CONVERSION_ARGB8888;                                         // Defines the size of pixel.
+
+	DMA2D->NLR     = (uint32_t(pDescriptor->WidthPixel) << 16) |
+                      uint32_t(pDescriptor->HeightPixel);                               // Size configuration of area to be transfered
+
+	SET_BIT(DMA2D->CR, DMA2D_CR_START);                                                 // Start operation
+	while ((DMA2D->ISR & DMA2D_ISR_ALL_FLAG) == 0);                                     // Wait for transfer complete
+	DMA2D->IFCR = DMA2D_IFCR_ALL_FLAG;                                                  // Clear flag
+}
+
 //-------------------------------------------------------------------------------------------------
 
 #endif // (DIGINI_USE_GRAFX == DEF_ENABLED)

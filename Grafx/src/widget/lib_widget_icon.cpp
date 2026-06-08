@@ -36,6 +36,12 @@
 #ifdef ICON_DEF
 
 //-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
+
+#define ICON_DEBUG_GUI                  DEF_DISABLED
+
+//-------------------------------------------------------------------------------------------------
 //
 //  Constructor:    WidgetIcon
 //
@@ -151,7 +157,7 @@ void WidgetIcon::Draw(ServiceReturn_t* pService)
     DisplayLayer::PushDrawing();
 
 /*
-  #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
+  #if (ICON_DEBUG_GUI == DEF_ENABLED)
     DisplayLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
   #else
    #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
@@ -162,7 +168,7 @@ void WidgetIcon::Draw(ServiceReturn_t* pService)
   #endif
 */
 
-  #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
+  #if (ICON_DEBUG_GUI == DEF_ENABLED)
     DisplayLayer::SetDrawing(((m_pIcon->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? BACKGROUND_DISPLAY_LAYER_0 : FOREGROUND_DISPLAY_LAYER_0);
   #else
     DisplayLayer::SetDrawing(((m_pIcon->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? GRAFX_SelectBackgroundDrawingLayer() :

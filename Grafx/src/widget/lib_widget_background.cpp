@@ -151,7 +151,7 @@ void WidgetBackground::Draw(ServiceReturn_t* pService)
 
   #if (GRAFX_USE_STATIC_IMAGE_ONLY == DEF_ENABLED)
 
-   #if (GRAFX_DEBUG_GUI == DEF_ENABLED) || (GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER == DEF_DISABLED)
+   #if (GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER == DEF_DISABLED)
     DisplayLayer::SetDrawing(BACKGROUND_DISPLAY_LAYER_0);
    #else
     DisplayLayer::SetDrawing(CONSTRUCTION_BACKGROUND_LAYER);
@@ -162,15 +162,8 @@ void WidgetBackground::Draw(ServiceReturn_t* pService)
     ImageInfo_t   ImageInfo;
     DisplayLayer* pLayer;
 
-  #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
-        DisplayLayer::SetDrawing(BACKGROUND_DISPLAY_LAYER_0);
-        pLayer = &LayerTable[BACKGROUND_DISPLAY_LAYER_0];
-  #else
-    {
-        DisplayLayer::SetDrawing(CONSTRUCTION_BACKGROUND_LAYER);
-        pLayer = &LayerTable[CONSTRUCTION_BACKGROUND_LAYER];
-    }
-  #endif
+    DisplayLayer::SetDrawing(CONSTRUCTION_BACKGROUND_LAYER);
+    pLayer = &LayerTable[CONSTRUCTION_BACKGROUND_LAYER];
 
     DB_Central.Get(&ImageInfo, GFX_IMAGE_INFO, uint16_t(m_pBackground->Image.ID_List[pService->IndexState]), 0);
     myGrafx->BlockCopy(ImageInfo.pPointer,
@@ -184,14 +177,12 @@ void WidgetBackground::Draw(ServiceReturn_t* pService)
                        CLEAR_BLEND);
   #endif
 
-  #if (GRAFX_DEBUG_GUI == DEF_DISABLED)
    #if (GRAFX_DRIVER_USE_V_SYNC == DEF_ENABLED)
     myGrafx->WaitFor_V_Sync();
    #endif
    #if (GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER == DEF_ENABLED)
     myGrafx->CopyLayerToLayer(CONSTRUCTION_BACKGROUND_LAYER, BACKGROUND_DISPLAY_LAYER_0, 0, 0, GRAFX_DRIVER_SIZE_X, GRAFX_DRIVER_SIZE_Y);
    #endif
-  #endif
 
     DisplayLayer::PopDrawing();
 }

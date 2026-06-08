@@ -36,6 +36,12 @@
 #ifdef BASIC_RECT_DEF
 
 //-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
+
+#define BASIC_RECT_DEBUG_GUI            DEF_DISABLED
+
+//-------------------------------------------------------------------------------------------------
 //
 //  Constructor:    WidgetBasicRectangle
 //
@@ -172,7 +178,7 @@ void WidgetBasicRectangle::Draw(ServiceReturn_t* pService)
 {
     DisplayLayer::PushDrawing();
 
-  #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
+  #if (BASIC_RECT_DEBUG_GUI == DEF_ENABLED)
     DisplayLayer::SetDrawing(((m_pBasicRect->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? BACKGROUND_DISPLAY_LAYER_0 : FOREGROUND_DISPLAY_LAYER_0);
   #else
 

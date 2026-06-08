@@ -446,6 +446,7 @@ struct RotaryDial_t
     Service_t      	Service;
     Box_t          	Box;							// This is the box position and dimension for this widget construction
     Arc_t		   	Arc;							// Center of circle + Radius + plus Arc
+    uint16_t        FocusAngle;                    // This is the offset angle for the main focus of the dial
     uint16_t       	StepAngle;						// Step angle for animation, each change is this angle.
     uint16_t       	RangeMin;
     uint16_t       	RangeMax;

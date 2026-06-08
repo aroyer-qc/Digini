@@ -193,7 +193,6 @@ void GUI_myClassTask::Run()
                 NewLink = PreviousLink;
             }
 
-         #if (GRAFX_DEBUG_GUI == DEF_DISABLED)
           #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
             if(NewLink == INVALID_LINK)         // Only make the copy if it's not an immediate redirection
             {
@@ -214,7 +213,6 @@ void GUI_myClassTask::Run()
               #endif
             }
           #endif
-         #endif
         }
     }
 }
@@ -841,11 +839,6 @@ void GUI_ClearWidgetLayer()
 {
     Box_t Box = {{0, 0},{GRAFX_DRIVER_SIZE_X, GRAFX_DRIVER_SIZE_Y}};
 
-  #if (GRAFX_DEBUG_GUI == DEF_ENABLED) && (GRAFX_USE_FOREGROUND_LAYER == DEF_ENABLED)
-    DisplayLayer::PushDrawing();
-    DisplayLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
-    #define ENABLE_POP
-  #else
    #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
     DisplayLayer::PushDrawing();
     DisplayLayer::SetDrawing(CONSTRUCTION_FOREGROUND_LAYER);
@@ -858,7 +851,6 @@ void GUI_ClearWidgetLayer()
     // The Driver will take care of the clearing since there is no layer
      #undef ENABLE_POP
    #endif
-  #endif
 
     DisplayLayer::SetColor(TRANSPARENT);
     myGrafx->DrawRectangle(&Box);

@@ -587,5 +587,112 @@ void GrafxGenDriver::DrawCircle(uint16_t PosX, uint16_t PosY, uint16_t Radius, P
 }
 
 //-------------------------------------------------------------------------------------------------
+//
+//   Function Name: DrawCircle
+//
+//   Parameter(s):  Box_t*              Box
+//                  uint16_t            PosX
+//                  uint16_t            PosY
+//                  uint16_t            Radius
+//                  PolygonMode_e       PolygonMode
+//
+//   Return Value:  none
+//
+//   Description:   Draw a circle on screen base on Bresenham algo
+//
+//   notes:         Option are:         POLY_FILL  -> for a completely fill circle
+//                                      POLY_SHAPE -> for the contour shape only
+//
+//-------------------------------------------------------------------------------------------------
+void GrafxGenDriver::DrawCircle(Box_t* Box, uint16_t PosX, uint16_t PosY, uint16_t Radius, PolygonMode_e PolygonMode)
+{
+    int16_t     X;
+    int16_t     Y;
+    int16_t     Decision;
+    uint16_t    q1;
+    uint16_t    q2;
+    uint16_t    q3;
+    uint16_t    q4;
+    uint16_t    q5;
+    uint16_t    q6;
+    uint16_t    q7;
+    uint16_t    q8;
+    uint8_t     Skip;
+
+    uint16_t    BoxX      = Box->Pos.X;
+    uint16_t    BoxY      = Box->Pos.Y;
+    uint16_t    BoxW      = Box->Size.Width;
+    uint16_t    BoxH      = Box->Size.Height;
+    uint16_t    BoxX2     = BoxX + BoxW - 1;
+    uint16_t    BoxY2     = BoxY + BoxH - 1;
+
+    X = 0;
+    Y = Radius;
+    Decision = 3 - ((int16_t)Radius << 1);
+
+    while(X <= Y)
+    {
+        q1 = PosX - (uint16_t)X;
+        q2 = PosY - (uint16_t)Y;
+        q3 = PosX - (uint16_t)Y;
+        q4 = PosY - (uint16_t)X;
+        q5 = PosX + (uint16_t)X;
+        q6 = PosY + (uint16_t)Y;
+        q7 = PosX + (uint16_t)Y;
+        q8 = PosY + (uint16_t)X;
+
+        if(PolygonMode == POLY_FILL)
+        {
+            uint16_t xL1 = (q1 < BoxX) ? BoxX : q1;
+            uint16_t xR1 = (q5 > BoxX2) ? BoxX2 : q5;
+
+            uint16_t xL2 = (q3 < BoxX) ? BoxX : q3;
+            uint16_t xR2 = (q7 > BoxX2) ? BoxX2 : q7;
+
+            if((q2 >= BoxY) && (q2 <= BoxY2)) DrawHLine(q2, xL1, xR1, 1);
+            if((q6 >= BoxY) && (q6 <= BoxY2)) DrawHLine(q6, xL1, xR1, 1);
+            if((q4 >= BoxY) && (q4 <= BoxY2)) DrawHLine(q4, xL2, xR2, 1);
+            if((q8 >= BoxY) && (q8 <= BoxY2)) DrawHLine(q8, xL2, xR2, 1);
+        }
+        else
+        {
+            Skip = 0;
+
+            if(q1 < BoxX)   Skip |= 0x01;
+            if(q2 < BoxY)   Skip |= 0x02;
+            if(q3 < BoxX)   Skip |= 0x04;
+            if(q4 < BoxY)   Skip |= 0x08;
+
+            if(q5 > BoxX2)  Skip |= 0x10;
+            if(q6 > BoxY2)  Skip |= 0x20;
+            if(q7 > BoxX2)  Skip |= 0x40;
+            if(q8 > BoxY2)  Skip |= 0x80;
+
+            if((Skip & 0x03) == 0) DrawPixel(q1, q2);
+            if((Skip & 0x12) == 0) DrawPixel(q5, q2);
+            if((Skip & 0x21) == 0) DrawPixel(q1, q6);
+            if((Skip & 0x30) == 0) DrawPixel(q5, q6);
+            if((Skip & 0x0C) == 0) DrawPixel(q3, q4);
+            if((Skip & 0x48) == 0) DrawPixel(q7, q4);
+            if((Skip & 0x84) == 0) DrawPixel(q3, q8);
+            if((Skip & 0xC0) == 0) DrawPixel(q7, q8);
+        }
+
+        if(Decision < 0)
+        {
+            Decision += ((int16_t)X << 2) + 6;
+        }
+        else
+        {
+            Decision += ((((int16_t)X - (int16_t)Y) << 2) + 10);
+            Y -= 1;
+        }
+        X++;
+    }
+}
+
+
+
+//-------------------------------------------------------------------------------------------------
 
 #endif // (DIGINI_USE_GRAFX == DEF_ENABLED)

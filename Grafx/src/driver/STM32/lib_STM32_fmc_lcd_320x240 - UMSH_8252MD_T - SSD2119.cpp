@@ -177,6 +177,7 @@ void GrafxDriver::DrawBox(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_
     Box.Pos.Y = PosY + Height - Thickness;
     DrawRectangle(&Box);                        // Bottom
     Box.Pos.Y = PosY + Thickness;
+    Box.Size.Height = Height - (2 * Thickness);
     Box.Size.Width  = Thickness;
     DrawRectangle(&Box);                        // Left
     Box.Pos.X = PosX + Length - Thickness;
@@ -195,7 +196,7 @@ void GrafxDriver::DrawBox(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DrawRectangle(Box_t* pBox)
 {
-    if(DisplayLayer::GetDrawing() == CONSTRUCTION_FOREGROUND_LAYER)
+    if(DisplayLayer::GetDrawing() == GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER)
     {
         uint32_t      Color;
         uint32_t      Size;
@@ -437,7 +438,7 @@ void GrafxDriver::BlendFromImage(ImageID_e ImageID, Cartesian_t Position, BlendM
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
 {
-//    if(DisplayLayer::GetDrawing() == CONSTRUCTION_FOREGROUND_LAYER) why??
+    if(DisplayLayer::GetDrawing() == CONSTRUCTION_FOREGROUND_LAYER)
     {
         uint32_t    ConstructAlphaLayer;
         Cartesian_t Pos;
@@ -445,7 +446,7 @@ void GrafxDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
         DisplayLayer* pLayer = &LayerTable[DisplayLayer::GetDrawing()];
         Pos.X = pPos->X - m_ConstructPosition.X;
         Pos.Y = pPos->Y - m_ConstructPosition.Y;
-        uint32_t Width               = uint32_t(pDescriptor->WidthPixel);
+        //uint32_t Width               = uint32_t(pDescriptor->WidthPixel);
 
         ConstructAlphaLayer  = ((Pos.Y * uint32_t(pLayer->GetSize().X)) + Pos.X);           // Calculate Offset of print
         ConstructAlphaLayer *= sizeof(uint32_t);                                            // Adjust for ARGB size
@@ -453,6 +454,10 @@ void GrafxDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
         // DMA2D the 2 buffers
 
         _PrintFont(pDescriptor, ConstructAlphaLayer, uint32_t(pLayer->GetSize().X), pPos, pLayer->GetTextColor());
+    }
+    else
+    {
+        PrintFont(pDescriptor, pPos);
     }
 }
 

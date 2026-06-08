@@ -30,7 +30,7 @@
 
 #define LIB_RK043FN48H_GLOBAL
 #include "./lib_digini.h"
-#include "./Grafx/inc/driver/STM32/lib_stm32_ltdc.h"
+#include "./Grafx/inc/driver/STM32/lib_STM32_ltdc.h"
 #undef  LIB_RK043FN48H_GLOBAL
 
 //-------------------------------------------------------------------------------------------------

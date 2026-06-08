@@ -315,6 +315,9 @@ void WidgetRotaryDial::Draw(ServiceReturn_t* pService)
     ComputeCircularPlacement(m_pRotaryDial->Arc.Circle.Pos.X, m_pRotaryDial->Arc.Circle.Pos.Y, m_pRotaryDial->Arc.Circle.Radius, ((ServiceType1_t*)pService)->Data, &Pos.X,  &Pos.Y, m_pRotaryDial->RotationTable);
     Text_t Text = {};
 
+if((Pos.X < 280) && (Pos.Y < 220))
+{
+
     Text.Box.Pos.X = Pos.X;
     Text.Box.Pos.Y = Pos.Y;
     Text.Box.Size.Width = 100;
@@ -337,6 +340,7 @@ void WidgetRotaryDial::Draw(ServiceReturn_t* pService)
    #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
     myGrafx->CopyWidgetToDevice(Text.Box.Size, Text.Box.Pos);
    #endif
+}
 
   #else
    #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)

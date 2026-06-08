@@ -250,7 +250,7 @@ void WidgetProgress::Draw(ServiceReturn_t* pService)
         m_CursorPos = CursorPos;
     }
 
-    WidgetPrint(&m_pProgress->Text, pService);
+    WidgetPrint(&m_pProgress->Text, pService, false);
 
     #if (GRAFX_PAINT_BOX_DEBUG == DEF_ENABLED)
       if((m_pProgress->Box.Size.Width != 0) && (m_pProgress->Box.Size.Height != 0))

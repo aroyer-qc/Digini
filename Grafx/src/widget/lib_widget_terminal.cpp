@@ -212,9 +212,9 @@ void WidgetTerminal::Finalize()
 //-------------------------------------------------------------------------------------------------
 void WidgetTerminal::Draw(ServiceReturn_t* pService)
 {
-    Box_t    Box;
-    GPrintf  Printf;
-    uint8_t* pScreenPtr;
+    Box_t        Box;
+    GrafxPrintf  Printf;
+    uint8_t*     pScreenPtr;
 
     DisplayLayer::PushDrawing();
 

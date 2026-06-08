@@ -59,15 +59,14 @@
 
 enum Link_e
 {
+    INVALID_LINK,
   #ifdef LINK_DEF
     LINK_DEF(EXPAND_X_LINK_AS_ENUM)
   #endif
     NB_LINK_CONST,
     PREVIOUS_LINK = 0xFFFD,
     REMOVE_WIDGET = 0xFFFE,
-    INVALID_LINK  = 0xFFFF,
 };
-
 
 struct PageWidget_t
 {

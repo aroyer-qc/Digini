@@ -180,7 +180,7 @@ void                PrintFont                           (FontDescriptor_t* pDesc
 
 void                DrawCursorOnCircle                  (ImageID_e ImageID, Cartesian_t* pPos, uint16_t Radius, uint16_t Angle);
 
-size_t              WidgetPrint                         (Text_t* pText, ServiceReturn_t* pService, bool UseBackText = false);
+size_t              WidgetPrint                         (Text_t* pText, ServiceReturn_t* pService, bool UseBackText, uint16_t RotationAngle = 0);
 
 // Alpha function
 void                AlphaBlend                          (void);
@@ -201,7 +201,7 @@ void                DrawBox                             (uint16_t PosX, uint16_t
 void                DrawBox                             (Box_t* pBox, uint16_t Thickness);
 void                DrawDebugBox                        (Box_t* pBox);
 
-class GPrintf
+class GrafxPrintf
 {
     public:
 

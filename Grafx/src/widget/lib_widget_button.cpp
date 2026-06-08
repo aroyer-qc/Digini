@@ -36,6 +36,12 @@
 #ifdef BTN_DEF
 
 //-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
+
+#define BUTTON_DEBUG_GUI                DEF_DISABLED
+
+//-------------------------------------------------------------------------------------------------
 //
 //  Constructor:    WidgetButton
 //
@@ -168,7 +174,7 @@ void WidgetButton::Draw(ServiceReturn_t* pService)
 {
     DisplayLayer::PushDrawing();
 
-  #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
+  #if (BUTTON_DEBUG_GUI == DEF_ENABLED)
     DisplayLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
   #else
    #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
@@ -199,7 +205,7 @@ void WidgetButton::Draw(ServiceReturn_t* pService)
         // Label for button
         if(m_pButton->Text.Label != INVALID_LABEL)
         {
-            WidgetPrint(&m_pButton->Text, pService);
+            WidgetPrint(&m_pButton->Text, pService, false);
         }
     }
 

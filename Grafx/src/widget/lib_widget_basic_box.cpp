@@ -36,6 +36,12 @@
 #ifdef BASIC_BOX_DEF
 
 //-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
+
+#define BASIC_BOX_DEBUG_GUI             DEF_DISABLED
+
+//-------------------------------------------------------------------------------------------------
 //
 //  Constructor:    WidgetBasicBox
 //
@@ -206,7 +212,7 @@ void WidgetBasicBox::Draw(ServiceReturn_t* pService)
 {
     DisplayLayer::PushDrawing();
 
-  #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
+  #if (BASIC_BOX_DEBUG_GUI == DEF_ENABLED)
     DisplayLayer::SetDrawing(((m_pBasicBox->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? BACKGROUND_DISPLAY_LAYER_0 : FOREGROUND_DISPLAY_LAYER_0);
   #else
 

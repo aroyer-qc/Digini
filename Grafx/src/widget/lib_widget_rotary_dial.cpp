@@ -56,19 +56,19 @@
 //                          Step Angle: 6°
 //
 //
-//          ┌──────────────┐
-//          │ *            │
-//          │       *      │
-//          │          *   │
-//          │            * │
-//          │             *│
-//          │ ○           *│
-//          │             *│
-//          │            * │
-//          │          *   │
-//          │       *      │
-//          │ *            │
-//          └──────────────┘
+//                            ┌──────────────┐
+//                            │ *            │
+//                            │       *      │
+//                            │          *   │
+//                            │            * │
+//                            │             *│
+//         Center of circle ->│ ○           *│ <- Focus Angle (can be in any positn inside the box)
+//                            │             *│
+//                            │            * │
+//                            │          *   │
+//                            │       *      │
+//                            │ *            │
+//                            └──────────────┘
 //
 //-------------------------------------------------------------------------------------------------
 
@@ -84,6 +84,20 @@
 #ifdef ROTARY_DIAL_DEF
 
 //-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
+
+#define ROTARY_DIAL_DEBUG_GUI                   DEF_ENABLED
+
+//-------------------------------------------------------------------------------------------------
+// Variable(s)
+//-------------------------------------------------------------------------------------------------
+
+#if (ROTARY_DIAL_DEBUG_GUI == DEF_ENABLED)
+bool RD_DebugDrawOnce;
+#endif
+
+//-------------------------------------------------------------------------------------------------
 //
 //  Constructor:    WidgetRotaryDial
 //
@@ -96,7 +110,6 @@ WidgetRotaryDial::WidgetRotaryDial(RotaryDial_t* pRotaryDial)
 {
     m_pRotaryDial = pRotaryDial;
     m_Value       = 0;
-    //m_pRotaryDial->Text.Blend = ALPHA_BLEND;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -121,6 +134,10 @@ Link_e WidgetRotaryDial::Create(PageWidget_t* pPageWidget)
         {
             m_Value = ((ServiceType1_t*)pService)->Data;
         }
+
+      #if (ROTARY_DIAL_DEBUG_GUI == DEF_ENABLED)
+        RD_DebugDrawOnce = true;
+      #endif
 
         Draw(pService);
         FreeServiceStruct(&pService);
@@ -259,20 +276,72 @@ struct RotaryDial_t
     uint16_t       Options;                     // Drawing option.
 };
 */
+#define TEST_ANGLE 64
+
 void WidgetRotaryDial::Draw(ServiceReturn_t* pService)
 {
-    int16_t     StartAngle;
-    int16_t     EndAngle;
-    uint16_t    DisplayAngle;
     BlendMode_e BlendMode;
-    uint16_t    Range;
-    uint16_t    Radius;
+   // OffsetAngle
+
+    //int16_t     StartAngle;
+    //int16_t     EndAngle;
+    //uint16_t    DisplayAngle;
+    //uint16_t    Range;
+    //uint16_t    Radius;
 
     BlendMode = ((m_pRotaryDial->Options & GRAFX_OPTION_BLEND_CLEAR) != 0) ? CLEAR_BLEND : ALPHA_BLEND;
     DisplayLayer::PushDrawing();
 
-  #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
+  #if (ROTARY_DIAL_DEBUG_GUI == DEF_ENABLED)
     DisplayLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
+    DisplayLayer::SetColor(RED);
+
+    if(RD_DebugDrawOnce == true)
+    {
+        RD_DebugDrawOnce = false;
+
+        DrawDebugBox(&m_pRotaryDial->Box);
+        DrawBox(m_pRotaryDial->Arc.Circle.Pos.X, m_pRotaryDial->Arc.Circle.Pos.Y, 3, 3, 1);
+
+    }
+
+    myGrafx->DrawCircle(&m_pRotaryDial->Box,
+                        m_pRotaryDial->Arc.Circle.Pos.X,
+                        m_pRotaryDial->Arc.Circle.Pos.Y,
+                        m_pRotaryDial->Arc.Circle.Radius,
+                        POLY_SHAPE);
+
+    Cartesian_t Pos;
+    ComputeCircularPlacement(m_pRotaryDial->Arc.Circle.Pos.X, m_pRotaryDial->Arc.Circle.Pos.Y, m_pRotaryDial->Arc.Circle.Radius, ((ServiceType1_t*)pService)->Data, &Pos.X,  &Pos.Y, m_pRotaryDial->RotationTable);
+    Text_t Text = {};
+
+if((Pos.X < 280) && (Pos.Y < 220))
+{
+
+    Text.Box.Pos.X = Pos.X;
+    Text.Box.Pos.Y = Pos.Y;
+    Text.Box.Size.Width = 100;
+    Text.Box.Size.Height = 20;
+    Text.Font = m_pRotaryDial->FontID;
+    Text.Blend = BlendMode;
+    Text.Label = LBL_INT;
+    Text.Color[0] = 0x00FF0000;
+    Text.Color[1] = 0x00FF0000;
+    Text.Color[2] = 0x00FF0000;
+
+    DisplayLayer::SetDrawing(CONSTRUCTION_FOREGROUND_LAYER);
+   #if (GRAFX_USE_CONSTRUCTION_ON_SINGLE_LAYER == DEF_ENABLED)
+    myGrafx->CopyBackgroundToConstruction(Text.Box.Pos);              		// if the display has no multilayer capability.
+   #endif
+
+
+    WidgetPrint(&Text, pService, false);//, TEST_ANGLE);
+
+   #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
+    myGrafx->CopyWidgetToDevice(Text.Box.Size, Text.Box.Pos);
+   #endif
+}
+
   #else
    #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
     DisplayLayer::SetDrawing(CONSTRUCTION_FOREGROUND_LAYER);
@@ -280,6 +349,14 @@ void WidgetRotaryDial::Draw(ServiceReturn_t* pService)
     DisplayLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
    #endif
   #endif
+
+
+    DisplayLayer::PopDrawing();
+}
+
+
+
+/*
 
   #if (GRAFX_USE_CONSTRUCTION_ON_SINGLE_LAYER == DEF_ENABLED)
     // need to copy part of the background to erase previous dial (m_pRotaryDial->Box);         // Copy part of the background into the construction layer
@@ -315,8 +392,8 @@ void WidgetRotaryDial::Draw(ServiceReturn_t* pService)
   //      myGrafx->CopyWidgetToDevice(Dimension of this element,  Position of this element);
       #endif
 
-    DisplayLayer::PopDrawing();
-}
+
+*/
 
 //-------------------------------------------------------------------------------------------------
 
@@ -330,7 +407,7 @@ void WidgetRotaryDial::Draw(ServiceReturn_t* pService)
 class ImageRotatorQ8
 {
     public:
-            
+
             void RotateAlphaIntoScreen(const uint8_t*  srcAlpha,     // 8-bit alpha mask (font/shape)
                                        BoxSize_t       srcSize,      // srcW, srcH
                                        uint32_t*       dstScreen,    // ARGB8888 construction layer

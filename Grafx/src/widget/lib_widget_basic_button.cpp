@@ -36,6 +36,12 @@
 #ifdef BASIC_BTN_DEF
 
 //-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
+
+#define BASIC_BUTTON_DEBUG_GUI          DEF_DISABLED
+
+//-------------------------------------------------------------------------------------------------
 //
 //  Constructor:    WidgetBasicButton
 //
@@ -175,7 +181,7 @@ void WidgetBasicButton::Draw(ServiceReturn_t* pService)
 
     DisplayLayer::PushDrawing();
 
-  #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
+  #if (BASIC_BUTTON_DEBUG_GUI == DEF_ENABLED)
     DisplayLayer::SetDrawing(BACKGROUND_DISPLAY_LAYER_0);
   #else
     DisplayLayer::SetDrawing(CONSTRUCTION_BACKGROUND_LAYER);
@@ -199,7 +205,7 @@ void WidgetBasicButton::Draw(ServiceReturn_t* pService)
     DisplayLayer::SetColor(BoxColor);
     DrawBox(&m_pBasicWidgetButton->Box, m_pBasicWidgetButton->Thickness);
 
-    WidgetPrint(&m_pBasicWidgetButton->Text, pService);
+    WidgetPrint(&m_pBasicWidgetButton->Text, pService, false);
 
    #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
     {

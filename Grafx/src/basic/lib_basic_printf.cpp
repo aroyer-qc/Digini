@@ -55,7 +55,7 @@
 //                  Maximum of characters define by DIGINI_MAX_PRINT_SIZE.
 //
 //-------------------------------------------------------------------------------------------------
-size_t GPrintf::Draw(Box_t* pBox, const char* pFormat, ...)
+size_t GrafxPrintf::Draw(Box_t* pBox, const char* pFormat, ...)
 {
     va_list     vaArg;
     uint16_t    Size;
@@ -84,7 +84,7 @@ size_t GPrintf::Draw(Box_t* pBox, const char* pFormat, ...)
 //                  Maximum of characters define by DIGINI_MAX_PRINT_SIZE.
 //
 //-------------------------------------------------------------------------------------------------
-size_t GPrintf::Draw(Box_t* pBox, const char* pFormat, va_list vaArg)
+size_t GrafxPrintf::Draw(Box_t* pBox, const char* pFormat, va_list vaArg)
 {
     size_t Size = 0;
 
@@ -133,7 +133,7 @@ size_t GPrintf::Draw(Box_t* pBox, const char* pFormat, va_list vaArg)
 //
 //
 //-------------------------------------------------------------------------------------------------
-size_t GPrintf::PutString(void)
+size_t GrafxPrintf::PutString(void)
 {
     uint32_t   KeepDrawingColor = DisplayLayer::GetColor();
     FontInfo_t FontInfo;
@@ -211,8 +211,8 @@ size_t GPrintf::PutString(void)
                     Character = FontInfo.pLookUpTable[Character];
                 }
 
-                const FontDescriptor_t* AddresstDescriptor = FontInfo.pDescriptor + Character;
-                memcpy(&m_FontDescriptor, (void*)AddresstDescriptor, sizeof(FontDescriptor_t));
+                const FontDescriptor_t* AddressDescriptor = FontInfo.pDescriptor + Character;
+                memcpy(&m_FontDescriptor, (void*)AddressDescriptor, sizeof(FontDescriptor_t));
 
                 m_CorrectedPos.X = m_Position.X + m_FontDescriptor.LeftBearing;
                 m_CorrectedPos.Y = m_Position.Y + m_FontDescriptor.OffsetY;
@@ -286,7 +286,7 @@ size_t GPrintf::PutString(void)
 //   note:
 //
 //-------------------------------------------------------------------------------------------------
-void GPrintf::ParseString(void)
+void GrafxPrintf::ParseString(void)
 {
     uint16_t    j;
     FontInfo_t  FontInfo;
@@ -348,7 +348,6 @@ void GPrintf::ParseString(void)
                 DB_Central.Get(&FontInfo, GFX_FONT_INFO, *m_pMovingUsedFontPtr);
 
               #ifdef GFX_ROM_DBASE_DEF
-                //DB_Central.Get(&FontInfo, GFX_FONT_INFO, 0, LoadChar);                    // need the font number here
                 memcpy(&m_FontDescriptor, FontInfo.pDescriptor, sizeof(FontDescriptor_t));
               #else
                 DB_Central.Get(&m_FontDescriptor, GFX_FONT_DESC_INFO, *m_pMovingUsedFontPtr, LoadChar);
@@ -439,7 +438,7 @@ void GPrintf::ParseString(void)
 //   note:
 //
 //-------------------------------------------------------------------------------------------------
-void GPrintf::ParseFeature(void)
+void GrafxPrintf::ParseFeature(void)
 {
     uint16_t i;
     bool     BackPtrCtrl;
@@ -504,7 +503,7 @@ void GPrintf::ParseFeature(void)
 //   note:
 //
 //-------------------------------------------------------------------------------------------------
-void GPrintf::IncrementFeaturePointer(void)
+void GrafxPrintf::IncrementFeaturePointer(void)
 {
     m_pMovingUsedFontPtr++;
     m_pMovingUsedColorPtr++;

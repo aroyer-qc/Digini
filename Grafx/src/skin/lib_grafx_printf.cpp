@@ -50,9 +50,10 @@
 //
 //   Function Name: WidgetPrint
 //
-//   Parameter(s):  Text_t*              pText,
-//                  ServiceReturn_t*     pService
-//					bool 				 UseBackText  		to draw a background text
+//   Parameter(s):  Text_t*             pText,
+//                  ServiceReturn_t*    pService
+//                  bool                UseBackText
+//					uint16_t            RotationAngle
 //   Return Value:  size_t              Size
 //
 //   Description:   Print a formatted text on the display.
@@ -61,9 +62,9 @@
 //                  It received te data from ServiceReturn_t structure
 //
 //-------------------------------------------------------------------------------------------------
-size_t WidgetPrint(Text_t* pText, ServiceReturn_t* pService, bool UseBackText)
+size_t WidgetPrint(Text_t* pText, ServiceReturn_t* pService, bool UseBackText, uint16_t RotationAngle)
 {
-    GPrintf     Printf;
+    GrafxPrintf Printf;
     char*       pString = nullptr;
     size_t      Size = 0;
 
@@ -71,84 +72,92 @@ size_t WidgetPrint(Text_t* pText, ServiceReturn_t* pService, bool UseBackText)
 
     if(Label != INVALID_LABEL)
     {
-		DisplayLayer::SetTextColor((UseBackText == false) ? pText->Color[pService->IndexState] : GRAFX_TEXT_ALTERNATE_COLOR_2);
-		FontDefault.Set(pText->Font);
+        DisplayLayer::SetTextColor((UseBackText == false) ? pText->Color[pService->IndexState] : GRAFX_TEXT_ALTERNATE_COLOR_2);
+        FontDefault.Set(pText->Font);
         SetXY_Justification(pText->Options);
         DB_Central.Get(&pString, APPLICATION_LABEL, Label);
 
-        if(pText->Blend == CLEAR_BLEND)
+        if(RotationAngle == 0)
         {
-            DisplayLayer::SetColor(TRANSPARENT);
-            myGrafx->DrawRectangle(&pText->Box);
-        }
+            if(pText->Blend == CLEAR_BLEND)
+            {
+                DisplayLayer::SetColor(TRANSPARENT);
+                myGrafx->DrawRectangle(&pText->Box);
+            }
 
-      #if (GRAFX_PAINT_BOX_DEBUG == DEF_ENABLED)
-        if((pText->Box.Size.Width != 0) && (pText->Box.Size.Height != 0))
-        {
-            DisplayLayer::SetColor(GRAFX_PAINT_BOX_DEBUG_COLOR);
-            //myGrafx->DrawBox(pText->Box);
-        }
-      #endif
+          #if (GRAFX_PAINT_BOX_DEBUG == DEF_ENABLED)
+            if((pText->Box.Size.Width != 0) && (pText->Box.Size.Height != 0))
+            {
+                DisplayLayer::SetColor(GRAFX_PAINT_BOX_DEBUG_COLOR);
+                //myGrafx->DrawBox(pText->Box);
+            }
+          #endif
 
-        if(pService->ServiceType == SERVICE_RETURN_TYPE1)
-        {
-            Size = Printf.Draw(&pText->Box, (const char*)pString, ((ServiceType1_t*)pService)->Data);
-        }
-        else if(pService->ServiceType == SERVICE_RETURN_TYPE2)         // it might go up to maximum
-        {
-            Size = Printf.Draw(&pText->Box, (const char*)pString, ((ServiceType2_t*)pService)->Data[0],
-                                                                  ((ServiceType2_t*)pService)->Data[1],
-                                                                  ((ServiceType2_t*)pService)->Data[2],
-                                                                  ((ServiceType2_t*)pService)->Data[3],
-                                                                  ((ServiceType2_t*)pService)->Data[4],
-                                                                  ((ServiceType2_t*)pService)->Data[5],
-                                                                  ((ServiceType2_t*)pService)->Data[6],
-                                                                  ((ServiceType2_t*)pService)->Data[7],
-                                                                  ((ServiceType2_t*)pService)->Data[8],
-                                                                  ((ServiceType2_t*)pService)->Data[9],
-                                                                  ((ServiceType2_t*)pService)->Data[10],
-                                                                  ((ServiceType2_t*)pService)->Data[11],
-                                                                  ((ServiceType2_t*)pService)->Data[12],
-                                                                  ((ServiceType2_t*)pService)->Data[13],
-                                                                  ((ServiceType2_t*)pService)->Data[14],
-                                                                  ((ServiceType2_t*)pService)->Data[15]);
-        }
-        else if(pService->ServiceType == SERVICE_RETURN_TYPE4)         // it might go up to maximum
-        {
+            if(pService->ServiceType == SERVICE_RETURN_TYPE1)
+            {
+                Size = Printf.Draw(&pText->Box, (const char*)pString, ((ServiceType1_t*)pService)->Data);
+            }
+            else if(pService->ServiceType == SERVICE_RETURN_TYPE2)         // it might go up to maximum
+            {
+                Size = Printf.Draw(&pText->Box, (const char*)pString, ((ServiceType2_t*)pService)->Data[0],
+                                                                      ((ServiceType2_t*)pService)->Data[1],
+                                                                      ((ServiceType2_t*)pService)->Data[2],
+                                                                      ((ServiceType2_t*)pService)->Data[3],
+                                                                      ((ServiceType2_t*)pService)->Data[4],
+                                                                      ((ServiceType2_t*)pService)->Data[5],
+                                                                      ((ServiceType2_t*)pService)->Data[6],
+                                                                      ((ServiceType2_t*)pService)->Data[7],
+                                                                      ((ServiceType2_t*)pService)->Data[8],
+                                                                      ((ServiceType2_t*)pService)->Data[9],
+                                                                      ((ServiceType2_t*)pService)->Data[10],
+                                                                      ((ServiceType2_t*)pService)->Data[11],
+                                                                      ((ServiceType2_t*)pService)->Data[12],
+                                                                      ((ServiceType2_t*)pService)->Data[13],
+                                                                      ((ServiceType2_t*)pService)->Data[14],
+                                                                      ((ServiceType2_t*)pService)->Data[15]);
+            }
+            else if(pService->ServiceType == SERVICE_RETURN_TYPE4)         // it might go up to maximum
+            {
 
 
-// TODO (Alain#1#):           redo and test this
+    // TODO (Alain#1#):           redo and test this
 
-            // Service 4 is use to print a series of value using %d and order position...
-            // if(((ServiceType4_t*)pService)->Mode == 1)
-            // {
-            //     DB_Central.Get(&pString, APPLICATION_LABEL, ((ServiceType4_t*)pService)->AlternatLabel_e, Language);
-            // }
-            Size = Printf.Draw(&pText->Box, (const char*)pString, ((ServiceType4_t*)pService)->pString[0],
-                                                                  ((ServiceType4_t*)pService)->pString[1],
-                                                                  ((ServiceType4_t*)pService)->pString[2],
-                                                                  ((ServiceType4_t*)pService)->pString[3],
-                                                                  ((ServiceType4_t*)pService)->pString[4],
-                                                                  ((ServiceType4_t*)pService)->pString[5],
-                                                                  ((ServiceType4_t*)pService)->pString[6],
-                                                                  ((ServiceType4_t*)pService)->pString[7],
-                                                                  ((ServiceType4_t*)pService)->pString[8],
-                                                                  ((ServiceType4_t*)pService)->pString[9],
-                                                                  ((ServiceType4_t*)pService)->pString[10],
-                                                                  ((ServiceType4_t*)pService)->pString[11],
-                                                                  ((ServiceType4_t*)pService)->pString[12],
-                                                                  ((ServiceType4_t*)pService)->pString[13],
-                                                                  ((ServiceType4_t*)pService)->pString[14],
-                                                                  ((ServiceType4_t*)pService)->pString[15]);
+                // Service 4 is use to print a series of value using %d and order position...
+                // if(((ServiceType4_t*)pService)->Mode == 1)
+                // {
+                //     DB_Central.Get(&pString, APPLICATION_LABEL, ((ServiceType4_t*)pService)->AlternatLabel_e, Language);
+                // }
+                Size = Printf.Draw(&pText->Box, (const char*)pString, ((ServiceType4_t*)pService)->pString[0],
+                                                                      ((ServiceType4_t*)pService)->pString[1],
+                                                                      ((ServiceType4_t*)pService)->pString[2],
+                                                                      ((ServiceType4_t*)pService)->pString[3],
+                                                                      ((ServiceType4_t*)pService)->pString[4],
+                                                                      ((ServiceType4_t*)pService)->pString[5],
+                                                                      ((ServiceType4_t*)pService)->pString[6],
+                                                                      ((ServiceType4_t*)pService)->pString[7],
+                                                                      ((ServiceType4_t*)pService)->pString[8],
+                                                                      ((ServiceType4_t*)pService)->pString[9],
+                                                                      ((ServiceType4_t*)pService)->pString[10],
+                                                                      ((ServiceType4_t*)pService)->pString[11],
+                                                                      ((ServiceType4_t*)pService)->pString[12],
+                                                                      ((ServiceType4_t*)pService)->pString[13],
+                                                                      ((ServiceType4_t*)pService)->pString[14],
+                                                                      ((ServiceType4_t*)pService)->pString[15]);
+            }
+            else
+            {
+                if(pService->ServiceType == SERVICE_RETURN_TYPE8)
+                {
+                    __asm("nop");
+                }
+
+                Size = Printf.Draw(&pText->Box, (const char*)pString);
+            }
         }
         else
         {
-            if(pService->ServiceType == SERVICE_RETURN_TYPE8)
-            {
-                __asm("nop");
-            }
-
-            Size = Printf.Draw(&pText->Box, (const char*)pString);
+            __asm("nop");
+            // TODO angle text need a completely different flow, we may only need a single type for this
         }
     }
     return Size;

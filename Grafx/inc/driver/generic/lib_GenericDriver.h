@@ -69,6 +69,7 @@ class GrafxGenDriver
             virtual	    void    DrawBox               			(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Height, uint16_t Thickness);
             virtual	    void    DrawCircle            			(uint16_t PosX, uint16_t PosY, uint16_t Radius, PolygonMode_e Mode);
             virtual	    void    DrawCircle            			(Circle_t* pCircle, PolygonMode_e PolygonMode);
+            virtual     void    DrawCircle                      (Box_t* Box, uint16_t PosX, uint16_t PosY, uint16_t Radius, PolygonMode_e PolygonMode);
             virtual	    void    DrawHLine             			(uint16_t PosY, uint16_t PosX1, uint16_t PosX2, uint16_t Thickness);
             virtual	    void    DrawLine              			(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Thickness, DrawMode_e Direction);
             virtual	    void    DrawRectangle         			(Box_t* pBox);

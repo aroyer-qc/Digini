@@ -36,6 +36,12 @@
 #ifdef LABEL_LIST_DEF
 
 //-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
+
+#define LABEL_LIST_DEBUG_GUI                DEF_DISABLED
+
+//-------------------------------------------------------------------------------------------------
 //
 //  Constructor:    WidgetLabelList
 //
@@ -158,9 +164,9 @@ void WidgetLabelList::Draw(ServiceReturn_t* pService)
 {
     DisplayLayer::PushDrawing();
 
-  #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
+  #if (LABEL_LIST_DEBUG_GUI == DEF_ENABLED)
     DisplayLayer::SetDrawing(((m_pLabelList->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? BACKGROUND_DISPLAY_LAYER_0 : FOREGROUND_DISPLAY_LAYER_0);
-  #else // (GRAFX_DEBUG_GUI == DEF_ENABLED)
+  #else // (LABEL_LIST_DEBUG_GUI == DEF_ENABLED)
 
    #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)     // TODO confirm this
     if(SKIN_pTask->IsSkinLoaded() == true)
@@ -175,11 +181,11 @@ void WidgetLabelList::Draw(ServiceReturn_t* pService)
         DisplayLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);   // On loading with do print directly on foreground layer
     }
    #endif
-  #endif //  (GRAFX_DEBUG_GUI == DEF_ENABLED)
+  #endif //  (LABEL_LIST_DEBUG_GUI == DEF_ENABLED)
 
 
     m_pLabelList->Text.Label = m_pLabelList->Label[((ServiceType1_t*)pService)->Data];
-    WidgetPrint(&m_pLabelList->Text, pService);
+    WidgetPrint(&m_pLabelList->Text, pService, false);
 
   #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
         // We might need to modify WidgetPrint to return a BoxSize_t or Box_t (full info)

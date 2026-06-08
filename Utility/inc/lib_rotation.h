@@ -107,6 +107,7 @@ void 	ImageRotation8_Q8			(const uint8_t*  pSrc, uint8_t*  pDst, int Width, int 
 void 	ImageRotation16_Q8			(const uint16_t* pSrc, uint16_t* pDst, int Width, int Height, int AngleStep, RotationID_e RotationID);
 void 	ImageRotation32_Q8			(const uint32_t* pSrc, uint32_t* pDst, int Width, int Height, int AngleStep, RotationID_e RotationID);
 void 	ComputeCircularPlacement	(int CenterX, int CenterY, int Radius, int AngleStep, int BitmapWidth, int BitmapHeight, int* pOutX,  int* pOutY, RotationID_e RotationID);
+void    ComputeCircularPlacement    (int16_t CenterX, int16_t CenterY, int16_t Radius, int16_t AngleStep, int16_t* pPosX,  int16_t* pPosY, RotationID_e RotationID);
 
 //-------------------------------------------------------------------------------------------------
 

@@ -37,6 +37,12 @@
 #ifdef LABEL_DEF
 
 //-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
+
+#define LABEL_DEBUG_GUI                 DEF_DISABLED
+
+//-------------------------------------------------------------------------------------------------
 //
 //  Constructor:    WidgetLabel
 //
@@ -166,9 +172,9 @@ void WidgetLabel::Draw(ServiceReturn_t* pService)
 {
    DisplayLayer::PushDrawing();
 
-  #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
+  #if (LABEL_DEBUG_GUI == DEF_ENABLED)
      DisplayLayer::SetDrawing(((m_pLabel->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? BACKGROUND_DISPLAY_LAYER_0 : FOREGROUND_DISPLAY_LAYER_0);
-  #else // (GRAFX_DEBUG_GUI == DEF_ENABLED)
+  #else // (LABEL_DEBUG_GUI == DEF_ENABLED)
 
    #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)     // TODO confirm this
     if(SKIN_pTask->IsSkinLoaded() == true)
@@ -184,14 +190,14 @@ void WidgetLabel::Draw(ServiceReturn_t* pService)
     }
    #endif
 
-  #endif // (GRAFX_DEBUG_GUI == DEF_ENABLED)
+  #endif // (LABEL_DEBUG_GUI == DEF_ENABLED)
 
   #if (GRAFX_USE_CONSTRUCTION_ON_SINGLE_LAYER == DEF_ENABLED)
     myGrafx->CopyBackgroundToConstruction(m_pLabel->Text.Box.Pos);              		// if the display has no multilayer capability.
   #endif
 
     WidgetPrint(&m_pLabel->Text, pService, _USE_BACKGROUND_TEXT_ON_LABEL);				// Example: a 7 Segments digit print. It allow to have the background looking like an OFF digit with a darker color
-    WidgetPrint(&m_pLabel->Text, pService);
+    WidgetPrint(&m_pLabel->Text, pService, false);
 
   #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
     myGrafx->CopyWidgetToDevice(m_pLabel->Text.Box.Size, m_pLabel->Text.Box.Pos);

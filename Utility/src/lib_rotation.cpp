@@ -255,12 +255,12 @@ const RotationLookup_t RotationTable12[30] =
 #endif
 
 
-static const RotationLookup_t* pRotationTable[ROTATION_TABLE_COUNT] =
+const RotationLookup_t* pRotationTable[ROTATION_TABLE_COUNT] =
 {
 	ROTATION_TABLE_DEF(EXPAND_X_TABLE_AS_PTR)
 };
 
-static const int RotationTableSize[ROTATION_TABLE_COUNT] =
+const int RotationTableSize[ROTATION_TABLE_COUNT] =
 {
 	ROTATION_TABLE_DEF(EXPAND_X_TABLE_AS_SIZE)
 };
@@ -453,6 +453,22 @@ void ComputeCircularPlacement(int CenterX, int CenterY, int Radius, int AngleSte
 		*pOutY = PosY - (BitmapHeight / 2);
 	}
 }
+
+
+void ComputeCircularPlacement(int16_t CenterX, int16_t CenterY, int16_t Radius, int16_t AngleStep, int16_t* pPosX,  int16_t* pPosY, RotationID_e RotationID)
+{
+    //if(RotationTableSize[RotationID] <= AngleStep)
+	{
+		int16_t CosQ = pRotationTable[RotationID][AngleStep].CosQ;
+		int16_t SinQ = pRotationTable[RotationID][AngleStep].SinQ;
+
+		//Cartesian position on the circle
+		*pPosX = CenterX + ((Radius * CosQ) >> 8);
+		*pPosY = CenterY + ((Radius * SinQ) >> 8);
+	}
+}
+
+
 
 //-------------------------------------------------------------------------------------------------
 

@@ -308,39 +308,42 @@ void WidgetRotaryDial::Draw(ServiceReturn_t* pService)
     myGrafx->DrawCircle(&m_pRotaryDial->Box,
                         m_pRotaryDial->Arc.Circle.Pos.X,
                         m_pRotaryDial->Arc.Circle.Pos.Y,
-                        m_pRotaryDial->Arc.Circle.Radius,
+                        m_pRotaryDial->Arc.Circle.Radius - 10,
                         POLY_SHAPE);
 
-    Cartesian_t Pos;
-    ComputeCircularPlacement(m_pRotaryDial->Arc.Circle.Pos.X, m_pRotaryDial->Arc.Circle.Pos.Y, m_pRotaryDial->Arc.Circle.Radius, ((ServiceType1_t*)pService)->Data, &Pos.X,  &Pos.Y, m_pRotaryDial->RotationTable);
-    Text_t Text = {};
+	uint16_t RotaryOffset = ((ServiceType1_t*)pService)->Data;
 
-if((Pos.X < 280) && (Pos.Y < 220))
-{
+	Text_t Text = {};
+	Text.Box.Size.Width = 100;
+	Text.Box.Size.Height = 20;
+	Text.Font = m_pRotaryDial->FontID;
+	Text.Blend = BlendMode;
+	Text.Label = LBL_INT;
+	Text.Color[0] = 0x00FF0000;
 
-    Text.Box.Pos.X = Pos.X;
-    Text.Box.Pos.Y = Pos.Y;
-    Text.Box.Size.Width = 100;
-    Text.Box.Size.Height = 20;
-    Text.Font = m_pRotaryDial->FontID;
-    Text.Blend = BlendMode;
-    Text.Label = LBL_INT;
-    Text.Color[0] = 0x00FF0000;
-    Text.Color[1] = 0x00FF0000;
-    Text.Color[2] = 0x00FF0000;
+	for(i = 0; i < 60; i++)
+	{
+		((ServiceType1_t*)pService)->Data = ((i % 6) != 0) ? ' ' : (i / 6) + '0';
+		
+		RotaryOffset += i;
+		RotaryOffset % 60;
+		ComputeCircularPlacement(m_pRotaryDial->Arc.Circle.Pos.X, m_pRotaryDial->Arc.Circle.Pos.Y, m_pRotaryDial->Arc.Circle.Radius, RotaryOffset, &Text.Box.Pos.X,  &Text.Box.Pos.Y, m_pRotaryDial->RotationTable);
 
-    DisplayLayer::SetDrawing(CONSTRUCTION_FOREGROUND_LAYER);
-   #if (GRAFX_USE_CONSTRUCTION_ON_SINGLE_LAYER == DEF_ENABLED)
-    myGrafx->CopyBackgroundToConstruction(Text.Box.Pos);              		// if the display has no multilayer capability.
-   #endif
+		if((Text.Box.Pos.X < 280) && (Text.Box.Pos.Y < 220))
+		{
+			DisplayLayer::SetDrawing(CONSTRUCTION_FOREGROUND_LAYER);
+		   #if (GRAFX_USE_CONSTRUCTION_ON_SINGLE_LAYER == DEF_ENABLED)
+			myGrafx->CopyBackgroundToConstruction(Text.Box.Pos);              		// if the display has no multilayer capability.
+		   #endif
 
 
-    WidgetPrint(&Text, pService, false);//, TEST_ANGLE);
+			WidgetPrint(&Text, pService, false);//, TEST_ANGLE);
 
-   #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
-    myGrafx->CopyWidgetToDevice(Text.Box.Size, Text.Box.Pos);
-   #endif
-}
+		   #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
+			myGrafx->CopyWidgetToDevice(Text.Box.Size, Text.Box.Pos);
+		   #endif
+		}
+	}
 
   #else
    #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
@@ -353,47 +356,6 @@ if((Pos.X < 280) && (Pos.Y < 220))
 
     DisplayLayer::PopDrawing();
 }
-
-
-
-/*
-
-  #if (GRAFX_USE_CONSTRUCTION_ON_SINGLE_LAYER == DEF_ENABLED)
-    // need to copy part of the background to erase previous dial (m_pRotaryDial->Box);         // Copy part of the background into the construction layer
-  #endif
-
-    StartAngle   = m_pRotaryDial->Arc.StartAngle;                   // Display of number start at this angle.   0 degree is at the top of the arc
-    EndAngle     = m_pRotaryDial->Arc.EndAngle;                     // Display of number end at that angle.
-    //Range        = m_pRotaryDial->Range;                            // The range of the rotary dial is 0 to range
-    DisplayAngle = pService->IndexState;                            // This is the angle of rotation
-    Radius       = m_pRotaryDial->Arc.Circle.Radius;
-
-    for(int16_t Element = StartAngle; Element < EndAngle; Element++)
-    {
-      // calculate the pos of this element
-
-      #if (GRAFX_USE_CONSTRUCTION_ON_SINGLE_LAYER == DEF_ENABLED)
-    //  CopyBackgroundToConstruction(Position of this element);         // Copy part of the background into the construction layer
-      #endif
-
-//      We need to construct the bitmap of the print for this element (Maybe more than one character)
-//      Get the font character for each element
-
-//      uint8_t* pDestination = (uint8_t*)pMemoryPool->Alloc(ImageSize, MEM_DBG_GRAFX_CL1);
-
-//      ImageRotation8_Q8(const uint8_t* pSrc, uint8_t* pDestination, int Width, int Height, int AngleIndex, USE_ROTATION_TABLE_9);
-//      ComputeCircularPlacement(int CenterX, int CenterY, Radius, int AngleIndex, int BitmapWidth, int BitmapHeight, int* pOutX,  int* pOutY);
-//      copy the element onto the the construction layer
-
-//      pMemoryPool->Free((void**)&pDestination);
-    }
-
-      #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
-  //      myGrafx->CopyWidgetToDevice(Dimension of this element,  Position of this element);
-      #endif
-
-
-*/
 
 //-------------------------------------------------------------------------------------------------
 

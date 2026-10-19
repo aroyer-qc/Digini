@@ -34,6 +34,14 @@
 #include "bsp.h"
 
 //-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
+
+#ifndef DIGINI_USE_IO_INITIALIZE_ALL
+#define DIGINI_USE_IO_INITIALIZE_ALL		DEF_ENABLED
+#endif
+
+//-------------------------------------------------------------------------------------------------
 // local Class
 //-------------------------------------------------------------------------------------------------
 
@@ -73,7 +81,10 @@ SystemState_e DIGINI_Initialize(void)
 {
     SysTick_Config(SYSTEM_CORE_CLOCK / CFG_SYSTICK_RATE);
     ISR_Initialize();
+
+  #if (DIGINI_USE_IO_INITIALIZE_ALL == DEF_ENABLED)
     IO_InitializeAll();
+  #endif
 
   #if (DIGINI_USE_DMA_MEM2MEM_FUNCTION == DEF_ENABLED)
     DMA_MEM2MEM_Initialize();
@@ -197,7 +208,11 @@ SystemState_e DIGINI_PostInitialize(void)
   #endif
 
   #if (USE_USB_DRIVER == DEF_ENABLED)
-    //USB.Initialize();
+   #if defined(STM32L4xx)
+    if(USB.Initialize() == false) return SYS_DEVICE_ERROR;
+   #else
+    USB.Initialize();
+   #endif
   #endif
 
   #if (DIGINI_USE_GRAFX == DEF_ENABLED)

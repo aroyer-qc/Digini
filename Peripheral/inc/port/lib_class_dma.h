@@ -28,6 +28,8 @@
  #include "./Peripheral/inc/port/STM32F1xx/lib_class_STM32F1_dma.h"
 #elif defined STM32F4xx
  #include "./Peripheral/inc/port/STM32F4xx/lib_class_STM32F4_dma.h"
+#elif defined STM32L4xx
+ #include "./Peripheral/inc/port/STM32L4xx/lib_class_STM32L4_dma.h"
 #elif defined STM32F7xx
  #include "./Peripheral/inc/port/STM32F7xx/lib_class_STM32F7_dma.h"
 #elif defined STM32H7xx

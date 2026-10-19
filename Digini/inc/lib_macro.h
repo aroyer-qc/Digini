@@ -80,7 +80,14 @@
 #define COLOR_B(C)                          (uint8_t(C))
 #define COLOR_A(C)                          (uint8_t((C) >> 24))
 
+#if (DIGINI_USE_NOS == DEF_ENABLED)
 #define GetTick()                           nOS_GetTickCount()
+#else
+#define GetTick()                           TickCounter
+#endif
+
+
+
 #define TickHasTimeOut(start_time,delay)    ((GetTick() - (start_time)) > ((TickCount_t)delay))
 
 #define CVT_HOUR_TO_SECOND(H)               ((H) * 3600)

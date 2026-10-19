@@ -332,7 +332,7 @@
 
  #if   (DIGINI_USE_CRC_MORE_THAN_32_BITS == DEF_ENABLED)
 #define CRC_uint_t  uint64_t
-#elif (DIGINI_USE_CRC_8_TO_32_BITS == DEF_ENABLED)
+#else
 #define CRC_uint_t  uint32_t
 #endif
 

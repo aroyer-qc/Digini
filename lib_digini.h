@@ -32,6 +32,14 @@
 
 #define DIGINI_VERSION              "V2.01"
 
+#ifndef DEF_DISABLED
+#define DEF_DISABLED                                0               // Use this for macro only
+#endif
+
+#ifndef DEF_ENABLED
+#define DEF_ENABLED                                 1               // Use this for macro only
+#endif
+
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
@@ -43,9 +51,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include <stdint.h>
-#include <stdbool.h>
 #include <string.h>
+
+//-------------------------------------------------------------------------------------------------
+
+#include "digini_cfg.h"
 
 //-------------------------------------------------------------------------------------------------
 
@@ -57,14 +67,15 @@
 //-------------------------------------------------------------------------------------------------
 // Real Time OS
 
+#if (DIGINI_USE_NOS == DEF_ENABLED)
 #include "nOS.h"
+#endif
 
 //-------------------------------------------------------------------------------------------------
 // Common configuration header
 //
 
 #include "project_def.h"
-#include "digini_cfg.h"
 
 // Need to integrate a dependency check for all DEF_ENABLED
 
@@ -122,8 +133,10 @@
 #include "./Digini/inc/lib_class_cbi.h"                      // Callback interface
 #include "./Digini/inc/lib_label.h"
 #include "./String/inc/lib_string.h"
+#if (DIGINI_USE_NOS == DEF_ENABLED)
 #include "./RTOS_Wrapper/inc/nOS/lib_class_queue.h"
 #include "./RTOS_Wrapper/inc/nOS/lib_class_timer.h"
+#endif
 #include "./Utility/inc/lib_utility.h"
 #include "./Utility/inc/lib_delay.h"
 #include "./Peripheral/inc/port/lib_isr.h"

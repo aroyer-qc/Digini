@@ -30,7 +30,11 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
+#if (DIGINI_USE_NOS == DEF_ENABLED)
 #define TickCount_t                                 nOS_TickCounter
+#else
+#define TickCount_t                                 uint32_t
+#endif
 
 // ---------- General define ----------
 #ifdef DEBUG
@@ -75,14 +79,6 @@
 
 #ifndef DEF_HIGH
 #define DEF_HIGH                                    1
-#endif
-
-#ifndef DEF_DISABLED
-#define DEF_DISABLED                                0               // Use this for macro only
-#endif
-
-#ifndef DEF_ENABLED
-#define DEF_ENABLED                                 1               // Use this for macro only
 #endif
 
 #ifndef DEF_NO

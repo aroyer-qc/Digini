@@ -1,0 +1,930 @@
+//-------------------------------------------------------------------------------------------------
+//
+//  File : lib_STM32L4_io.cpp
+//
+//-------------------------------------------------------------------------------------------------
+//
+// Copyright(c) 2026 Alain Royer.
+// Email: aroyer.qc@gmail.com
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+// and associated documentation files (the "Software"), to deal in the Software without
+// restriction, including without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
+// AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
+//-------------------------------------------------------------------------------------------------
+
+//-------------------------------------------------------------------------------------------------
+// Include file(s)
+//-------------------------------------------------------------------------------------------------
+
+#define IO_DRIVER_GLOBAL
+#include "./lib_digini.h"
+#undef  IO_DRIVER_GLOBAL
+
+//-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
+
+#define IO_PORT_MASK_FOR_CLOCK_ENABLE   0x00003C00 // Keep only offset for each port
+#define IO_PORT_SHIFT_FOR_CLOCK_ENABLE  10         // Need to shift 10 bits to set value from 0 - 7
+#define IO_PORT_SHIFT_BSRR_SET          0x00000001
+#define IO_PORT_SHIFT_BSRR_RESET        0x00010000
+
+//-------------------------------------------------------------------------------------------------
+// Expand macro(s)
+//-------------------------------------------------------------------------------------------------
+
+#define EXPAND_X_IO_CFG_AS_STRUCT_DATA(ENUM_ID, IO_MODE, IO_TYPE, IO_SPEED, IO_EXTRA) \
+                                              { IO_MODE, IO_TYPE, IO_SPEED, IO_EXTRA },
+#define EXPAND_X_IO_AS_STRUCT_DATA(ENUM_ID, IO_PORT, IO_PIN, IO_CONFIG ) \
+                                          { IO_PORT, IO_PIN, IO_CONFIG },
+#define EXPAND_X_IO_GROUP_AS_STRUCT_DATA(ENUM_ID, IO_PORT, IO_GROUP, IO_CONFIG ) \
+                                                { IO_PORT, IO_GROUP, IO_CONFIG },
+#define EXPAND_X_IO_IRQ_AS_STRUCT_DATA(ENUM_ID, IO_ID, NUMBER, PRIO, TRIGGER, CALLBACK, ARGUMENT) \
+                                              { IO_ID, NUMBER, PRIO, TRIGGER, CALLBACK, ARGUMENT},
+
+//-------------------------------------------------------------------------------------------------
+// Typedef(s)
+//-------------------------------------------------------------------------------------------------
+
+struct IO_ConfigProperties_t
+{
+    uint32_t                PinMode;
+    uint32_t                PinType;
+    uint32_t                PinSpeed;
+    uint32_t                State;
+};
+
+struct IO_Properties_t
+{
+    GPIO_TypeDef*           pPort;
+    uint32_t                PinNumber;
+    IO_ConfigID_e           IO_ConfigID;
+};
+
+struct IO_GroupProperties_t
+{
+    GPIO_TypeDef*           pPort;
+    uint32_t                GroupPin;
+    IO_ConfigID_e           IO_ConfigID;
+};
+
+struct IO_IRQ_Properties_t
+{
+    IO_ID_e                 IO_ID;
+    IRQn_Type               IRQ_Channel;
+    uint8_t                 Priority;
+    uint32_t                Trigger;
+    IO_PinChangeCallback_t  pCallback;
+    void*                   pArg;
+};
+
+//-------------------------------------------------------------------------------------------------
+//  const(s) and variable(s)
+//-------------------------------------------------------------------------------------------------
+
+const GPIO_TypeDef* IO_Port[NUMBER_OF_IO_PORT] =
+{
+    GPIOA,
+    GPIOB,
+    GPIOC,
+#if defined(STM32L431xx) || defined(STM32L432xx) || defined(STM32L433xx) || \
+    defined(STM32L442xx) || defined(STM32L443xx) || \
+    defined(STM32L451xx) || defined(STM32L452xx) || defined(STM32L462xx) || \
+    defined(STM32L471xx) || defined(STM32L475xx) || defined(STM32L476xx) || \
+    defined(STM32L485xx) || defined(STM32L486xx) || \
+    defined(STM32L496xx) || defined(STM32L4A6xx) || \
+    defined(STM32L4R5xx) || defined(STM32L4R7xx) || defined(STM32L4R9xx) || \
+    defined(STM32L4S5xx) || defined(STM32L4S7xx) || defined(STM32L4S9xx)
+    GPIOD,
+#endif
+
+#if defined(STM32L431xx) || defined(STM32L432xx) || defined(STM32L433xx) || \
+    defined(STM32L442xx) || defined(STM32L443xx) || \
+    defined(STM32L451xx) || defined(STM32L452xx) || defined(STM32L462xx) || \
+    defined(STM32L471xx) || defined(STM32L475xx) || defined(STM32L476xx) || \
+    defined(STM32L485xx) || defined(STM32L486xx) || \
+    defined(STM32L496xx) || defined(STM32L4A6xx) || \
+    defined(STM32L4R5xx) || defined(STM32L4R7xx) || defined(STM32L4R9xx) || \
+    defined(STM32L4S5xx) || defined(STM32L4S7xx) || defined(STM32L4S9xx)
+    GPIOE,
+#endif
+
+#if defined(STM32L451xx) || defined(STM32L452xx) || defined(STM32L462xx) || \
+    defined(STM32L471xx) || defined(STM32L475xx) || defined(STM32L476xx) || \
+    defined(STM32L485xx) || defined(STM32L486xx) || \
+    defined(STM32L496xx) || defined(STM32L4A6xx) || \
+    defined(STM32L4R5xx) || defined(STM32L4R7xx) || defined(STM32L4R9xx) || \
+    defined(STM32L4S5xx) || defined(STM32L4S7xx) || defined(STM32L4S9xx)
+    GPIOF,
+    GPIOG,
+#endif
+
+    GPIOH,
+
+#if defined(STM32L471xx) || defined(STM32L475xx) || defined(STM32L476xx) || \
+    defined(STM32L485xx) || defined(STM32L486xx) || \
+    defined(STM32L496xx) || defined(STM32L4A6xx) || \
+    defined(STM32L4R5xx) || defined(STM32L4R7xx) || defined(STM32L4R9xx) || \
+    defined(STM32L4S5xx) || defined(STM32L4S7xx) || defined(STM32L4S9xx)
+    GPIOI,
+#endif
+};
+
+const IO_ConfigProperties_t IO_ConfigProperties[IO_CFG_NUM] =
+{
+    IO_CFG_DEF(EXPAND_X_IO_CFG_AS_STRUCT_DATA)
+};
+
+const IO_Properties_t IO_Properties[IO_NUM] =
+{
+    IO_DEF(EXPAND_X_IO_AS_STRUCT_DATA)
+
+    #ifdef IO_PRE_INIT_DEF
+    IO_PRE_INIT_DEF(EXPAND_X_IO_AS_STRUCT_DATA)
+    #endif
+};
+
+#ifdef IO_GROUP_DEF
+const IO_GroupProperties_t IO_GroupProperties[IO_GROUP_NUM] =
+{
+    IO_GROUP_DEF(EXPAND_X_IO_GROUP_AS_STRUCT_DATA)
+};
+#endif
+
+#ifdef IO_IRQ_DEF
+const IO_IRQ_Properties_t IO_IRQ_Properties[IO_IRQ_NUM] =
+{
+    IO_IRQ_DEF(EXPAND_X_IO_IRQ_AS_STRUCT_DATA)
+};
+
+#endif
+
+//-------------------------------------------------------------------------------------------------
+// private prototype
+//-------------------------------------------------------------------------------------------------
+
+static void _IO_PinInit         (GPIO_TypeDef* pPort, uint32_t PinNumber, const IO_ConfigProperties_t* pIO_Config);
+static void _IO_EnableClock     (GPIO_TypeDef* pPort);
+
+#ifdef IO_IRQ_DEF
+static void _IO_GetPinInfo      (IO_IrqID_e IO_ID, uint32_t* pPinNumber, uint32_t* pPinMask);
+#endif
+
+//-------------------------------------------------------------------------------------------------
+// private function
+//-------------------------------------------------------------------------------------------------
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       _IO_PinInit
+//
+//  Parameter(s):   GPIO_TypeDef            pPort           Address of the port
+//                  uint32_t                PinNumber       Pin Number IO_PIN_0 to IO_PIN_15
+//                  IO_ConfigProperties_t   pIO_Config      Properties of the pin
+//  Return:         None
+//
+//  Description:    Enable port clock.
+//
+//  Notes:          __builtin_ctz return the bit position of the pin number
+//
+//-------------------------------------------------------------------------------------------------
+void _IO_PinInit(GPIO_TypeDef* pPort, uint32_t PinNumber, const IO_ConfigProperties_t* pIO_Config)
+{
+    uint32_t PinMode      = pIO_Config->PinMode;
+    uint32_t PinType      = pIO_Config->PinType;
+    uint32_t PinSpeed     = pIO_Config->PinSpeed;
+    uint32_t State        = pIO_Config->State;
+    uint32_t BitPosition  = __builtin_ctz(PinNumber);
+    uint32_t Pin2BitShift = BitPosition << 1;
+
+    // Set pin speed
+    pPort->OSPEEDR &= ~(uint32_t)(IO_SPEED_PIN_MASK << Pin2BitShift);
+    pPort->OSPEEDR |=  (uint32_t)(PinSpeed          << Pin2BitShift);
+
+    switch(PinMode)
+    {
+        case IO_MODE_OUTPUT:
+        {
+            // Preset initial state
+            if(State == 0) pPort->BSRR = (IO_PORT_SHIFT_BSRR_RESET << BitPosition);
+            else           pPort->BSRR = (IO_PORT_SHIFT_BSRR_SET   << BitPosition);
+        }
+        break;
+
+        case IO_MODE_ALTERNATE:
+        {
+            if(BitPosition < 8)
+            {
+                pPort->AFR[0] &= ~(uint32_t)(IO_AF_MASK << (BitPosition << 2));
+                pPort->AFR[0] |=  (uint32_t)(State      << (BitPosition << 2));
+            }
+            else
+            {
+                pPort->AFR[1] &= ~(uint32_t)(IO_AF_MASK << ((BitPosition - 8) << 2));
+                pPort->AFR[1] |=  (uint32_t)(State      << ((BitPosition - 8) << 2));
+            }
+        }
+        break;
+
+        // case IO_MODE_ANALOG:    // Nothing to do for analog
+        // case IO_MODE_INPUT:     // Nothing to do for input
+        default:
+        {
+        }
+        break;
+    }
+
+    pPort->PUPDR  &= ~(uint32_t)((IO_TYPE_PIN_PULL_MASK >> 1)             << Pin2BitShift);     // Reset bit for Pull Up
+    pPort->PUPDR  |=  (uint32_t)(((PinType & IO_TYPE_PIN_PULL_MASK) >> 1) << Pin2BitShift);     // Set new pull setting
+
+    pPort->OTYPER &= ~(uint32_t)(IO_TYPE_PIN_DRIVE_MASK << BitPosition);                        // Reset bit for Drive type PP or OD
+    pPort->OTYPER |=  (uint32_t)((PinType & IO_TYPE_PIN_DRIVE_MASK) << BitPosition);            // Set new type
+
+    pPort->MODER  &= ~(uint32_t)(IO_MODE_PIN_MASK << Pin2BitShift);
+    pPort->MODER  |=  (uint32_t)(PinMode          << Pin2BitShift);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       _IO_EnableClock
+//
+//  Parameter(s):   GPIO_TypeDef            pPort           Address of the port
+//  Return:         None
+//
+//  Description:    Enable port clock.
+//
+//-------------------------------------------------------------------------------------------------
+static void _IO_EnableClock(GPIO_TypeDef* pPort)
+{
+    uint32_t ClockEnable;
+
+    // GPIO clock enable
+    ClockEnable   = ((uint32_t)(pPort) & IO_PORT_MASK_FOR_CLOCK_ENABLE);          // Mask bit to keep only enableoffset
+    ClockEnable >>= IO_PORT_SHIFT_FOR_CLOCK_ENABLE;
+    ClockEnable   = 1 << ClockEnable;                                             // Set bit position
+    RCC->AHB1ENR |= ClockEnable;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       _IO_GetPinInfo
+//
+//  Parameter(s):   IO_IRQ_ID        ID of the IO "IRQ" pin definition
+//                  pPinNumber       Pointer on variable to return pin number
+//                  pPinMask         Pointer on variable to return pin mask
+//  Return:         None
+//
+//  Description:    Get pin number and mask from struct.
+//
+//-------------------------------------------------------------------------------------------------
+#ifdef IO_IRQ_DEF
+static void _IO_GetPinInfo(IO_IrqID_e IO_IRQ_ID, uint32_t* pPinNumber, uint32_t* pPinMask)
+{
+    const    IO_IRQ_Properties_t* pIRQ_Properties;
+    const    IO_Properties_t*     pIO_Properties;
+    uint32_t PinNumber;
+    uint32_t PinMask;
+
+    pIRQ_Properties = &IO_IRQ_Properties[IO_IRQ_ID];
+    pIO_Properties  = &IO_Properties[pIRQ_Properties->IO_ID];
+    PinNumber       = pIO_Properties->PinNumber;
+    PinMask         = 1 << PinNumber;
+
+    if(pPinNumber != nullptr) *pPinNumber = PinNumber;
+    if(pPinMask   != nullptr) *pPinMask   = PinMask;
+}
+#endif
+
+//-------------------------------------------------------------------------------------------------
+// Public Function
+//-------------------------------------------------------------------------------------------------
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       IO_InitializeAll
+//
+//  Parameter(s):   IO_ID           ID of the IO pin definition in IO_Properties_t structure
+//  Return:         None
+//
+//  Description:    Init All individual IO and group of pin IO.
+//
+//  Note(s):        This support function may not be used, and user should then call individually
+//                  their IO_PinInit or IO_GroupPinInit.
+//
+//-------------------------------------------------------------------------------------------------
+void IO_InitializeAll(void)
+{
+    for(int i = 0; i < int(IO_NUM); i++)
+    {
+        IO_PinInit(IO_ID_e(i));
+    }
+
+  #ifdef IO_GROUP_DEF
+    for(int i = 0; i < int(IO_GROUP_NUM); i++)
+    {
+        IO_GroupPinInit(IO_GroupID_e(i));
+    }
+  #endif
+
+
+  #ifdef IO_IRQ_DEF
+    for(int i = 0; i < int(IO_IRQ_NUM); i++)
+    {
+        IO_PinInitIRQ(IO_IrqID_e(i));
+    }
+  #endif
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       IO_PinInit
+//
+//  Parameter(s):   IO_ID           ID of the IO pin definition in IO_Properties_t structure
+//  Return:         None
+//
+//  Description:    Basic pin initialization Using ID.
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+void IO_PinInit(IO_ID_e IO_ID)
+{
+    const IO_Properties_t*       pIO_Properties = &IO_Properties[IO_ID];
+    const IO_ConfigProperties_t* pIO_Config     = &IO_ConfigProperties[pIO_Properties->IO_ConfigID];
+    GPIO_TypeDef*                pPort          = pIO_Properties->pPort;
+
+    if(pPort != GPIOxx)
+    {
+        _IO_EnableClock(pPort);
+        _IO_PinInit(pPort, pIO_Properties->PinNumber, pIO_Config);
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       IO_PinInitInput
+//
+//  Parameter(s):   IO_ID           ID of the IO pin definition in IO_Properties_t structure
+//  Return:         None
+//
+//  Description:    ID of the IO pin.
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+void IO_PinInitInput(IO_ID_e IO_ID)
+{
+    GPIO_TypeDef* pPort;
+    uint32_t      PinNumber;
+
+    pPort = IO_Properties[IO_ID].pPort;
+
+    if(pPort != GPIOxx)
+    {
+        PinNumber = IO_Properties[IO_ID].PinNumber << 1;
+        pPort->MODER &= ~(uint32_t)(IO_MODE_PIN_MASK << PinNumber);
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       IO_PinInitOutput
+//
+//  Parameter(s):   IO_ID           ID of the IO pin definition in IO_Properties_t structure
+//  Return:         None
+//
+//  Description:    Initialize the IO In output.
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+void IO_PinInitOutput(IO_ID_e IO_ID)
+{
+    GPIO_TypeDef* pPort;
+    uint32_t      PinNumber;
+
+    pPort = IO_Properties[IO_ID].pPort;
+
+    if(pPort != GPIOxx)
+    {
+        PinNumber = IO_Properties[IO_ID].PinNumber << 1;
+
+        pPort->MODER &= ~(uint32_t)(IO_MODE_PIN_MASK << PinNumber);
+        pPort->MODER |=  (uint32_t)(IO_MODE_OUTPUT   << PinNumber);
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       IO_GroupPinInit
+//
+//  Parameter(s):   IO_ID       ID of the group IO pin definition in IO_GroupProperties_t structure
+//  Return:         None
+//
+//  Description:    Basic group pin initialization Using ID.
+//
+//  Note(s):        Initialize a group of pin on same port with same config
+//
+//-------------------------------------------------------------------------------------------------
+#ifdef IO_GROUP_DEF
+void IO_GroupPinInit(IO_GroupID_e IO_GroupID)
+{
+    const IO_GroupProperties_t*  pProperties = &IO_GroupProperties[IO_GroupID];
+    const IO_ConfigProperties_t* pIO_Config  = &IO_ConfigProperties[pProperties->IO_ConfigID];
+    GPIO_TypeDef*                pPort       = pProperties->pPort;
+	uint32_t                     PinNumber;
+
+    if(pPort != GPIOxx)
+    {
+        _IO_EnableClock(pPort);
+
+		for(uint32_t IO_PinScan = IO_PIN_0; IO_PinScan <= IO_PIN_15; IO_PinScan <<= 1)
+		{
+			PinNumber = pProperties->GroupPin & IO_PinScan;						// Get the port pins position
+
+			if(PinNumber != 0)
+			{
+                _IO_PinInit(pPort, PinNumber, pIO_Config);
+            }
+        }
+	}
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       IO_GroupPinInitInput
+//
+//  Parameter(s):   IO_ID       ID of the group IO pin definition in IO_GroupProperties_t structure
+//  Return:         None
+//
+//  Description:    Basic group initialization of the IO in input.
+//
+//-------------------------------------------------------------------------------------------------
+void IO_GroupPinInitInput(IO_GroupID_e IO_GroupID)
+{
+    const IO_GroupProperties_t*  pProperties = &IO_GroupProperties[IO_GroupID];
+    GPIO_TypeDef*                pPort       = pProperties->pPort;
+	uint32_t                     PinNumber;
+
+    if(pPort != GPIOxx)
+    {
+		for(uint32_t IO_PinScan = IO_PIN_0; IO_PinScan <= IO_PIN_15; IO_PinScan <<= 1)
+		{
+			PinNumber = pProperties->GroupPin & IO_PinScan;						// Get the port pins position
+
+			if(PinNumber != 0)
+			{
+                PinNumber = static_cast<uint32_t>(__builtin_ctz(PinNumber)) * 2U;
+				pPort->MODER &= ~(uint32_t)(IO_MODE_PIN_MASK << PinNumber);
+			}
+		}
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       IO_GroupPinInitOutput
+//
+//  Parameter(s):   IO_ID       ID of the group IO pin definition in IO_GroupProperties_t structure
+//  Return:         None
+//
+//  Description:    Basic group initialization of the IO in output.
+//
+//-------------------------------------------------------------------------------------------------
+void IO_GroupPinInitOutput(IO_GroupID_e IO_GroupID)
+{
+    const IO_GroupProperties_t*  pProperties = &IO_GroupProperties[IO_GroupID];
+    GPIO_TypeDef*                pPort       = pProperties->pPort;
+	uint32_t                     PinNumber;
+
+    if(pPort != GPIOxx)
+    {
+		for(uint32_t IO_PinScan = IO_PIN_0; IO_PinScan <= IO_PIN_15; IO_PinScan <<= 1)
+		{
+			PinNumber = pProperties->GroupPin & IO_PinScan;						// Get the port pins position
+
+			if(PinNumber != 0)
+			{
+                PinNumber = static_cast<uint32_t>(__builtin_ctz(PinNumber)) * 2U;
+				pPort->MODER &= ~(uint32_t)(IO_MODE_PIN_MASK << PinNumber);
+				pPort->MODER |=  (uint32_t)(IO_MODE_OUTPUT   << PinNumber);
+			}
+		}
+    }
+}
+#endif
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       IO_SetPinLow
+//
+//  Parameter(s):   IO_ID           ID of the IO pin definition in IO_Properties_t structure
+//  Return:         None
+//
+//  Description:    Sets pin(s) low.
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+void IO_SetPinLow(IO_ID_e IO_ID)
+{
+    GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
+
+    if(pPort != GPIOxx)
+    {
+        uint32_t PinPosition = __builtin_ctz(IO_Properties[IO_ID].PinNumber);
+        pPort->BSRR = (IO_PORT_SHIFT_BSRR_RESET << PinPosition);
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       IO_SetPinHigh
+//
+//  Parameter(s):   IO_ID           ID of the IO pin definition in IO_Properties_t structure
+//  Return:         None
+//
+//  Description:    Sets pin(s) high.
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+void IO_SetPinHigh(IO_ID_e IO_ID)
+{
+    GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
+
+    if(pPort != GPIOxx)
+    {
+        uint32_t PinPosition = __builtin_ctz(IO_Properties[IO_ID].PinNumber);
+        pPort->BSRR = (IO_PORT_SHIFT_BSRR_SET << PinPosition);
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       IO_TogglePin
+//
+//  Parameter(s):   IO_ID           ID of the IO pin definition in IO_Properties_t structure
+//  Return:         None
+//
+//  Description:    Toggles pin(s).
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+void IO_TogglePin(IO_ID_e IO_ID)
+{
+    GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
+
+    if(pPort != GPIOxx)
+    {
+        uint32_t PinPosition = __builtin_ctz(IO_Properties[IO_ID].PinNumber);
+        pPort->ODR ^= (1 << PinPosition);
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       IO_SetPin
+//
+//  Parameter(s):   IO_ID           ID of the IO pin definition
+//                  Value           Value to put out on the pin        0 or 1
+//  Return:         None
+//
+//  Description:    Sets pin(s) value.
+//
+//-------------------------------------------------------------------------------------------------
+void IO_SetPin(IO_ID_e IO_ID, bool Value)
+{
+    if(Value == 0)
+    {
+        IO_SetPinLow(IO_ID);
+    }
+    else
+    {
+        IO_SetPinHigh(IO_ID);
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       IO_GetInputPinValue
+//
+//  Parameter(s):   IO_ID           ID of the IO pin definition in IO_Properties_t structure
+//  Return:         uint32_t        Actual bit value for this input pin on the port
+//
+//  Description:    Gets input data bit value.
+//
+//-------------------------------------------------------------------------------------------------
+uint32_t IO_GetInputPinValue(IO_ID_e IO_ID)
+{
+    GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
+    uint32_t      PinValue = 0;
+
+    if(pPort != GPIOxx)
+    {
+        uint32_t PinPosition = __builtin_ctz(IO_Properties[IO_ID].PinNumber);
+        PinValue = pPort->IDR & (1 << PinPosition);
+    }
+
+    return PinValue;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       IO_GetInputPin
+//
+//  Parameter(s):   IO_ID           ID of the IO pin definition in IO_Properties_t structure
+//  Return:         bool            level on input pin is 0 or 1
+//
+//  Description:    Gets input data bit.
+//
+//-------------------------------------------------------------------------------------------------
+bool IO_GetInputPin(IO_ID_e IO_ID)
+{
+    return (IO_GetInputPinValue(IO_ID) != 0) ? true : false;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       IO_GetOutputPin
+//
+//  Parameter(s):   IO_ID       ID of the IO pin definition in IO_Properties_t structure
+//  Return:         bool        level on internal register output 0 or 1
+//
+//  Description:    Gets output data bit.
+//
+//  Note(s):        Get the value in register not actual output... use IO_GetInputPin for this
+//
+//-------------------------------------------------------------------------------------------------
+bool IO_GetOutputPin(IO_ID_e IO_ID)
+{
+    GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
+
+    if(pPort != GPIOxx)
+    {
+        uint32_t PinPosition = __builtin_ctz(IO_Properties[IO_ID].PinNumber);
+
+        if((pPort->ODR & (1 << PinPosition)) == 0)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       IO_IsItValid
+//
+//  Parameter(s):   IO_ID       ID of the IO pin definition in IO_Properties_t structure
+//  Return:         bool        true if valid, false if not
+//
+//  Description:    Return if this pin is a valid one.
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+bool IO_IsItValid(IO_ID_e IO_ID)
+{
+    GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
+
+    if(pPort != GPIOxx)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       IO_PinInitIRQ
+//
+//  Parameter(s):   IO_IRQ_ID       ID of the IRQ to initialize
+//                  pCallback       Callback to call when condition of IRQ are met
+//  Return:         None
+//
+//  Description:    Pin initialization for pin using IRQ.
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+#ifdef IO_IRQ_DEF
+void IO_PinInitIRQ(IO_IrqID_e IO_IRQ_ID)
+{
+    const IO_IRQ_Properties_t* pIRQ_Properties;
+    const IO_Properties_t*     pIO_Properties;
+    uint32_t                   BitPosition;
+    uint32_t                   PinMask;
+
+    pIRQ_Properties = &IO_IRQ_Properties[IO_IRQ_ID];
+    pIO_Properties  = &IO_Properties[pIRQ_Properties->IO_ID];
+    BitPosition     = __builtin_ctz(pIO_Properties->PinNumber);
+    PinMask         = 1 << BitPosition;
+
+    // Init The IO for this pin
+    IO_PinInit(pIRQ_Properties->IO_ID);
+
+    // Enable EXT Line in SYSCFG
+    SYSCFG->EXTICR[BitPosition >> 2] &= ~(((uint32_t)0x0F) << ((BitPosition & 3)) << 2);
+    SYSCFG->EXTICR[BitPosition >> 2] |= ((((uint32_t)pIO_Properties->pPort >> 10) & 7) << ((BitPosition & 3) << 2));
+
+    // Disable Event on provided Lines
+    CLEAR_BIT(EXTI->EMR1, PinMask);
+
+    // Then Enable IT on provided Lines
+    SET_BIT(EXTI->IMR1, PinMask);
+
+    CLEAR_BIT(EXTI->FTSR1, PinMask);            // Disable Falling Trigger on provided Lines
+    CLEAR_BIT(EXTI->RTSR1, PinMask);            // Disable Rising Trigger on provided Lines
+
+    if((pIRQ_Properties->Trigger & IO_EXTI_TRIGGER_RISING) != 0)
+    {
+        SET_BIT(EXTI->RTSR1, PinMask);          // Enable Rising trigger on provided Lines
+    }
+    else
+    {
+        CLEAR_BIT(EXTI->RTSR1, PinMask);
+    }
+
+    if((pIRQ_Properties->Trigger & IO_EXTI_TRIGGER_FALLING) != 0)
+    {
+        SET_BIT(EXTI->FTSR1, PinMask);          // Enable Falling trigger on provided Lines
+    }
+    else
+    {
+        CLEAR_BIT(EXTI->FTSR1, PinMask);
+    }
+
+    // Configure interrupt priority for IO
+    ISR_Init(pIRQ_Properties->IRQ_Channel, pIRQ_Properties->Priority);
+}
+#endif
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       IO_EnableIRQ
+//
+//  Parameter(s):   IO_IRQ_ID       ID of the IRQ to enable
+//  Return:         None
+//
+//  Description:    Enable the IRQ for specify ID.
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+#ifdef IO_IRQ_DEF
+void IO_EnableIRQ(IO_IrqID_e IO_IRQ_ID)
+{
+    uint32_t PinMask;
+
+    _IO_GetPinInfo(IO_IRQ_ID, nullptr, &PinMask);
+    EXTI->PR1 = PinMask;
+    SET_BIT(EXTI->IMR1, PinMask);                    // Enable IT on provided Lines
+}
+#endif
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       IO_EnableIRQ
+//
+//  Parameter(s):   IO_IRQ_ID       ID of the IRQ to disable
+//  Return:         None
+//
+//  Description:    Disable the IRQ for specify ID.
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+#ifdef IO_IRQ_DEF
+void IO_DisableIRQ(IO_IrqID_e IO_IRQ_ID)
+{
+    uint32_t PinMask;
+
+    _IO_GetPinInfo(IO_IRQ_ID, nullptr, &PinMask);
+    CLEAR_BIT(EXTI->IMR1, PinMask);                  // Disable IT on provided Lines
+}
+#endif
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       IO_EnableIRQ
+//
+//  Parameter(s):   IO_IRQ_ID       ID of the IRQ to get the state
+//  Return:         IO_ID_e         ID of the IO used
+//
+//  Description:    Get the IO ID for this IO IRQ ID
+//
+//-------------------------------------------------------------------------------------------------
+#ifdef IO_IRQ_DEF
+IO_ID_e IO_GetIO_ID(IO_IrqID_e IO_IRQ_ID)
+{
+    const IO_IRQ_Properties_t* pIRQ_Properties = &IO_IRQ_Properties[IO_IRQ_ID];
+    return pIRQ_Properties->IO_ID;
+}
+#endif
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       IO_EnableIRQ
+//
+//  Parameter(s):   IO_IRQ_ID       ID of the IRQ to get the state
+//  Return:         bool            level on input pin 0 or 1
+//
+//  Description:    Get the state of the IRQ for specify ID.
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+#ifdef IO_IRQ_DEF
+bool IO_GetIRQ_State(IO_IrqID_e IO_IRQ_ID)
+{
+    uint32_t PinMask;
+
+    _IO_GetPinInfo(IO_IRQ_ID, nullptr, &PinMask);
+
+    if((EXTI->IMR1 & PinMask) != 0)
+    {
+        return true;
+    }
+
+    return false;
+}
+#endif
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       IO_callBack
+//
+//  Parameter(s):   IO_IRQ_ID       ID of the IRQ to get the state
+//  Return:         None
+//
+//  Description:    Get the state of the IRQ for specify ID.
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+#ifdef IO_IRQ_DEF
+void IO_CallBack(IO_IrqID_e IO_IRQ_ID)
+{
+    IO_PinChangeCallback_t pCallBack = IO_IRQ_Properties[IO_IRQ_ID].pCallback;
+
+    if(pCallBack != nullptr)
+    {
+        pCallBack(IO_IRQ_Properties[IO_IRQ_ID].pArg);
+    }
+}
+#endif
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       IO_PinLowLevelAccess
+//
+//  Parameter(s):   PortIO
+//                  PinNumber
+//                  Direction
+//                  State
+//  Return:         uint32_t
+//
+//  Description:    Get the state of the IRQ for specify ID.
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+uint32_t IO_PinLowLevelAccess(uint32_t PortIO, uint32_t PinNumber, uint32_t Direction, uint32_t State)
+{
+    GPIO_TypeDef* pPort = (GPIO_TypeDef*)IO_Port[PortIO];
+    uint32_t      BitPosition   = __builtin_ctz(PinNumber);
+    uint32_t      Pin2BitShift  = BitPosition << 1;
+
+    _IO_EnableClock(pPort);
+
+    if(Direction == IO_MODE_OUTPUT)
+    {
+        // Preset state
+        if(State == 0) pPort->BSRR = BitPosition << 16;
+        else           pPort->BSRR = BitPosition;
+    }
+
+    MODIFY_REG(pPort->MODER, (IO_MODE_PIN_MASK << Pin2BitShift), (Direction << Pin2BitShift));
+
+    return (pPort->IDR >> BitPosition) & 0x01;
+}
+
+//-------------------------------------------------------------------------------------------------

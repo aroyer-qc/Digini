@@ -67,9 +67,7 @@
 //-------------------------------------------------------------------------------------------------
 // Real Time OS
 
-#if (DIGINI_USE_NOS == DEF_ENABLED)
 #include "nOS.h"
-#endif
 
 //-------------------------------------------------------------------------------------------------
 // Common configuration header
@@ -133,10 +131,8 @@
 #include "./Digini/inc/lib_class_cbi.h"                      // Callback interface
 #include "./Digini/inc/lib_label.h"
 #include "./String/inc/lib_string.h"
-#if (DIGINI_USE_NOS == DEF_ENABLED)
 #include "./RTOS_Wrapper/inc/nOS/lib_class_queue.h"
 #include "./RTOS_Wrapper/inc/nOS/lib_class_timer.h"
-#endif
 #include "./Utility/inc/lib_utility.h"
 #include "./Utility/inc/lib_delay.h"
 #include "./Peripheral/inc/port/lib_isr.h"

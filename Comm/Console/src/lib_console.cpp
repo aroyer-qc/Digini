@@ -51,7 +51,7 @@
 //
 //  Name:           Initialize
 //
-//  Parameter(s):   UART_Driver*    UartDriver       Pointer on the UART driver to use.
+//  Parameter(s):   SerialPortInterface*    pSerialPort       Serial transport to use.
 //  Return:         None
 //
 //  Description:    Initialize command line interface
@@ -59,11 +59,11 @@
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void Console::Initialize(UART_Driver* pUartDriver)
+void Console::Initialize(SerialPortInterface* pSerialPort)
 {
     uint8_t* pBuffer;
 
-    m_pUartDriver           = pUartDriver;
+    m_pSerialPort           = pSerialPort;
     //m_IsItOnHold            = false;
     //m_IsItOnStartup         = true;
   #if (CON_USE_DEBUG_LOG == DEF_ENABLED)
@@ -82,22 +82,15 @@ void Console::Initialize(UART_Driver* pUartDriver)
         m_pChildProcess[i]  = nullptr;
     }
 
-    pUartDriver->Initialize();
+        pSerialPort->InitializeTransport();
     m_Fifo.Initialize(CON_FIFO_PARSER_RX_SIZE);
     pBuffer = m_Fifo.GetBufferPointer();
 
     nOS_SemCreate(&m_RX_IdleSem, 0, CON_RX_NB_OF_SEMAPHORE_COUNT);
-    pUartDriver->DMA_ConfigRX(pBuffer, CON_FIFO_PARSER_RX_SIZE);                // DMA will use the FIFO buffer allocated memory
-
-  #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED)
-    pUartDriver->RegisterCallback((CallbackInterface*)this);
-   #if (UART_DRIVER_RX_NOT_EMPTY_CFG == DEF_ENABLED)
-    pUartDriver->EnableCallbackType(UART_CALLBACK_RX_NOT_EMPTY | UART_CALLBACK_TX_COMPLETED | UART_CALLBACK_RX_ERROR);
-   #endif
-   #if (UART_DRIVER_RX_IDLE_CFG == DEF_ENABLED)
-    pUartDriver->EnableCallbackType(UART_CALLBACK_RX_IDLE | UART_CALLBACK_TX_COMPLETED | UART_CALLBACK_RX_ERROR);
-   #endif
-  #endif
+        pSerialPort->SetReceiveBuffer(pBuffer, CON_FIFO_PARSER_RX_SIZE);
+        pSerialPort->RegisterReceiveCallback(this);
+        pSerialPort->EnableReceiveCallbacks(SERIAL_CALLBACK_RX_NOT_EMPTY | SERIAL_CALLBACK_RX_IDLE |
+                                                                                SERIAL_CALLBACK_TX_COMPLETED | SERIAL_CALLBACK_RX_ERROR);
 
   #if (CON_TRAP_COMMENT_INCOMING_LINE == DEF_ENABLED)
     m_InTrapForCommentLine = false;
@@ -334,7 +327,7 @@ void Console::PrintSerialLog(SystemDebugLevel_e Level, const char* pFormat, va_l
           #if (CON_USE_DEBUG_LOG == DEF_ENABLED)
             if(m_MuteSerialLogging == false)
             {
-                m_pUartDriver->SendData((const uint8_t*)pBuffer, &Size);
+                m_pSerialPort->SendData((const uint8_t*)pBuffer, &Size);
             }
             else
             {
@@ -366,8 +359,7 @@ void Console::PrintSerialLog(SystemDebugLevel_e Level, const char* pFormat, va_l
 //-------------------------------------------------------------------------------------------------
 SystemState_e Console::SendData(const uint8_t* p_BufferTX, size_t* pSizeTX)
 {
-    m_pUartDriver->SendData((const uint8_t*)p_BufferTX, pSizeTX);
-    return SYS_READY;
+    return m_pSerialPort->SendData(p_BufferTX, pSizeTX);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -570,29 +562,22 @@ void Console::CallbackFunction(int Type, void* pContext)
 {
     switch(Type)
     {
-      #if (UART_DRIVER_RX_NOT_EMPTY_CFG == DEF_ENABLED)                         // Don't know if we need to keep this... this mode is never use!!
-        case UART_CALLBACK_RX_NOT_EMPTY:
+                case SERIAL_CALLBACK_RX_NOT_EMPTY:
         {
-            uint8_t* pData = (uint8_t*)pContext;
-            //m_Fifo.Write(pData, 1);
             nOS_SemGive(&m_RX_IdleSem);
         }
         break;
-      #endif
 
-      #if (UART_DRIVER_RX_IDLE_CFG == DEF_ENABLED)
-        case UART_CALLBACK_RX_IDLE:
+                case SERIAL_CALLBACK_RX_IDLE:
         {
-            UART_Transfer_t* pTransfer = (UART_Transfer_t*)pContext;
+            SerialTransfer_t* pTransfer = static_cast<SerialTransfer_t*>(pContext);
             m_Fifo.SetNewHeadPosition(pTransfer->u.Head);
             nOS_SemGive(&m_RX_IdleSem);
         }
         break;
-      #endif
 
-        case UART_CALLBACK_TX_DMA:
-        case UART_CALLBACK_TX_COMPLETED:
-        case UART_CALLBACK_RX_ERROR:
+                case SERIAL_CALLBACK_TX_COMPLETED:
+                case SERIAL_CALLBACK_RX_ERROR:
         {
             __asm("nop");
             // nothing so far

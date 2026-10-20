@@ -207,14 +207,6 @@ SystemState_e DIGINI_PostInitialize(void)
    #endif
   #endif
 
-  #if (USE_USB_DRIVER == DEF_ENABLED)
-   #if defined(STM32L4xx)
-    if(USB.Initialize() == false) return SYS_DEVICE_ERROR;
-   #else
-    USB.Initialize();
-   #endif
-  #endif
-
   #if (DIGINI_USE_GRAFX == DEF_ENABLED)
     GRAFX_PostInitialize();
   #endif

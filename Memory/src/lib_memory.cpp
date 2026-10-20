@@ -53,7 +53,7 @@
 
 #define EXPAND_X_MEM_BLOCK_AS_INITIALIZE_DEBUG_INFO_ARRAY(ENUM_ID, GROUP_NAME, ALLOC_NAME, BLOCK_MAX, BLOCK_SIZE)        \
                                                                                                                          \
-                                                            memset(&m_DebugTrace ## GROUP_NAME[i++], 0, sizeof(nOS_Mem));
+                                                            memset(m_DebugTrace ## GROUP_NAME, 0, sizeof(m_DebugTrace ## GROUP_NAME));
 
 //-------------------------------------------------------------------------------------------------
 //

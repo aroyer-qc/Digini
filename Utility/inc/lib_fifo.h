@@ -67,8 +67,8 @@ class FIFO_Buffer
         bool            ReadyRead               (void);
         bool            ReadyWrite              (void);
 
-        size_t          CheckFreeSpace          (void);
-        size_t          CheckUsedSpace          (void);
+        size_t          CheckFreeSpace          (void) const;
+        size_t          CheckUsedSpace          (void) const;
 
         void            SetTailForward          (size_t Size);
         void            SetTailBackward         (size_t Size);
@@ -77,6 +77,7 @@ class FIFO_Buffer
         void            SetNewHeadPosition      (size_t Position);      // Set a new 'head' position
 
         uint8_t*        GetBufferPointer        (void)                  { return m_pBuffer; }
+        const uint8_t*  GetBufferPointer        (void) const            { return m_pBuffer; }
 
     private:
 

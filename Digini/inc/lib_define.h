@@ -30,11 +30,7 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#if (DIGINI_USE_NOS == DEF_ENABLED)
 #define TickCount_t                                 nOS_TickCounter
-#else
-#define TickCount_t                                 uint32_t
-#endif
 
 // ---------- General define ----------
 #ifdef DEBUG

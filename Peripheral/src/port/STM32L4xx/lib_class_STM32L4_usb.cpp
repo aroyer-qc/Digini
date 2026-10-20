@@ -46,10 +46,13 @@
 #define USB_ENDPOINT(Number) (*reinterpret_cast<volatile uint16_t*>(USB_BASE + 4U * (Number)))
 #define USB_TABLE reinterpret_cast<volatile uint16_t*>(USB_PMAADDR)
 
-#define USB_CDC_DEFAULT_BAUD_RATE        115200UL
-#define USB_CDC_STOP_BITS_1              0
-#define USB_CDC_PARITY_NONE              0
-#define USB_CDC_DATA_BITS_8              8
+#define USB_CDC_DEFAULT_BAUD_RATE           115200UL
+#define USB_CDC_STOP_BITS_1                 0
+#define USB_CDC_PARITY_NONE                 0
+#define USB_CDC_DATA_BITS_8                 8
+#define USB_CDC_VID                         0x0483U
+#define USB_CDC_PID                         0x5740U
+
 
 //-------------------------------------------------------------------------------------------------
 // Private variable(s) and constant(s)
@@ -742,11 +745,11 @@ bool USB_CDC_ACM_Driver::GetClassDescriptor(uint16_t Value, uint16_t Requested)
 
         if(Index == 1)
         {
-            pText = USB_CDC_MANUFACTURER;
+            pText = OUR_FIRMWARE_DIGINI_NAME;
         }
         else if(Index == 2)
         {
-            pText = USB_CDC_PRODUCT;
+            pText = OUR_FIRMWARE_NAME;
         }
         else if(Index == 3)
         {

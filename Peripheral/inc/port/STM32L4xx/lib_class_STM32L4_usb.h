@@ -48,11 +48,11 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define USB_CONTROL_PACKET_SIZE 64
+#define USB_CONTROL_PACKET_SIZE 			64
 #if (USE_USB_CDC_DRIVER == DEF_ENABLED)
-#define USB_CDC_PACKET_SIZE 64
-#define USB_CDC_BUFFER_SIZE 512
-#define USB_CDC_LINE_CODING_SIZE 7
+#define USB_CDC_PACKET_SIZE 				64
+#define USB_CDC_BUFFER_SIZE 				512
+#define USB_CDC_LINE_CODING_SIZE 			7
 #endif
 
 //-------------------------------------------------------------------------------------------------

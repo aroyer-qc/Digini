@@ -28,1635 +28,4134 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#define USB_DRIVER_GLOBAL
-#include "./lib_digini.h"
-#undef  USB_DRIVER_GLOBAL
+#include "lib_digini.h"
 
-#if (USE_USB_DRIVER == DEF_ENABLED)
+#if(USE_USB_DRIVER == DEF_ENABLED) && defined(STM32L4xx)
 
-#if (CFG_ENABLE_PLL_Q == 0) || (CFG_PLL_Q_FREQUENCY != 48000000ULL)
-#error USB requires a 48 MHz PLLQ clock
-#endif
+#include <cstring>
 
 //-------------------------------------------------------------------------------------------------
-// Define(s)
+// Define(s) and macro(s)
 //-------------------------------------------------------------------------------------------------
 
-#define USB_REGS reinterpret_cast<USB_TypeDef*>(USB_BASE)
-#define USB_ENDPOINT(Number) (*reinterpret_cast<volatile uint16_t*>(USB_BASE + 4U * (Number)))
-#define USB_TABLE reinterpret_cast<volatile uint16_t*>(USB_PMAADDR)
-
-#define USB_CDC_DEFAULT_BAUD_RATE           115200UL
-#define USB_CDC_STOP_BITS_1                 0
-#define USB_CDC_PARITY_NONE                 0
-#define USB_CDC_DATA_BITS_8                 8
-#define USB_CDC_VID                         0x0483U
-#define USB_CDC_PID                         0x5740U
-
+#define USB_BTABLE_ADDRESS 0x000U
+#define USB_PMA_ACCESS 1U
+#define USB_CNTRX_NBLK_MSK (0x1FUL << 10)
+#define USB_CNTRX_BLSIZE (0x1UL << 15)
 
 //-------------------------------------------------------------------------------------------------
-// Private variable(s) and constant(s)
+// Function(s)
 //-------------------------------------------------------------------------------------------------
-
-#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
-const uint8_t USB_CDC_ACM_Driver::m_DefaultLineCoding[USB_CDC_LINE_CODING_SIZE] =
-{
-    static_cast<uint8_t>(USB_CDC_DEFAULT_BAUD_RATE),
-    static_cast<uint8_t>(USB_CDC_DEFAULT_BAUD_RATE >> 8),
-    static_cast<uint8_t>(USB_CDC_DEFAULT_BAUD_RATE >> 16),
-    static_cast<uint8_t>(USB_CDC_DEFAULT_BAUD_RATE >> 24),
-    USB_CDC_STOP_BITS_1,
-    USB_CDC_PARITY_NONE,
-    USB_CDC_DATA_BITS_8
-};
-#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
-// Name:           USB_Driver
-// Parameter(s):   void
-// Return:         void
+//  Function:       USB_Driver
 //
-// Description:    Initialize generic USB port state
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    Initialize the controller state without accessing the peripheral registers.
 //
 //-------------------------------------------------------------------------------------------------
 USB_Driver::USB_Driver(void)
 {
-    m_Configured        = false;
-    m_Suspended         = false;
-    m_ControlRemaining  = 0;
-    m_ControlZLP        = false;
-    m_pControlData      = nullptr;
-    m_AddressPending    = false;
-    m_PendingAddress    = 0;
-    m_Configuration     = 0;
-    m_Initialized       = false;
-}
+    m_pUSB                          = USB;
+    m_Info                          = {};
+    m_Address                       = 0;
+    m_Locked                        = false;
+    m_State                         = USB_STATE_RESET;
+    m_ErrorCode                     = 0;
+#if (DIGINI_USE_USB_LPM == DEF_ENABLED)
+    m_LPM_State                     = USB_LPM_L0;
+    m_BESL                          = 0;
+#endif
+    m_FrameNumber                   = 0;
+#if (DIGINI_USE_USB_LPM == DEF_ENABLED)
+    m_LPM_Active                    = 0;
+#endif
+#if (DIGINI_USE_USB_BCD == DEF_ENABLED)
+    m_BCD_Active                    = 0;
+#endif
+    m_pSOFCallback                  = nullptr;
+    m_pSetupStageCallback           = nullptr;
+    m_pResetCallback                = nullptr;
+    m_pSuspendCallback              = nullptr;
+    m_pResumeCallback               = nullptr;
+    m_pConnectCallback              = nullptr;
+    m_pDisconnectCallback           = nullptr;
+    m_pHardwareInitializeCallback   = nullptr;
+    m_pHardwareDeInitializeCallback = nullptr;
+    m_pDataOutStageCallback         = nullptr;
+    m_pDataInStageCallback          = nullptr;
+#if (DIGINI_USE_USB_ISOCHRONOUS == DEF_ENABLED)
+    m_pISOOUTIncompleteCallback     = nullptr;
+    m_pISOINIncompleteCallback      = nullptr;
+#endif
+#if (DIGINI_USE_USB_LPM == DEF_ENABLED)
+    m_pLPMCallback                  = nullptr;
+#endif
+#if (DIGINI_USE_USB_BCD == DEF_ENABLED)
+    m_pBCDCallback                  = nullptr;
+#endif
 
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           USB_CDC_ACM_Driver
-// Parameter(s):   void
-// Return:         void
-//
-// Description:    Initialize CDC ACM class state
-//
-//-------------------------------------------------------------------------------------------------
-#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
-USB_CDC_ACM_Driver::USB_CDC_ACM_Driver(void)
-{
-    m_TxBusy                     = false;
-    m_ControlLines               = 0;
-    m_TxZLP                      = false;
-    m_TxPacketLength             = 0;
-    m_ExpectLineCoding           = false;
-    m_pReceiveBuffer             = nullptr;
-    m_ReceiveBufferCapacity      = 0;
-    m_ReceiveBufferHead          = 0;
-    m_ReceiveTransfer.pBuffer    = nullptr;
-    m_ReceiveTransfer.u.Head     = 0;
-    m_ReceiveTransfer.StaticSize = 0;
-    m_pReceiveCallback           = nullptr;
-    m_ReceiveCallbackTypes       = 0;
-
-    memcpy(m_LineCoding, m_DefaultLineCoding, sizeof(m_LineCoding));
-}
-#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
-
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           InitializeClass
-// Parameter(s):   void
-// Return:         bool - true when both CDC FIFOs have storage
-//
-// Description:    Allocate CDC buffers from the memory pool before enabling USB interrupts
-//
-//-------------------------------------------------------------------------------------------------
-#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
-bool USB_CDC_ACM_Driver::InitializeClass(void)
-{
-
-    if(m_RxFifo.GetBufferPointer() == nullptr)
+    for(uint8_t Index = 0; Index < USB_ENDPOINT_COUNT; Index++)
     {
-
-        if(pMemoryPool->IsAvailable(USB_CDC_BUFFER_SIZE) == false)
-        {
-            return false;
-        }
-
-        m_RxFifo.Initialize(USB_CDC_BUFFER_SIZE);
+        m_InEndpoint[Index]  = {};
+        m_OutEndpoint[Index] = {};
     }
-
-    if(m_TxFifo.GetBufferPointer() == nullptr)
+    for(uint8_t Index = 0; Index < 12U; Index++)
     {
-
-        if(pMemoryPool->IsAvailable(USB_CDC_BUFFER_SIZE) == false)
-        {
-            return false;
-        }
-
-        m_TxFifo.Initialize(USB_CDC_BUFFER_SIZE);
+        m_Setup[Index] = 0;
     }
-
-    return (m_RxFifo.GetBufferPointer() != nullptr) && (m_TxFifo.GetBufferPointer() != nullptr);
 }
-#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
-// Name:           InitializeTransport
-// Parameter(s):   void
-// Return:         void
+//  Function:       Initialize
 //
-// Description:    Initialize the USB-backed serial transport
+//  Parameter(s):   pInfo
+//  Return:         SystemState_e
+//
+//  Description:    Initialize the USB FS device controller from its configuration.
 //
 //-------------------------------------------------------------------------------------------------
-#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
-void USB_CDC_ACM_Driver::InitializeTransport(void)
+SystemState_e USB_Driver::Initialize(const USB_Info_t* pInfo)
 {
-    (void)Initialize();
-}
-#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
-
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           SetReceiveBuffer
-// Parameter(s):   pBuffer - circular receive buffer
-//                 Capacity - buffer capacity
-// Return:         void
-//
-// Description:    Attach the Console receive buffer to the CDC packet stream
-//
-//-------------------------------------------------------------------------------------------------
-#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
-void USB_CDC_ACM_Driver::SetReceiveBuffer(uint8_t* pBuffer, size_t Capacity)
-{
-    m_pReceiveBuffer          = pBuffer;
-    m_ReceiveBufferCapacity   = Capacity;
-    m_ReceiveBufferHead       = 0;
-    m_ReceiveTransfer.pBuffer = pBuffer;
-    m_ReceiveTransfer.u.Head  = 0;
-    m_ReceiveTransfer.StaticSize = Capacity;
-}
-#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
-
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           SendData
-// Parameter(s):   pData - data to send
-//                 pSize - requested size and accepted size on return
-// Return:         SystemState_e - ready, busy, or device error
-//
-// Description:    Queue serial data through the CDC ACM transmit ring
-//
-//-------------------------------------------------------------------------------------------------
-#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
-SystemState_e USB_CDC_ACM_Driver::SendData(const uint8_t* pData, size_t* pSize)
-{
-    if((pSize == nullptr) || ((*pSize != 0) && (pData == nullptr)))
+    if((pInfo == nullptr) || (pInfo->EndpointCount == 0U) || (pInfo->EndpointCount > 8U))
     {
         return SYS_WRONG_VALUE;
     }
 
-    size_t Requested = *pSize;
-    size_t Accepted = 0;
-    const size_t MaxChunk = static_cast<size_t>(UINT16_MAX);
-
-    while(Accepted < Requested)
+#if (DIGINI_USE_USB_LPM != DEF_ENABLED)
+    if(pInfo->LPM_Enable == true)
     {
-        size_t Remaining = Requested - Accepted;
-        uint16_t Chunk = static_cast<uint16_t>((Remaining > MaxChunk) ? MaxChunk : Remaining);
-        uint16_t Written = Write(pData + Accepted, Chunk);
-        Accepted += Written;
+        return SYS_WRONG_VALUE;
+    }
+#endif
+    m_Info = *pInfo;
 
-        if(Written < Chunk)
-        {
-            break;
-        }
+    uint8_t Index;
+
+    if(m_State == USB_STATE_RESET)
+    {
+        m_Locked = false;
+
+        m_pSOFCallback              = nullptr;
+        m_pSetupStageCallback       = nullptr;
+        m_pResetCallback            = nullptr;
+        m_pSuspendCallback          = nullptr;
+        m_pResumeCallback           = nullptr;
+        m_pConnectCallback          = nullptr;
+        m_pDisconnectCallback       = nullptr;
+        m_pDataOutStageCallback     = nullptr;
+        m_pDataInStageCallback      = nullptr;
+#if (DIGINI_USE_USB_ISOCHRONOUS == DEF_ENABLED)
+        m_pISOOUTIncompleteCallback = nullptr;
+        m_pISOINIncompleteCallback  = nullptr;
+#endif
+#if (DIGINI_USE_USB_LPM == DEF_ENABLED)
+        m_pLPMCallback              = nullptr;
+#endif
+#if (DIGINI_USE_USB_BCD == DEF_ENABLED)
+        m_pBCDCallback              = nullptr;
+#endif
+
+        HardwareInitialize();
     }
 
-    *pSize = Accepted;
+    m_State = USB_STATE_BUSY;
 
-    if(Accepted == Requested)
+    (void)DisableInterrupts();
+    std::memset(m_InEndpoint, 0, sizeof(m_InEndpoint));
+    std::memset(m_OutEndpoint, 0, sizeof(m_OutEndpoint));
+    m_ErrorCode  = 0;
+#if (DIGINI_USE_USB_LPM == DEF_ENABLED)
+    m_LPM_State  = USB_LPM_L0;
+    m_LPM_Active = 0;
+#endif
+#if (DIGINI_USE_USB_BCD == DEF_ENABLED)
+    m_BCD_Active = 0;
+#endif
+
+    for(Index = 0U; Index < m_Info.EndpointCount; Index++)
     {
-        return SYS_READY;
+        m_InEndpoint[Index].IsIn   = 1U;
+        m_InEndpoint[Index].Number = Index;
+
+        m_InEndpoint[Index].Type            = USB_ENDPOINT_CONTROL;
+        m_InEndpoint[Index].MaxPacketSize   = 0U;
+        m_InEndpoint[Index].pTransferBuffer = 0U;
+        m_InEndpoint[Index].TransferLength  = 0U;
     }
 
-    if(IsConfigured() == true)
+    for(Index = 0U; Index < m_Info.EndpointCount; Index++)
+    {
+        m_OutEndpoint[Index].IsIn   = 0U;
+        m_OutEndpoint[Index].Number = Index;
+
+        m_OutEndpoint[Index].Type            = USB_ENDPOINT_CONTROL;
+        m_OutEndpoint[Index].MaxPacketSize   = 0U;
+        m_OutEndpoint[Index].pTransferBuffer = 0U;
+        m_OutEndpoint[Index].TransferLength  = 0U;
+    }
+
+    if(InitializeDevice() != SYS_READY)
+    {
+        m_State = USB_STATE_ERROR;
+        return SYS_ERROR;
+    }
+
+    m_Address = 0U;
+    m_State   = USB_STATE_READY;
+
+#if (DIGINI_USE_USB_LPM == DEF_ENABLED)
+    if(m_Info.LPM_Enable == 1U)
+    {
+        (void)ActivateLPM();
+    }
+    else
+    {
+        (void)DeActivateLPM();
+    }
+#else
+    m_pUSB->LPMCSR &= uint16_t(~(USB_LPMCSR_LMPEN | USB_LPMCSR_LPMACK));
+#endif
+
+    (void)DisconnectDevice();
+
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       DeInitialize
+//
+//  Parameter(s):   None
+//  Return:         SystemState_e
+//
+//  Description:    Stop the USB device and release its hardware resources.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::DeInitialize(void)
+{
+    m_State = USB_STATE_BUSY;
+
+    if(StopDevice() != SYS_READY)
+    {
+        return SYS_ERROR;
+    }
+
+    HardwareDeInitialize();
+
+    m_State = USB_STATE_RESET;
+
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       HardwareInitialize
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    Hardware Initialize.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::HardwareInitialize(void)
+{
+    Notify(m_pHardwareInitializeCallback, USB_CALLBACK_HARDWARE_INITIALIZE, 0U);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       HardwareDeInitialize
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    Hardware De Initialize.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::HardwareDeInitialize(void)
+{
+    Notify(m_pHardwareDeInitializeCallback, USB_CALLBACK_HARDWARE_DEINITIALIZE, 0U);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       RegisterCallback
+//
+//  Parameter(s):   CallbackID, pCallback
+//  Return:         SystemState_e
+//
+//  Description:    Register Callback.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::RegisterCallback(USB_Callback_e CallbackID, CallbackInterface* pCallback)
+{
+    SystemState_e Status = SYS_READY;
+
+    if(pCallback == nullptr)
+    {
+        m_ErrorCode |= USB_ERROR_INVALID_CALLBACK;
+        return SYS_ERROR;
+    }
+
+    if(Lock() == false)
     {
         return SYS_BUSY;
     }
 
-    return SYS_DEVICE_ERROR;
-}
-#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
-
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           RegisterReceiveCallback
-// Parameter(s):   pCallback - serial receive callback
-// Return:         void
-//
-// Description:    Register the Console callback for CDC receive events
-//
-//-------------------------------------------------------------------------------------------------
-#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
-void USB_CDC_ACM_Driver::RegisterReceiveCallback(CallbackInterface* pCallback)
-{
-    m_pReceiveCallback = pCallback;
-}
-#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
-
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           EnableReceiveCallbacks
-// Parameter(s):   CallbackTypes - enabled serial callback types
-// Return:         void
-//
-// Description:    Select CDC receive events to forward to the registered callback
-//
-//-------------------------------------------------------------------------------------------------
-#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
-void USB_CDC_ACM_Driver::EnableReceiveCallbacks(int CallbackTypes)
-{
-    m_ReceiveCallbackTypes = CallbackTypes;
-}
-#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
-
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           Initialize
-//
-// Parameter(s):   void
-// Return:         bool - true when the USB device is initialized
-//
-// Description:    Initialize the USB peripheral and enable its interrupt
-//
-//-------------------------------------------------------------------------------------------------
-bool USB_Driver::Initialize(void)
-{
-    if(m_Initialized == true)
+    if(m_State == USB_STATE_READY)
     {
-        return true;
+        switch(CallbackID)
+        {
+        case USB_CALLBACK_SOF:
+            m_pSOFCallback = pCallback;
+            break;
+
+        case USB_CALLBACK_SETUP:
+            m_pSetupStageCallback = pCallback;
+            break;
+
+        case USB_CALLBACK_RESET:
+            m_pResetCallback = pCallback;
+            break;
+
+        case USB_CALLBACK_SUSPEND:
+            m_pSuspendCallback = pCallback;
+            break;
+
+        case USB_CALLBACK_RESUME:
+            m_pResumeCallback = pCallback;
+            break;
+
+        case USB_CALLBACK_CONNECT:
+            m_pConnectCallback = pCallback;
+            break;
+
+        case USB_CALLBACK_DISCONNECT:
+            m_pDisconnectCallback = pCallback;
+            break;
+
+        case USB_CALLBACK_HARDWARE_INITIALIZE:
+            m_pHardwareInitializeCallback = pCallback;
+            break;
+
+        case USB_CALLBACK_HARDWARE_DEINITIALIZE:
+            m_pHardwareDeInitializeCallback = pCallback;
+            break;
+
+        default:
+
+            m_ErrorCode |= USB_ERROR_INVALID_CALLBACK;
+
+            Status = SYS_ERROR;
+            break;
+        }
     }
-
-    if(((RCC->CR & RCC_CR_PLLRDY) == 0) || ((RCC->PLLCFGR & RCC_PLLCFGR_PLLQEN) == 0))
+    else if(m_State == USB_STATE_RESET)
     {
-        return false;
-    }
+        switch(CallbackID)
+        {
+        case USB_CALLBACK_HARDWARE_INITIALIZE:
+            m_pHardwareInitializeCallback = pCallback;
+            break;
 
-    if(InitializeClass() == false)
-    {
-        return false;
-    }
+        case USB_CALLBACK_HARDWARE_DEINITIALIZE:
+            m_pHardwareDeInitializeCallback = pCallback;
+            break;
 
-    RCC->APB1ENR1  |= RCC_APB1ENR1_PWREN;
-    PWR->CR2       |= PWR_CR2_USV;
-    RCC->CCIPR      = (RCC->CCIPR & ~RCC_CCIPR_CLK48SEL) | RCC_CCIPR_CLK48SEL_1;
-    RCC->APB1ENR1  |= RCC_APB1ENR1_USBFSEN;
-    (void)RCC->APB1ENR1;
-    RCC->APB1RSTR1 |= RCC_APB1RSTR1_USBFSRST;
-    RCC->APB1RSTR1 &= ~RCC_APB1RSTR1_USBFSRST;
-    USB_REGS->BCDR = 0;
-    USB_REGS->CNTR = USB_CNTR_FRES;
-    LIB_Delay_uSec(10);
-    USB_REGS->CNTR = 0;
-    USB_REGS->ISTR = 0;
-    Reset();
-    USB_REGS->CNTR = USB_CNTR_CTRM | USB_CNTR_RESETM | USB_CNTR_SUSPM | USB_CNTR_WKUPM;
-    NVIC_ClearPendingIRQ(USB_IRQn);
-    NVIC_SetPriority(USB_IRQn, 5);
-    m_Initialized = true;
-    NVIC_EnableIRQ(USB_IRQn);
-    USB_REGS->BCDR = USB_BCDR_DPPU;
-    return true;
-}
+        default:
 
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           SetEndpointStatus
-//
-// Parameter(s):   Endpoint - USB endpoint number
-//                 Mask - endpoint status fields to update
-//                 Status - requested endpoint status
-// Return:         void
-//
-// Description:    Update endpoint status fields while preserving other register bits
-//
-//-------------------------------------------------------------------------------------------------
-void USB_Driver::SetEndpointStatus(uint8_t Endpoint, uint16_t Mask, uint16_t Status)
-{
-    uint16_t Value = USB_ENDPOINT(Endpoint);
-    USB_ENDPOINT(Endpoint) = (Value & (USB_EP_T_FIELD | USB_EP_KIND | USB_EPADDR_FIELD)) | USB_EP_CTR_RX | USB_EP_CTR_TX | ((Value ^ Status) & Mask);
-}
+            m_ErrorCode |= USB_ERROR_INVALID_CALLBACK;
 
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           ClearEndpointEvent
-//
-// Parameter(s):   Endpoint - USB endpoint number
-//                 Event - endpoint event flags to clear
-// Return:         void
-//
-// Description:    Clear selected endpoint events without changing its status fields
-//
-//-------------------------------------------------------------------------------------------------
-void USB_Driver::ClearEndpointEvent(uint8_t Endpoint, uint16_t Event)
-{
-    USB_ENDPOINT(Endpoint) = (USB_ENDPOINT(Endpoint) & (USB_EP_T_FIELD | USB_EP_KIND | USB_EPADDR_FIELD)) | ((USB_EP_CTR_RX | USB_EP_CTR_TX) & ~Event);
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           ConfigureEndpoint
-// Parameter(s):   Endpoint - endpoint number
-//                 Type - endpoint transfer type
-//                 TxAddress - PMA transmit buffer address
-//                 RxAddress - PMA receive buffer address
-// Return:         void
-//
-// Description:    Configure an endpoint and its packet memory buffer addresses
-//
-//-------------------------------------------------------------------------------------------------
-void USB_Driver::ConfigureEndpoint(uint8_t Endpoint, uint16_t Type, uint16_t TxAddress, uint16_t RxAddress)
-{
-    USB_TABLE[Endpoint * 4] = TxAddress;
-    USB_TABLE[Endpoint * 4 + 1] = 0;
-    USB_TABLE[Endpoint * 4 + 2] = RxAddress;
-    USB_TABLE[Endpoint * 4 + 3] = 0;
-    USB_ENDPOINT(Endpoint) = Type | Endpoint;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           IsEndpointTxReady
-// Parameter(s):   Endpoint - endpoint number
-// Return:         bool - true when the endpoint can accept a transmit packet
-//
-// Description:    Check whether an endpoint transmit status is NAK
-//
-//-------------------------------------------------------------------------------------------------
-bool USB_Driver::IsEndpointTxReady(uint8_t Endpoint) const
-{
-    return (USB_ENDPOINT(Endpoint) & USB_EPTX_STAT) == USB_EP_TX_NAK;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           IsEndpointTxStalled
-// Parameter(s):   Endpoint - endpoint number
-// Return:         bool - true when the endpoint transmit direction is stalled
-//
-// Description:    Check whether the endpoint transmit direction is stalled
-//
-//-------------------------------------------------------------------------------------------------
-bool USB_Driver::IsEndpointTxStalled(uint8_t Endpoint) const
-{
-    return (USB_ENDPOINT(Endpoint) & USB_EPTX_STAT) == USB_EP_TX_STALL;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           IsEndpointRxBlocked
-// Parameter(s):   Endpoint - endpoint number
-// Return:         bool - true when the endpoint receive direction is NAK
-//
-// Description:    Check whether the endpoint receive direction is blocked
-//
-//-------------------------------------------------------------------------------------------------
-bool USB_Driver::IsEndpointRxBlocked(uint8_t Endpoint) const
-{
-    return (USB_ENDPOINT(Endpoint) & USB_EPRX_STAT) == USB_EP_RX_NAK;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           EnableEndpointRx
-// Parameter(s):   Endpoint - endpoint number
-//                 Capacity - receive buffer capacity in bytes
-// Return:         void
-//
-// Description:    Set the PMA receive capacity and enable endpoint reception
-//
-//-------------------------------------------------------------------------------------------------
-void USB_Driver::EnableEndpointRx(uint8_t Endpoint, uint16_t Capacity)
-{
-    uint16_t Allocation = 0;
-
-    if(Capacity > 62)
-    {
-        uint16_t Blocks = static_cast<uint16_t>((Capacity + 31) / 32);
-        Allocation = static_cast<uint16_t>(0x8000 | ((Blocks - 1) << 10));
+            Status = SYS_ERROR;
+            break;
+        }
     }
     else
     {
-        Allocation = static_cast<uint16_t>((Capacity + 1) / 2);
+        m_ErrorCode |= USB_ERROR_INVALID_CALLBACK;
+
+        Status = SYS_ERROR;
     }
 
-    USB_TABLE[Endpoint * 4 + 3] = Allocation;
-    SetEndpointStatus(Endpoint, USB_EPRX_STAT, USB_EP_RX_VALID);
+    Unlock();
+    return Status;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-// Name:           GetEndpointRxLength
-// Parameter(s):   Endpoint - endpoint number
-// Return:         uint16_t - received packet length
+//  Function:       UnRegisterCallback
 //
-// Description:    Read the received byte count from endpoint packet memory
+//  Parameter(s):   CallbackID
+//  Return:         SystemState_e
+//
+//  Description:    Un Register Callback.
 //
 //-------------------------------------------------------------------------------------------------
-uint16_t USB_Driver::GetEndpointRxLength(uint8_t Endpoint) const
+SystemState_e USB_Driver::UnRegisterCallback(USB_Callback_e CallbackID)
 {
-    return USB_TABLE[Endpoint * 4 + 3] & 0x03FF;
-}
+    SystemState_e Status = SYS_READY;
 
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           ReadEndpointRx
-// Parameter(s):   Endpoint - endpoint number
-//                 pData - destination buffer
-//                 Length - number of bytes to read
-// Return:         void
-//
-// Description:    Copy an endpoint receive packet from PMA to a class buffer
-//
-//-------------------------------------------------------------------------------------------------
-void USB_Driver::ReadEndpointRx(uint8_t Endpoint, uint8_t* pData, uint16_t Length)
-{
-    ReadPMA(USB_TABLE[Endpoint * 4 + 2], pData, Length);
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           WritePMA
-//
-// Parameter(s):   Address - packet memory address
-//                 pData - source data
-//                 Length - number of bytes to write
-// Return:         void
-//
-// Description:    Copy data to USB packet memory using 16-bit accesses
-//
-//-------------------------------------------------------------------------------------------------
-void USB_Driver::WritePMA(uint16_t Address, const uint8_t* pData, uint16_t Length)
-{
-    volatile uint16_t* pMemory = reinterpret_cast<volatile uint16_t*>(USB_PMAADDR + Address);
-    
-    for(uint16_t Offset = 0; Offset < Length; Offset += 2)
+    if(Lock() == false)
     {
-        uint16_t Value = pData[Offset];
-
-        if((Offset + 1) < Length)
-        {
-            Value |= static_cast<uint16_t>(pData[Offset + 1]) << 8;
-        }
-
-        *pMemory++ = Value;
-    }
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           ReadPMA
-//
-// Parameter(s):   Address - packet memory address
-//                 pData   - destination buffer
-//                 Length  - number of bytes to read
-// Return:         void
-//
-// Description:    Copy data from USB packet memory using 16-bit accesses
-//
-//-------------------------------------------------------------------------------------------------
-void USB_Driver::ReadPMA(uint16_t Address, uint8_t* pData, uint16_t Length)
-{
-    volatile uint16_t* pMemory = reinterpret_cast<volatile uint16_t*>(USB_PMAADDR + Address);
-    
-    for(uint16_t Offset = 0; Offset < Length; Offset += 2)
-    {
-        uint16_t Value = *pMemory++;
-        pData[Offset] = static_cast<uint8_t>(Value);
-        
-        if((Offset + 1) < Length)
-        {
-            pData[Offset + 1] = static_cast<uint8_t>(Value >> 8);
-        }
-    }
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           Transmit
-//
-// Parameter(s):   Endpoint - USB endpoint number
-//                 pData - source data
-//                 Length - number of bytes to transmit
-// Return:         void
-//
-// Description:    Write endpoint data to packet memory and start transmission
-//
-//-------------------------------------------------------------------------------------------------
-void USB_Driver::Transmit(uint8_t Endpoint, const uint8_t* pData, uint16_t Length)
-{
-    WritePMA(USB_TABLE[Endpoint * 4], pData, Length);
-    USB_TABLE[Endpoint * 4 + 1] = Length;
-    SetEndpointStatus(Endpoint, USB_EPTX_STAT, USB_EP_TX_VALID);
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           Reset
-// Parameter(s):   void
-// Return:         void
-//
-// Description:    Reset USB state and initialize the control endpoint
-//
-//-------------------------------------------------------------------------------------------------
-void USB_Driver::Reset(void)
-{
-    m_Configured = false;
-    m_Suspended = false;
-    m_ControlRemaining = 0;
-    m_ControlZLP = false;
-    m_AddressPending = false;
-    m_Configuration = 0;
-    USB_REGS->BTABLE = 0;
-
-    ResetClassState();
-
-    for(uint8_t Endpoint = 0; Endpoint < 8; ++Endpoint)
-    {
-        USB_ENDPOINT(Endpoint) = 0;
-        SetEndpointStatus(Endpoint, USB_EPRX_STAT | USB_EPTX_STAT, 0);
-        uint16_t Toggles = USB_ENDPOINT(Endpoint) & (USB_EP_DTOG_RX | USB_EP_DTOG_TX);
-        USB_ENDPOINT(Endpoint) = Toggles;
+        return SYS_BUSY;
     }
 
-    USB_TABLE[0] = 0x40;
-    USB_TABLE[1] = 0;
-    USB_TABLE[2] = 0x80;
-    USB_TABLE[3] = 0x8400;
-    USB_ENDPOINT(0) = USB_EP_CONTROL;
-    SetEndpointStatus(0, USB_EPRX_STAT | USB_EPTX_STAT, USB_EP_RX_VALID | USB_EP_TX_NAK);
-    USB_REGS->DADDR = USB_DADDR_EF;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           ConfigureEndpoints
-//
-// Parameter(s):   void
-// Return:         void
-//
-// Description:    Configure CDC endpoints for the current USB configuration
-//
-//-------------------------------------------------------------------------------------------------
-void USB_Driver::ConfigureEndpoints(void)
-{
-    m_Configured = false;
-
-    ResetClassState();
-
-    for(uint8_t Endpoint = 1; Endpoint < 8; ++Endpoint)
+    if(m_State == USB_STATE_READY)
     {
-        USB_ENDPOINT(Endpoint) = Endpoint;
-        SetEndpointStatus(Endpoint, USB_EPRX_STAT | USB_EPTX_STAT, 0);
-        uint16_t Toggles = USB_ENDPOINT(Endpoint) & (USB_EP_DTOG_RX | USB_EP_DTOG_TX);
-        USB_ENDPOINT(Endpoint) = Endpoint | Toggles;
+        switch(CallbackID)
+        {
+        case USB_CALLBACK_SOF:
+            m_pSOFCallback = nullptr;
+            break;
+
+        case USB_CALLBACK_SETUP:
+            m_pSetupStageCallback = nullptr;
+            break;
+
+        case USB_CALLBACK_RESET:
+            m_pResetCallback = nullptr;
+            break;
+
+        case USB_CALLBACK_SUSPEND:
+            m_pSuspendCallback = nullptr;
+            break;
+
+        case USB_CALLBACK_RESUME:
+            m_pResumeCallback = nullptr;
+            break;
+
+        case USB_CALLBACK_CONNECT:
+            m_pConnectCallback = nullptr;
+            break;
+
+        case USB_CALLBACK_DISCONNECT:
+            m_pDisconnectCallback = nullptr;
+            break;
+
+        case USB_CALLBACK_HARDWARE_INITIALIZE:
+            m_pHardwareInitializeCallback = nullptr;
+            break;
+
+        case USB_CALLBACK_HARDWARE_DEINITIALIZE:
+            m_pHardwareDeInitializeCallback = nullptr;
+            break;
+
+        default:
+
+            m_ErrorCode |= USB_ERROR_INVALID_CALLBACK;
+
+            Status = SYS_ERROR;
+            break;
+        }
     }
-
-    if(m_Configuration == 0)
+    else if(m_State == USB_STATE_RESET)
     {
-        return;
-    }
-
-    ConfigureClassEndpoints();
-    m_Configured = true;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           ResetClassState
-// Parameter(s):   void
-// Return:         void
-//
-// Description:    Reset CDC buffers and class-specific transfer state
-//
-//-------------------------------------------------------------------------------------------------
-#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
-void USB_CDC_ACM_Driver::ResetClassState(void)
-{
-    m_TxBusy = false;
-    m_TxZLP = false;
-    m_TxPacketLength = 0;
-    m_RxFifo.Flush(m_RxFifo.CheckUsedSpace());
-    m_TxFifo.Flush(m_TxFifo.CheckUsedSpace());
-    m_ControlLines = 0;
-    m_ExpectLineCoding = false;
-    m_ReceiveBufferHead = 0;
-    m_ReceiveTransfer.u.Head = 0;
-
-    if((m_pReceiveCallback != nullptr) &&
-       ((m_ReceiveCallbackTypes & SERIAL_CALLBACK_RX_IDLE) != 0))
-    {
-        m_pReceiveCallback->CallbackFunction(SERIAL_CALLBACK_RX_IDLE, &m_ReceiveTransfer);
-    }
-}
-#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
-
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           ConfigureClassEndpoints
-// Parameter(s):   void
-// Return:         void
-//
-// Description:    Configure the CDC notification and bulk endpoints
-//
-//-------------------------------------------------------------------------------------------------
-#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
-void USB_CDC_ACM_Driver::ConfigureClassEndpoints(void)
-{
-    ConfigureEndpoint(1, USB_EP_INTERRUPT, 0xC0, 0);
-    SetEndpointStatus(1, USB_EPTX_STAT, USB_EP_TX_NAK);
-
-    ConfigureEndpoint(2, USB_EP_BULK, 0xD0, 0x110);
-    EnableEndpointRx(2, USB_CDC_PACKET_SIZE);
-    SetEndpointStatus(2, USB_EPTX_STAT, USB_EP_TX_NAK);
-}
-#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
-
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           GetDescriptor
-//
-// Parameter(s):   Value - descriptor type and index
-//                 Requested - requested descriptor length
-// Return:         bool - true when the descriptor is supported
-//
-// Description:    Select and send a USB device, configuration, or string descriptor
-//
-//-------------------------------------------------------------------------------------------------
-#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
-bool USB_CDC_ACM_Driver::GetClassDescriptor(uint16_t Value, uint16_t Requested)
-{
-    static const uint8_t Device[] = {
-        18, 1, 0x00, 0x02, 0xEF, 2, 1, 64,
-        USB_CDC_VID & 0xFF, USB_CDC_VID >> 8, USB_CDC_PID & 0xFF, USB_CDC_PID >> 8,
-        0x00, 0x01, 1, 2, 3, 1
-    };
-    
-    static const uint8_t Configuration[] =
-    {
-        9, 2, 75, 0, 2, 1, 0, 0x80, 50,
-        8, 11, 0, 2, 2, 2, 1, 0,
-        9, 4, 0, 0, 1, 2, 2, 1, 0,
-        5, 0x24, 0, 0x10, 0x01,
-        5, 0x24, 1, 0, 1,
-        4, 0x24, 2, 2,
-        5, 0x24, 6, 0, 1,
-        7, 5, 0x81, 3, 16, 0, 16,
-        9, 4, 1, 0, 2, 0x0A, 0, 0, 0,
-        7, 5, 0x02, 2, 64, 0, 0,
-        7, 5, 0x82, 2, 64, 0, 0
-    };
-    static_assert(sizeof(Configuration) == 75, "Invalid CDC configuration length");
-
-    if(Value == 0x0100)
-    {
-        ControlSend(Device, sizeof(Device), Requested);
-    }
-    else if(Value == 0x0200)
-    {
-        ControlSend(Configuration, sizeof(Configuration), Requested);
-    }
-    else if((Value >> 8) == 3)
-    {
-        uint8_t Index = static_cast<uint8_t>(Value);
-
-        if(Index == 0)
+        switch(CallbackID)
         {
-            static const uint8_t Language[] = { 4, 3, 0x09, 0x04 };
-            ControlSend(Language, sizeof(Language), Requested);
-            return true;
+        case USB_CALLBACK_HARDWARE_INITIALIZE:
+            m_pHardwareInitializeCallback = nullptr;
+            break;
+
+        case USB_CALLBACK_HARDWARE_DEINITIALIZE:
+            m_pHardwareDeInitializeCallback = nullptr;
+            break;
+
+        default:
+
+            m_ErrorCode |= USB_ERROR_INVALID_CALLBACK;
+
+            Status = SYS_ERROR;
+            break;
         }
-
-        const char* pText = nullptr;
-        char Serial[25];
-
-        if(Index == 1)
-        {
-            pText = OUR_FIRMWARE_DIGINI_NAME;
-        }
-        else if(Index == 2)
-        {
-            pText = OUR_FIRMWARE_NAME;
-        }
-        else if(Index == 3)
-        {
-            static const char Hex[] = "0123456789ABCDEF";
-            const volatile uint32_t* pUID = reinterpret_cast<const volatile uint32_t*>(UID_BASE);
-
-            for(uint8_t Word = 0; Word < 3; ++Word)
-            {
-                uint32_t Unique = pUID[Word];
-                for(uint8_t Digit = 0; Digit < 8; ++Digit)
-                {
-                    Serial[Word * 8 + Digit] = Hex[(Unique >> (28 - Digit * 4)) & 15];
-                }
-            }
-
-            Serial[24] = 0;
-            pText = Serial;
-        }
-        else
-        {
-            return false;
-        }
-
-        uint16_t Characters = static_cast<uint16_t>(strlen(pText));
-
-        if(Characters > ((sizeof(m_ControlBuffer) - 2) / 2))
-        {
-            Characters = (sizeof(m_ControlBuffer) - 2) / 2;
-        }
-
-        m_ControlBuffer[0] = static_cast<uint8_t>(2 + Characters * 2);
-        m_ControlBuffer[1] = 3;
-
-        for(uint16_t Position = 0; Position < Characters; ++Position)
-        {
-            m_ControlBuffer[2 + Position * 2] = static_cast<uint8_t>(pText[Position]);
-            m_ControlBuffer[3 + Position * 2] = 0;
-        }
-
-        ControlSend(m_ControlBuffer, m_ControlBuffer[0], Requested);
     }
     else
     {
-        return false;
+        m_ErrorCode |= USB_ERROR_INVALID_CALLBACK;
+
+        Status = SYS_ERROR;
     }
 
-    return true;
-}
-#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
-    
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           ControlSend
-//
-// Parameter(s):   pData - control response data
-//                 Length - response length
-//                 Requested - host-requested length
-// Return:         void
-//
-// Description:    Prepare a control response and start its first packet
-//
-//-------------------------------------------------------------------------------------------------
-void USB_Driver::ControlSend(const uint8_t* pData, uint16_t Length, uint16_t Requested)
-{
-    m_pControlData = pData;
-
-    m_ControlZLP = (Length < Requested) && ((Length % USB_CONTROL_PACKET_SIZE) == 0);
-    m_ControlRemaining = Length < Requested ? Length : Requested;
-    ControlIn();
+    Unlock();
+    return Status;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-// Name:           ControlIn
+//  Function:       RegisterDataOutStageCallback
 //
-// Parameter(s):   void
-// Return:         void
+//  Parameter(s):   pCallback
+//  Return:         SystemState_e
 //
-// Description:    Send the next packet of a control response
+//  Description:    Register Data Out Stage Callback.
 //
 //-------------------------------------------------------------------------------------------------
-void USB_Driver::ControlIn(void)
+SystemState_e USB_Driver::RegisterDataOutStageCallback(CallbackInterface* pCallback)
 {
+    SystemState_e Status = SYS_READY;
 
-    if(m_AddressPending == true)
+    if(pCallback == nullptr)
     {
-        USB_REGS->DADDR = USB_DADDR_EF | m_PendingAddress;
-        m_AddressPending = false;
-        return;
+        m_ErrorCode |= USB_ERROR_INVALID_CALLBACK;
+
+        return SYS_ERROR;
     }
 
-    uint16_t Length = m_ControlRemaining > USB_CONTROL_PACKET_SIZE ?
-        static_cast<uint16_t>(USB_CONTROL_PACKET_SIZE) : m_ControlRemaining;
-    Transmit(0, m_pControlData, Length);
-
-    if(Length != 0)
+    if(Lock() == false)
     {
-        m_pControlData += Length;
+        return SYS_BUSY;
     }
 
-    m_ControlRemaining -= Length;
-
-    if(Length == 0)
+    if(m_State == USB_STATE_READY)
     {
-        m_ControlZLP = false;
-    }
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           StallControl
-//
-// Parameter(s):   void
-// Return:         void
-//
-// Description:    Stall the control endpoint and cancel any pending control transfer
-//
-//-------------------------------------------------------------------------------------------------
-void USB_Driver::StallControl(void)
-{
-    m_ControlRemaining = 0;
-    m_ControlZLP = false;
-    CancelClassControl();
-    SetEndpointStatus(0, USB_EPRX_STAT | USB_EPTX_STAT, USB_EP_RX_STALL | USB_EP_TX_STALL);
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           CancelClassControl
-// Parameter(s):   void
-// Return:         void
-//
-// Description:    Cancel any pending CDC-specific control request
-//
-//-------------------------------------------------------------------------------------------------
-#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
-void USB_CDC_ACM_Driver::CancelClassControl(void)
-{
-    m_ExpectLineCoding = false;
-}
-#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
-
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           Setup
-//
-// Parameter(s):   pSetup - received USB setup packet
-// Return:         void
-//
-// Description:    Decode standard and CDC class setup requests
-//
-//-------------------------------------------------------------------------------------------------
-void USB_Driver::Setup(const uint8_t* pSetup)
-{
-    uint8_t Type = pSetup[0];
-    uint8_t Request = pSetup[1];
-    uint16_t Value = pSetup[2] | (static_cast<uint16_t>(pSetup[3]) << 8);
-    uint16_t Index = pSetup[4] | (static_cast<uint16_t>(pSetup[5]) << 8);
-    uint16_t Length = pSetup[6] | (static_cast<uint16_t>(pSetup[7]) << 8);
-    m_AddressPending = false;
-    CancelClassControl();
-    m_ControlRemaining = 0;
-    m_ControlZLP = false;
-    m_pControlData = nullptr;
-    SetEndpointStatus(0, USB_EPRX_STAT | USB_EPTX_STAT, USB_EP_RX_VALID | USB_EP_TX_NAK);
-
-    if((Type == 0x80) && (Request == 6) && (Length != 0))
-    {
-        if(GetClassDescriptor(Value, Length) == true)
-        {
-            return;
-        }
-    }
-    else if((Type == 0) && (Request == 5) && (Value <= 127) && (Index == 0) &&
-            (Length == 0) && (m_Configured == false))
-    {
-        Transmit(0, nullptr, 0);
-        m_PendingAddress = static_cast<uint8_t>(Value);
-        m_AddressPending = true;
-        return;
-    }
-    else if((Type == 0) && (Request == 9) && (Value <= 1) && (Index == 0) &&
-            (Length == 0) && ((USB_REGS->DADDR & USB_DADDR_ADD) != 0))
-    {
-        m_Configuration = static_cast<uint8_t>(Value);
-        ConfigureEndpoints();
-        ControlSend(nullptr, 0, 0);
-        return;
-    }
-    else if((Type == 0x80) && (Request == 8) && (Value == 0) && (Index == 0) && (Length == 1))
-    {
-        m_ControlBuffer[0] = m_Configuration;
-        ControlSend(m_ControlBuffer, 1, Length);
-        return;
-    }
-    else if((Type == 0x81) && (Request == 10) && (Value == 0) &&
-            (Index < GetInterfaceCount()) && (Length == 1) && (m_Configured == true))
-    {
-        m_ControlBuffer[0] = 0;
-        ControlSend(m_ControlBuffer, 1, Length);
-        return;
-    }
-    else if((Type == 1) && (Request == 11) && (Value == 0) &&
-            (Index < GetInterfaceCount()) && (Length == 0) && (m_Configured == true))
-    {
-        ControlSend(nullptr, 0, 0);
-        return;
-    }
-    else if((Request == 0) && (Value == 0) && (Length == 2))
-    {
-        bool IsSupported = false;
-
-        if(Type == 0x80)
-        {
-            IsSupported = (Index == 0);
-        }
-        else if(Type == 0x81)
-        {
-            IsSupported = (m_Configured == true) && (Index < GetInterfaceCount());
-        }
-        else if((Type == 0x82) && (Index <= 0x008F) && ((Index & 0x0070) == 0))
-        {
-            uint8_t Endpoint = static_cast<uint8_t>(Index & 0x0F);
-            bool In = (Index & 0x80) != 0;
-
-            IsSupported = (Endpoint == 0) ||
-                ((m_Configured == true) && (IsEndpointAvailable(Endpoint, In) == true));
-        }
-
-        if(IsSupported == true)
-        {
-            m_ControlBuffer[0] = 0;
-            m_ControlBuffer[1] = 0;
-
-            if(Type == 0x82)
-            {
-                uint16_t Mask = (Index & 0x80) ? USB_EPTX_STAT : USB_EPRX_STAT;
-                uint16_t Halt = (Index & 0x80) ? USB_EP_TX_STALL : USB_EP_RX_STALL;
-                m_ControlBuffer[0] = (USB_ENDPOINT(Index & 15) & Mask) == Halt;
-            }
-
-            ControlSend(m_ControlBuffer, 2, Length);
-            return;
-        }
-    }
-    else if((Type == 2) && ((Request == 1) || (Request == 3)) && (Value == 0) &&
-            (Length == 0) && (m_Configured == true) && (Index <= 0x008F) &&
-            ((Index & 0x0070) == 0) &&
-            (IsEndpointAvailable(static_cast<uint8_t>(Index & 0x0F), (Index & 0x80) != 0) == true))
-    {
-        uint8_t Endpoint = static_cast<uint8_t>(Index & 0x0F);
-        uint16_t Mask = (Index & 0x80) ? USB_EPTX_STAT : USB_EPRX_STAT;
-        uint16_t Status = (Index & 0x80) ? USB_EP_TX_STALL : USB_EP_RX_STALL;
-
-        if(Request == 1)
-        {
-            uint16_t Toggle = (Index & 0x80) ? USB_EP_DTOG_TX : USB_EP_DTOG_RX;
-            uint16_t Register = USB_ENDPOINT(Endpoint);
-            USB_ENDPOINT(Endpoint) = (Register & (USB_EP_T_FIELD | USB_EP_KIND | USB_EPADDR_FIELD | Toggle)) |
-                USB_EP_CTR_RX | USB_EP_CTR_TX;
-            Status = (Index & 0x80) ? USB_EP_TX_NAK : USB_EP_RX_NAK;
-        }
-
-        SetEndpointStatus(Endpoint, Mask, Status);
-
-        if(Request == 1)
-        {
-            HandleEndpointHaltCleared(Endpoint);
-        }
-
-        Process();
-        ControlSend(nullptr, 0, 0);
-        return;
-    }
-    else if(HandleClassSetup(Type, Request, Value, Index, Length) == true)
-    {
-        return;
-    }
-
-    StallControl();
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           HandleClassSetup
-// Parameter(s):   Type - request type
-//                 Request - request code
-//                 Value - request value
-//                 Index - interface index
-//                 Length - request data length
-// Return:         bool - true when the CDC request is supported
-//
-// Description:    Handle CDC ACM class-specific control requests
-//
-//-------------------------------------------------------------------------------------------------
-#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
-bool USB_CDC_ACM_Driver::HandleClassSetup(uint8_t Type, uint8_t Request, uint16_t Value,
-                                          uint16_t Index, uint16_t Length)
-{
-    if((Index == 0) && (m_Configured == true) && (Value == 0) &&
-       (Type == 0xA1) && (Request == 0x21) && (Length == 7))
-    {
-        memcpy(m_ControlBuffer, m_LineCoding, sizeof(m_LineCoding));
-        ControlSend(m_ControlBuffer, 7, Length);
-        return true;
-    }
-    else if((Index == 0) && (m_Configured == true) && (Value == 0) &&
-            (Type == 0x21) && (Request == 0x20) && (Length == 7))
-    {
-        m_ExpectLineCoding = true;
-        return true;
-    }
-    else if((Index == 0) && (m_Configured == true) && (Type == 0x21) &&
-            (Request == 0x22) && (Length == 0) && ((Value & ~3U) == 0))
-    {
-        m_ControlLines = Value;
-        uint8_t Notification[10] = { 0xA1, 0x20, 0, 0, 0, 0, 2, 0,
-            static_cast<uint8_t>((Value & 1) ? 3 : 0), 0 };
-
-        if(IsEndpointTxReady(1) == true)
-        {
-            Transmit(1, Notification, sizeof(Notification));
-        }
-
-        ControlSend(nullptr, 0, 0);
-        return true;
-    }
-
-    return false;
-}
-#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
-
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           ControlOut
-//
-// Parameter(s):   pData - received control data
-//                 Length - received data length
-// Return:         void
-//
-// Description:    Validate and accept CDC line coding data
-//
-//-------------------------------------------------------------------------------------------------
-#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
-void USB_CDC_ACM_Driver::HandleClassControlOut(const uint8_t* pData, uint16_t Length)
-{
-    if(m_ExpectLineCoding == true)
-    {
-        m_ExpectLineCoding = false;
-
-        if((Length != 7) || (pData[4] > 2) || (pData[5] > 4) ||
-            ((((pData[6] >= 5) && (pData[6] <= 8)) || (pData[6] == 16)) == false) ||
-            ((pData[0] | pData[1] | pData[2] | pData[3]) == 0))
-        {
-            StallControl();
-            return;
-        }
-
-        memcpy(m_LineCoding, pData, sizeof(m_LineCoding));
-        ControlSend(nullptr, 0, 0);
+        m_pDataOutStageCallback = pCallback;
     }
     else
     {
-        StallControl();
+        m_ErrorCode |= USB_ERROR_INVALID_CALLBACK;
+
+        Status = SYS_ERROR;
     }
+
+    Unlock();
+
+    return Status;
 }
-#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
-// Name:           StartTransmit
+//  Function:       UnRegisterDataOutStageCallback
 //
-// Parameter(s):   void
-// Return:         void
+//  Parameter(s):   None
+//  Return:         SystemState_e
 //
-// Description:    Start the next queued CDC packet when the transmit endpoint is available
+//  Description:    Un Register Data Out Stage Callback.
 //
 //-------------------------------------------------------------------------------------------------
-#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
-void USB_CDC_ACM_Driver::StartTransmit(void)
+SystemState_e USB_Driver::UnRegisterDataOutStageCallback(void)
 {
+    SystemState_e Status = SYS_READY;
 
-     if((m_Configured == false) || (m_Suspended == true) || (m_TxBusy == true) ||
-         (IsEndpointTxStalled(2) == true))
+    if(Lock() == false)
     {
-        return;
+        return SYS_BUSY;
     }
 
-    uint16_t Length = static_cast<uint16_t>(m_TxFifo.CheckUsedSpace());
-
-    if(Length == 0)
+    if(m_State == USB_STATE_READY)
     {
-
-        if(m_TxZLP == true)
-        {
-            m_TxZLP = false;
-            m_TxPacketLength = 0;
-            m_TxBusy = true;
-            Transmit(2, nullptr, 0);
-        }
-        return;
+        m_pDataOutStageCallback = nullptr;
     }
-
-    if(Length > USB_CDC_PACKET_SIZE)
+    else
     {
-        Length = USB_CDC_PACKET_SIZE;
+        m_ErrorCode |= USB_ERROR_INVALID_CALLBACK;
+
+        Status = SYS_ERROR;
     }
 
-    uint8_t Packet[USB_CDC_PACKET_SIZE];
+    Unlock();
 
-    for(uint16_t Position = 0; Position < Length; ++Position)
+    return Status;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       RegisterDataInStageCallback
+//
+//  Parameter(s):   pCallback
+//  Return:         SystemState_e
+//
+//  Description:    Register Data In Stage Callback.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::RegisterDataInStageCallback(CallbackInterface* pCallback)
+{
+    SystemState_e Status = SYS_READY;
+
+    if(pCallback == nullptr)
     {
-        Packet[Position] = static_cast<uint8_t>(m_TxFifo.At(Position));
+        m_ErrorCode |= USB_ERROR_INVALID_CALLBACK;
+
+        return SYS_ERROR;
     }
 
-    m_TxZLP = Length == USB_CDC_PACKET_SIZE;
-    m_TxPacketLength = Length;
-    m_TxBusy = true;
-    Transmit(2, Packet, Length);
-}
-#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
-
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           Receive
-//
-// Parameter(s):   void
-// Return:         void
-//
-// Description:    Receive one bulk packet into the RX ring buffer
-//
-//-------------------------------------------------------------------------------------------------
-#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
-void USB_CDC_ACM_Driver::Receive(void)
-{
-    uint16_t Length = GetEndpointRxLength(2);
-    size_t Free = m_RxFifo.CheckFreeSpace();
-    bool InternalBufferHasSpace = Length <= Free;
-    bool ExternalBufferAttached = (m_pReceiveBuffer != nullptr) && (m_ReceiveBufferCapacity != 0);
-
-    if((Length <= USB_CDC_PACKET_SIZE) &&
-       ((InternalBufferHasSpace == true) || (ExternalBufferAttached == true)))
+    if(Lock() == false)
     {
-        uint8_t Packet[USB_CDC_PACKET_SIZE];
-        ReadEndpointRx(2, Packet, Length);
-
-        if(InternalBufferHasSpace == true)
-        {
-            m_RxFifo.Write(Packet, Length);
-        }
-
-        for(uint16_t Position = 0; Position < Length; ++Position)
-        {
-            if(ExternalBufferAttached == true)
-            {
-                m_pReceiveBuffer[m_ReceiveBufferHead] = Packet[Position];
-                m_ReceiveBufferHead++;
-
-                if(m_ReceiveBufferHead == m_ReceiveBufferCapacity)
-                {
-                    m_ReceiveBufferHead = 0;
-                }
-            }
-        }
-
-        if((m_pReceiveCallback != nullptr) && (m_pReceiveBuffer != nullptr) &&
-           (m_ReceiveBufferCapacity != 0))
-        {
-            m_ReceiveTransfer.u.Head = m_ReceiveBufferHead;
-
-            if((m_ReceiveCallbackTypes & SERIAL_CALLBACK_RX_IDLE) != 0)
-            {
-                m_pReceiveCallback->CallbackFunction(SERIAL_CALLBACK_RX_IDLE, &m_ReceiveTransfer);
-            }
-            else if((m_ReceiveCallbackTypes & SERIAL_CALLBACK_RX_NOT_EMPTY) != 0)
-            {
-                m_pReceiveCallback->CallbackFunction(SERIAL_CALLBACK_RX_NOT_EMPTY, &m_ReceiveTransfer);
-            }
-        }
+        return SYS_BUSY;
     }
 
-    Process();
-}
-#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
-
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           Process
-//
-// Parameter(s):   void
-// Return:         void
-//
-// Description:    Re-enable RX when buffer space is available and advance queued TX data
-//
-//-------------------------------------------------------------------------------------------------
-void USB_Driver::Process(void)
-{
-    if(m_Initialized == false)
+    if(m_State == USB_STATE_READY)
     {
-        return;
+        m_pDataInStageCallback = pCallback;
     }
-
-    uint32_t InterruptState = __get_PRIMASK();
-    __disable_irq();
-
-    ProcessClass();
-
-    __set_PRIMASK(InterruptState);
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           ProcessClass
-// Parameter(s):   void
-// Return:         void
-//
-// Description:    Service CDC receive flow control and pending transmissions
-//
-//-------------------------------------------------------------------------------------------------
-#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
-void USB_CDC_ACM_Driver::ProcessClass(void)
-{
-    bool InternalBufferHasSpace = m_RxFifo.CheckFreeSpace() >= USB_CDC_PACKET_SIZE;
-    bool ExternalBufferAttached = (m_pReceiveBuffer != nullptr) && (m_ReceiveBufferCapacity != 0);
-
-    if((m_Configured == true) && (m_Suspended == false) &&
-       (IsEndpointRxBlocked(2) == true) &&
-       ((InternalBufferHasSpace == true) || (ExternalBufferAttached == true)))
+    else
     {
-        EnableEndpointRx(2, USB_CDC_PACKET_SIZE);
+        m_ErrorCode |= USB_ERROR_INVALID_CALLBACK;
+
+        Status = SYS_ERROR;
     }
 
-    StartTransmit();
-}
-#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
+    Unlock();
 
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           IsConfigured
-//
-// Parameter(s):   void
-// Return:         bool - true when configured and not suspended
-//
-// Description:    Report whether the USB device can currently transfer data
-//
-//-------------------------------------------------------------------------------------------------
-bool USB_Driver::IsConfigured(void) const
-{
-    return (m_Configured == true) && (m_Suspended == false);
+    return Status;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-// Name:           GetInterfaceCount
-// Parameter(s):   void
-// Return:         uint8_t - number of CDC interfaces
+//  Function:       UnRegisterDataInStageCallback
 //
-// Description:    Report the number of interfaces in the CDC ACM configuration
+//  Parameter(s):   None
+//  Return:         SystemState_e
+//
+//  Description:    Un Register Data In Stage Callback.
 //
 //-------------------------------------------------------------------------------------------------
-#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
-uint8_t USB_CDC_ACM_Driver::GetInterfaceCount(void) const
+SystemState_e USB_Driver::UnRegisterDataInStageCallback(void)
 {
-    return 2;
-}
-#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
+    SystemState_e Status = SYS_READY;
 
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           IsEndpointAvailable
-// Parameter(s):   Endpoint - endpoint number
-//                 In - true for an IN endpoint
-// Return:         bool - true when the endpoint direction is used by CDC
-//
-// Description:    Validate an endpoint address against the CDC endpoint map
-//
-//-------------------------------------------------------------------------------------------------
-#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
-bool USB_CDC_ACM_Driver::IsEndpointAvailable(uint8_t Endpoint, bool In) const
-{
-    return ((Endpoint == 1) && (In == true)) || (Endpoint == 2);
-}
-#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
-
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           HandleEndpointHaltCleared
-// Parameter(s):   Endpoint - endpoint number
-// Return:         void
-//
-// Description:    Resume CDC transmission when the host clears a bulk endpoint halt
-//
-//-------------------------------------------------------------------------------------------------
-#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
-void USB_CDC_ACM_Driver::HandleEndpointHaltCleared(uint8_t Endpoint)
-{
-    if(Endpoint == 2)
+    if(Lock() == false)
     {
-        StartTransmit();
+        return SYS_BUSY;
     }
-}
-#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
 
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           HandleClassEndpointRx
-// Parameter(s):   Endpoint - endpoint number
-// Return:         void
-//
-// Description:    Dispatch received CDC endpoint data
-//
-//-------------------------------------------------------------------------------------------------
-#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
-void USB_CDC_ACM_Driver::HandleClassEndpointRx(uint8_t Endpoint)
-{
-    if((Endpoint == 2) && (m_Configured == true))
+    if(m_State == USB_STATE_READY)
     {
-        Receive();
+        m_pDataInStageCallback = nullptr;
     }
-}
-#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
-
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           HandleClassEndpointTx
-// Parameter(s):   Endpoint - endpoint number
-// Return:         void
-//
-// Description:    Complete a CDC bulk IN packet and schedule the next one
-//
-//-------------------------------------------------------------------------------------------------
-#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
-void USB_CDC_ACM_Driver::HandleClassEndpointTx(uint8_t Endpoint)
-{
-    if(Endpoint == 2)
+    else
     {
-        m_TxFifo.Flush(m_TxPacketLength);
-        m_TxPacketLength = 0;
-        m_TxBusy = false;
-        StartTransmit();
+        m_ErrorCode |= USB_ERROR_INVALID_CALLBACK;
+
+        Status = SYS_ERROR;
     }
-}
-#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
 
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           IsDTR
-//
-// Parameter(s):   void
-// Return:         bool - true when the host asserts DTR
-//
-// Description:    Report the current CDC DTR control-line state
-//
-//-------------------------------------------------------------------------------------------------
-#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
-bool USB_CDC_ACM_Driver::IsDTR(void) const
-{
-    return (IsConfigured() == true) && ((m_ControlLines & 1) != 0);
-}
-#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
+    Unlock();
 
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           IsRTS
-//
-// Parameter(s):   void
-// Return:         bool - true when the host asserts RTS
-//
-// Description:    Report the current CDC RTS control-line state
-//
-//-------------------------------------------------------------------------------------------------
-#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
-bool USB_CDC_ACM_Driver::IsRTS(void) const
-{
-    return (IsConfigured() == true) && ((m_ControlLines & 2) != 0);
+    return Status;
 }
-#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
 
+#if (DIGINI_USE_USB_ISOCHRONOUS == DEF_ENABLED)
 //-------------------------------------------------------------------------------------------------
 //
-// Name:           GetBaudRate
+//  Function:       RegisterIsoOutIncpltCallback
 //
-// Parameter(s):   void
-// Return:         uint32_t - host-requested baud rate
+//  Parameter(s):   pCallback
+//  Return:         SystemState_e
 //
-// Description:    Read the baud rate from the most recently accepted line coding
+//  Description:    Register Iso Out Incplt Callback.
 //
 //-------------------------------------------------------------------------------------------------
-#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
-uint32_t USB_CDC_ACM_Driver::GetBaudRate(void) const
+SystemState_e USB_Driver::RegisterIsoOutIncpltCallback(CallbackInterface* pCallback)
 {
-    uint32_t InterruptState = __get_PRIMASK();
-    __disable_irq();
-    uint32_t Baud = m_LineCoding[0] | (static_cast<uint32_t>(m_LineCoding[1]) << 8) |
-        (static_cast<uint32_t>(m_LineCoding[2]) << 16) | (static_cast<uint32_t>(m_LineCoding[3]) << 24);
-    __set_PRIMASK(InterruptState);
-    return Baud;
-}
-#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
+    SystemState_e Status = SYS_READY;
 
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           Available
-//
-// Parameter(s):   void
-// Return:         uint16_t - number of bytes waiting in the RX buffer
-//
-// Description:    Return the number of buffered receive bytes
-//
-//-------------------------------------------------------------------------------------------------
-#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
-uint16_t USB_CDC_ACM_Driver::Available(void) const
-{
-    if(m_RxFifo.GetBufferPointer() == nullptr)
+    if(pCallback == nullptr)
     {
-        return 0;
+        m_ErrorCode |= USB_ERROR_INVALID_CALLBACK;
+
+        return SYS_ERROR;
     }
 
-    uint32_t InterruptState = __get_PRIMASK();
-    __disable_irq();
-    uint16_t Count = static_cast<uint16_t>(m_RxFifo.CheckUsedSpace());
-    __set_PRIMASK(InterruptState);
-    return Count;
-}
-#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
+    if(Lock() == false)
+    {
+        return SYS_BUSY;
+    }
 
+    if(m_State == USB_STATE_READY)
+    {
+        m_pISOOUTIncompleteCallback = pCallback;
+    }
+    else
+    {
+        m_ErrorCode |= USB_ERROR_INVALID_CALLBACK;
+
+        Status = SYS_ERROR;
+    }
+
+    Unlock();
+
+    return Status;
+}
+#endif
+
+
+#if (DIGINI_USE_USB_ISOCHRONOUS == DEF_ENABLED)
 //-------------------------------------------------------------------------------------------------
 //
-// Name:           Read
+//  Function:       UnRegisterIsoOutIncpltCallback
 //
-// Parameter(s):   pData - destination buffer (cannot be nullptr)
-//                 Length - maximum number of bytes to read
-// Return:         uint16_t - number of bytes copied
+//  Parameter(s):   None
+//  Return:         SystemState_e
 //
-// Description:    Read buffered CDC data and resume reception when space is available
+//  Description:    Un Register Iso Out Incplt Callback.
 //
 //-------------------------------------------------------------------------------------------------
-#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
-uint16_t USB_CDC_ACM_Driver::Read(uint8_t* pData, uint16_t Length)
+SystemState_e USB_Driver::UnRegisterIsoOutIncpltCallback(void)
 {
-    if(pData == nullptr)
+    SystemState_e Status = SYS_READY;
+
+    if(Lock() == false)
     {
-        return 0;
+        return SYS_BUSY;
     }
 
-    uint32_t InterruptState = __get_PRIMASK();
-    __disable_irq();
-    uint16_t Count = static_cast<uint16_t>(m_RxFifo.Read(pData, Length));
+    if(m_State == USB_STATE_READY)
+    {
+        m_pISOOUTIncompleteCallback = nullptr;
+    }
+    else
+    {
+        m_ErrorCode |= USB_ERROR_INVALID_CALLBACK;
 
-    Process();
-    __set_PRIMASK(InterruptState);
-    return Count;
+        Status = SYS_ERROR;
+    }
+
+    Unlock();
+
+    return Status;
 }
-#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
+#endif
 
+
+#if (DIGINI_USE_USB_ISOCHRONOUS == DEF_ENABLED)
 //-------------------------------------------------------------------------------------------------
 //
-// Name:           Write
+//  Function:       RegisterIsoInIncpltCallback
 //
-// Parameter(s):   pData - source buffer
-//                 Length - number of bytes to queue
-// Return:         uint16_t - number of bytes accepted
+//  Parameter(s):   pCallback
+//  Return:         SystemState_e
 //
-// Description:    Queue CDC data for transmission to the host
+//  Description:    Register Iso In Incplt Callback.
 //
 //-------------------------------------------------------------------------------------------------
-#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
-uint16_t USB_CDC_ACM_Driver::Write(const uint8_t* pData, uint16_t Length)
+SystemState_e USB_Driver::RegisterIsoInIncpltCallback(CallbackInterface* pCallback)
 {
-    if(pData == nullptr)
+    SystemState_e Status = SYS_READY;
+
+    if(pCallback == nullptr)
     {
-        return 0;
+        m_ErrorCode |= USB_ERROR_INVALID_CALLBACK;
+
+        return SYS_ERROR;
     }
 
-    uint32_t InterruptState = __get_PRIMASK();
-    __disable_irq();
-    uint16_t Count = 0;
-
-    if(IsConfigured() == true)
+    if(Lock() == false)
     {
-        Count = static_cast<uint16_t>(m_TxFifo.Write(pData, Length));
-
-        StartTransmit();
+        return SYS_BUSY;
     }
 
-    __set_PRIMASK(InterruptState);
-    return Count;
+    if(m_State == USB_STATE_READY)
+    {
+        m_pISOINIncompleteCallback = pCallback;
+    }
+    else
+    {
+        m_ErrorCode |= USB_ERROR_INVALID_CALLBACK;
+
+        Status = SYS_ERROR;
+    }
+
+    Unlock();
+
+    return Status;
 }
-#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
+#endif
+
+
+#if (DIGINI_USE_USB_ISOCHRONOUS == DEF_ENABLED)
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       UnRegisterIsoInIncpltCallback
+//
+//  Parameter(s):   None
+//  Return:         SystemState_e
+//
+//  Description:    Un Register Iso In Incplt Callback.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::UnRegisterIsoInIncpltCallback(void)
+{
+    SystemState_e Status = SYS_READY;
+
+    if(Lock() == false)
+    {
+        return SYS_BUSY;
+    }
+
+    if(m_State == USB_STATE_READY)
+    {
+        m_pISOINIncompleteCallback = nullptr;
+    }
+    else
+    {
+        m_ErrorCode |= USB_ERROR_INVALID_CALLBACK;
+
+        Status = SYS_ERROR;
+    }
+
+    Unlock();
+
+    return Status;
+}
+#endif
+
+
+#if (DIGINI_USE_USB_BCD == DEF_ENABLED)
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       RegisterBcdCallback
+//
+//  Parameter(s):   pCallback
+//  Return:         SystemState_e
+//
+//  Description:    Register Bcd Callback.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::RegisterBcdCallback(CallbackInterface* pCallback)
+{
+    SystemState_e Status = SYS_READY;
+
+    if(pCallback == nullptr)
+    {
+        m_ErrorCode |= USB_ERROR_INVALID_CALLBACK;
+
+        return SYS_ERROR;
+    }
+
+    if(Lock() == false)
+    {
+        return SYS_BUSY;
+    }
+
+    if(m_State == USB_STATE_READY)
+    {
+        m_pBCDCallback = pCallback;
+    }
+    else
+    {
+        m_ErrorCode |= USB_ERROR_INVALID_CALLBACK;
+
+        Status = SYS_ERROR;
+    }
+
+    Unlock();
+
+    return Status;
+}
+#endif
+
+
+#if (DIGINI_USE_USB_BCD == DEF_ENABLED)
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       UnRegisterBcdCallback
+//
+//  Parameter(s):   None
+//  Return:         SystemState_e
+//
+//  Description:    Un Register Bcd Callback.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::UnRegisterBcdCallback(void)
+{
+    SystemState_e Status = SYS_READY;
+
+    if(Lock() == false)
+    {
+        return SYS_BUSY;
+    }
+
+    if(m_State == USB_STATE_READY)
+    {
+        m_pBCDCallback = nullptr;
+    }
+    else
+    {
+        m_ErrorCode |= USB_ERROR_INVALID_CALLBACK;
+
+        Status = SYS_ERROR;
+    }
+
+    Unlock();
+
+    return Status;
+}
+#endif
+
+
+#if (DIGINI_USE_USB_LPM == DEF_ENABLED)
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       RegisterLpmCallback
+//
+//  Parameter(s):   pCallback
+//  Return:         SystemState_e
+//
+//  Description:    Register Lpm Callback.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::RegisterLpmCallback(CallbackInterface* pCallback)
+{
+    SystemState_e Status = SYS_READY;
+
+    if(pCallback == nullptr)
+    {
+        m_ErrorCode |= USB_ERROR_INVALID_CALLBACK;
+
+        return SYS_ERROR;
+    }
+
+    if(Lock() == false)
+    {
+        return SYS_BUSY;
+    }
+
+    if(m_State == USB_STATE_READY)
+    {
+        m_pLPMCallback = pCallback;
+    }
+    else
+    {
+        m_ErrorCode |= USB_ERROR_INVALID_CALLBACK;
+
+        Status = SYS_ERROR;
+    }
+
+    Unlock();
+
+    return Status;
+}
+#endif
+
+
+#if (DIGINI_USE_USB_LPM == DEF_ENABLED)
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       UnRegisterLpmCallback
+//
+//  Parameter(s):   None
+//  Return:         SystemState_e
+//
+//  Description:    Un Register Lpm Callback.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::UnRegisterLpmCallback(void)
+{
+    SystemState_e Status = SYS_READY;
+
+    if(Lock() == false)
+    {
+        return SYS_BUSY;
+    }
+
+    if(m_State == USB_STATE_READY)
+    {
+        m_pLPMCallback = nullptr;
+    }
+    else
+    {
+        m_ErrorCode |= USB_ERROR_INVALID_CALLBACK;
+
+        Status = SYS_ERROR;
+    }
+
+    Unlock();
+
+    return Status;
+}
+#endif
+
 
 //-------------------------------------------------------------------------------------------------
 //
-// Name:           IRQHandler
+//  Function:       Start
 //
-// Parameter(s):   void
-// Return:         void
+//  Parameter(s):   None
+//  Return:         SystemState_e
 //
-// Description:    Handle USB reset, suspend, wakeup, and endpoint events
+//  Description:    Start.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::Start(void)
+{
+    if(Lock() == false)
+    {
+        return SYS_BUSY;
+    }
+    (void)EnableInterrupts();
+    (void)ConnectDevice();
+    Unlock();
+
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       Stop
+//
+//  Parameter(s):   None
+//  Return:         SystemState_e
+//
+//  Description:    Stop.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::Stop(void)
+{
+    if(Lock() == false)
+    {
+        return SYS_BUSY;
+    }
+    (void)DisableInterrupts();
+    (void)DisconnectDevice();
+
+    Unlock();
+
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       IRQHandler
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    Dispatch USB FS interrupts and completed endpoint transfers.
 //
 //-------------------------------------------------------------------------------------------------
 void USB_Driver::IRQHandler(void)
 {
-    uint16_t Status = USB_REGS->ISTR;
+    uint32_t Interrupt = ReadInterrupts();
 
-    if((Status & USB_ISTR_RESET) != 0)
+    if((Interrupt & USB_ISTR_CTR) == USB_ISTR_CTR)
     {
-        USB_REGS->CNTR &= ~(USB_CNTR_FSUSP | USB_CNTR_LPMODE);
-        USB_REGS->ISTR = static_cast<uint16_t>(~(USB_ISTR_RESET | USB_ISTR_SUSP | USB_ISTR_WKUP));
-        Reset();
+        (void)EndpointIRQHandler();
+
+        return;
+    }
+
+    if((Interrupt & USB_ISTR_RESET) == USB_ISTR_RESET)
+    {
+        m_pUSB->ISTR = uint16_t(~(USB_ISTR_RESET | USB_ISTR_SUSP | USB_ISTR_WKUP));
+        m_pUSB->CNTR &= uint16_t(~(USB_CNTR_FSUSP | USB_CNTR_LPMODE));
+#if (DIGINI_USE_USB_LPM == DEF_ENABLED)
+        m_LPM_State = USB_LPM_L0;
+        m_BESL = 0U;
+#endif
+
+        ResetCallback();
+
+        (void)SetAddress(0U);
+
+        return;
+    }
+
+    if((Interrupt & USB_ISTR_PMAOVR) == USB_ISTR_PMAOVR)
+    {
+        m_pUSB->ISTR = uint16_t(~(USB_ISTR_PMAOVR));
+
+        return;
+    }
+
+    if((Interrupt & USB_ISTR_ERR) == USB_ISTR_ERR)
+    {
+        m_pUSB->ISTR = uint16_t(~(USB_ISTR_ERR));
+
+        return;
+    }
+
+    if((Interrupt & USB_ISTR_WKUP) == USB_ISTR_WKUP)
+    {
+        m_pUSB->CNTR &= (uint16_t) ~(USB_CNTR_LPMODE);
+        m_pUSB->CNTR &= (uint16_t) ~(USB_CNTR_FSUSP);
+
+#if (DIGINI_USE_USB_LPM == DEF_ENABLED)
+        if(m_LPM_State == USB_LPM_L1)
+        {
+            m_LPM_State = USB_LPM_L0;
+            LPM_Callback(USB_LPM_L0_ACTIVE);
+        }
+#endif
+
+        ResumeCallback();
+
+        m_pUSB->ISTR = uint16_t(~(USB_ISTR_WKUP));
+
+        return;
+    }
+
+    if((Interrupt & USB_ISTR_SUSP) == USB_ISTR_SUSP)
+    {
+        m_pUSB->CNTR |= (uint16_t)USB_CNTR_FSUSP;
+
+        m_pUSB->ISTR = uint16_t(~(USB_ISTR_SUSP));
+
+        m_pUSB->CNTR |= (uint16_t)USB_CNTR_LPMODE;
+
+        SuspendCallback();
+
+        return;
+    }
+
+#if (DIGINI_USE_USB_LPM == DEF_ENABLED)
+    if((Interrupt & USB_ISTR_L1REQ) == USB_ISTR_L1REQ)
+    {
+        m_pUSB->ISTR = uint16_t(~(USB_ISTR_L1REQ));
+        if(m_LPM_State == USB_LPM_L0)
+        {
+            m_pUSB->CNTR |= (uint16_t)USB_CNTR_LPMODE;
+            m_pUSB->CNTR |= (uint16_t)USB_CNTR_FSUSP;
+
+            m_LPM_State = USB_LPM_L1;
+            m_BESL      = ((uint32_t)m_pUSB->LPMCSR & USB_LPMCSR_BESL) >> 4;
+            LPM_Callback(USB_LPM_L1_ACTIVE);
+        }
+        else
+        {
+            SuspendCallback();
+        }
+
+        return;
+    }
+#endif
+
+    if((Interrupt & USB_ISTR_SOF) == USB_ISTR_SOF)
+    {
+        m_pUSB->ISTR = uint16_t(~(USB_ISTR_SOF));
+
+        SOFCallback();
+
+        return;
+    }
+
+    if((Interrupt & USB_ISTR_ESOF) == USB_ISTR_ESOF)
+    {
+        m_pUSB->ISTR = uint16_t(~(USB_ISTR_ESOF));
+
+        return;
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       DataOutStageCallback
+//
+//  Parameter(s):   Endpoint
+//  Return:         None
+//
+//  Description:    Data Out Stage Callback.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::DataOutStageCallback(uint8_t Endpoint)
+{
+    Notify(m_pDataOutStageCallback, USB_CALLBACK_DATA_OUT, Endpoint);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       DataInStageCallback
+//
+//  Parameter(s):   Endpoint
+//  Return:         None
+//
+//  Description:    Data In Stage Callback.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::DataInStageCallback(uint8_t Endpoint)
+{
+    Notify(m_pDataInStageCallback, USB_CALLBACK_DATA_IN, Endpoint);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       SetupStageCallback
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    Setup Stage Callback.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::SetupStageCallback(void)
+{
+    Notify(m_pSetupStageCallback, USB_CALLBACK_SETUP, 0U);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       SOFCallback
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    SOF Callback.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::SOFCallback(void)
+{
+    Notify(m_pSOFCallback, USB_CALLBACK_SOF, 0U);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       ResetCallback
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    Reset Callback.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::ResetCallback(void)
+{
+    Notify(m_pResetCallback, USB_CALLBACK_RESET, 0U);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       SuspendCallback
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    Suspend Callback.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::SuspendCallback(void)
+{
+    Notify(m_pSuspendCallback, USB_CALLBACK_SUSPEND, 0U);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       ResumeCallback
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    Resume Callback.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::ResumeCallback(void)
+{
+    Notify(m_pResumeCallback, USB_CALLBACK_RESUME, 0U);
+}
+
+#if (DIGINI_USE_USB_ISOCHRONOUS == DEF_ENABLED)
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       ISOOUTIncompleteCallback
+//
+//  Parameter(s):   Endpoint
+//  Return:         None
+//
+//  Description:    ISOOUT Incomplete Callback.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::ISOOUTIncompleteCallback(uint8_t Endpoint)
+{
+    Notify(m_pISOOUTIncompleteCallback, USB_CALLBACK_ISO_OUT_INCOMPLETE, Endpoint);
+}
+#endif
+
+
+#if (DIGINI_USE_USB_ISOCHRONOUS == DEF_ENABLED)
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       ISOINIncompleteCallback
+//
+//  Parameter(s):   Endpoint
+//  Return:         None
+//
+//  Description:    ISOIN Incomplete Callback.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::ISOINIncompleteCallback(uint8_t Endpoint)
+{
+    Notify(m_pISOINIncompleteCallback, USB_CALLBACK_ISO_IN_INCOMPLETE, Endpoint);
+}
+#endif
+
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       ConnectCallback
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    Connect Callback.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::ConnectCallback(void)
+{
+    Notify(m_pConnectCallback, USB_CALLBACK_CONNECT, 0U);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       DisconnectCallback
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    Disconnect Callback.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::DisconnectCallback(void)
+{
+    Notify(m_pDisconnectCallback, USB_CALLBACK_DISCONNECT, 0U);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       Connect
+//
+//  Parameter(s):   None
+//  Return:         SystemState_e
+//
+//  Description:    Connect.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::Connect(void)
+{
+    if(Lock() == false)
+    {
+        return SYS_BUSY;
+    }
+
+    (void)ConnectDevice();
+    Unlock();
+
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       Disconnect
+//
+//  Parameter(s):   None
+//  Return:         SystemState_e
+//
+//  Description:    Disconnect.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::Disconnect(void)
+{
+    if(Lock() == false)
+    {
+        return SYS_BUSY;
+    }
+    (void)DisconnectDevice();
+
+    Unlock();
+
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       SetAddress
+//
+//  Parameter(s):   Address
+//  Return:         SystemState_e
+//
+//  Description:    Set Address.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::SetAddress(uint8_t Address)
+{
+    if(Address > 127U)
+    {
+        return SYS_WRONG_VALUE;
+    }
+    if(Lock() == false)
+    {
+        return SYS_BUSY;
+    }
+    m_Address = Address;
+    (void)SetDeviceAddress(Address);
+    Unlock();
+
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       OpenEndpoint
+//
+//  Parameter(s):   EndpointAddress, MaxPacketSize, Type
+//  Return:         SystemState_e
+//
+//  Description:    Activate an endpoint using its configured packet-memory buffers.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::OpenEndpoint(uint8_t EndpointAddress, uint16_t MaxPacketSize, uint8_t Type)
+{
+#if (DIGINI_USE_USB_ISOCHRONOUS != DEF_ENABLED)
+    if(Type == USB_ENDPOINT_ISOCHRONOUS)
+    {
+        return SYS_WRONG_VALUE;
+    }
+#endif
+    if((IsEndpointValid(EndpointAddress) == false) || (Type > USB_ENDPOINT_INTERRUPT) || (MaxPacketSize == 0U) ||
+       (MaxPacketSize > ((Type == USB_ENDPOINT_ISOCHRONOUS) ? 1023U : 64U)))
+    {
+        return SYS_WRONG_VALUE;
+    }
+    if((((Type == USB_ENDPOINT_CONTROL) || (Type == USB_ENDPOINT_BULK)) && (MaxPacketSize != 8U) &&
+        (MaxPacketSize != 16U) && (MaxPacketSize != 32U) && (MaxPacketSize != 64U)) ||
+       (((EndpointAddress & USB_ENDPOINT_MASK) == 0U) && (Type != USB_ENDPOINT_CONTROL)))
+    {
+        return SYS_WRONG_VALUE;
+    }
+
+    SystemState_e   Status = SYS_READY;
+    USB_Endpoint_t* pEndpoint;
+
+    if((EndpointAddress & 0x80U) == 0x80U)
+    {
+        pEndpoint       = &m_InEndpoint[EndpointAddress & USB_ENDPOINT_MASK];
+        pEndpoint->IsIn = 1U;
     }
     else
     {
-        if((Status & USB_ISTR_SUSP) != 0)
-        {
-            USB_REGS->CNTR |= USB_CNTR_FSUSP;
-            m_Suspended = true;
-            USB_REGS->ISTR = static_cast<uint16_t>(~USB_ISTR_SUSP);
-        }
-
-        if((Status & USB_ISTR_WKUP) != 0)
-        {
-            USB_REGS->CNTR &= ~(USB_CNTR_FSUSP | USB_CNTR_LPMODE);
-            m_Suspended = false;
-            USB_REGS->ISTR = static_cast<uint16_t>(~USB_ISTR_WKUP);
-        }
+        pEndpoint       = &m_OutEndpoint[EndpointAddress & USB_ENDPOINT_MASK];
+        pEndpoint->IsIn = 0U;
     }
 
-    while((USB_REGS->ISTR & USB_ISTR_CTR) != 0)
+    if((IsPMA_Valid(pEndpoint, MaxPacketSize) == false)
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+       || ((pEndpoint->DoubleBuffer != 0U) && ((Type == USB_ENDPOINT_CONTROL) || (Type == USB_ENDPOINT_INTERRUPT)))
+#endif
+       )
     {
-        uint8_t Endpoint = USB_REGS->ISTR & USB_ISTR_EP_ID;
-        uint16_t Register = USB_ENDPOINT(Endpoint);
+        return SYS_WRONG_VALUE;
+    }
 
-        if((Register & USB_EP_CTR_RX) != 0)
+    pEndpoint->Number        = EndpointAddress & USB_ENDPOINT_MASK;
+    pEndpoint->MaxPacketSize = (uint32_t)MaxPacketSize & 0x7FFU;
+    pEndpoint->Type          = Type;
+
+    if(Type == USB_ENDPOINT_BULK)
+    {
+        pEndpoint->DataPID = 0U;
+    }
+
+    if(Lock() == false)
+    {
+        return SYS_BUSY;
+    }
+    Status = ActivateEndpoint(pEndpoint);
+    Unlock();
+
+    return Status;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       CloseEndpoint
+//
+//  Parameter(s):   EndpointAddress
+//  Return:         SystemState_e
+//
+//  Description:    Close Endpoint.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::CloseEndpoint(uint8_t EndpointAddress)
+{
+    if(IsEndpointValid(EndpointAddress) == false)
+    {
+        return SYS_WRONG_VALUE;
+    }
+
+    USB_Endpoint_t* pEndpoint;
+
+    if((EndpointAddress & 0x80U) == 0x80U)
+    {
+        pEndpoint       = &m_InEndpoint[EndpointAddress & USB_ENDPOINT_MASK];
+        pEndpoint->IsIn = 1U;
+    }
+    else
+    {
+        pEndpoint       = &m_OutEndpoint[EndpointAddress & USB_ENDPOINT_MASK];
+        pEndpoint->IsIn = 0U;
+    }
+    pEndpoint->Number = EndpointAddress & USB_ENDPOINT_MASK;
+
+    if(Lock() == false)
+    {
+        return SYS_BUSY;
+    }
+    (void)DeactivateEndpoint(pEndpoint);
+    Unlock();
+    pEndpoint->MaxPacketSize = 0U;
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       Receive
+//
+//  Parameter(s):   EndpointAddress, pBuffer, Length
+//  Return:         SystemState_e
+//
+//  Description:    Arm an OUT transfer; the caller retains the buffer until completion.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::Receive(uint8_t EndpointAddress, uint8_t* pBuffer, uint32_t Length)
+{
+    if((Length != 0U) && (pBuffer == nullptr))
+    {
+        return SYS_WRONG_VALUE;
+    }
+
+    if(IsEndpointValid(EndpointAddress) == false)
+    {
+        return SYS_WRONG_VALUE;
+    }
+
+    USB_Endpoint_t* pEndpoint;
+
+    pEndpoint = &m_OutEndpoint[EndpointAddress & USB_ENDPOINT_MASK];
+
+    if(pEndpoint->MaxPacketSize == 0U)
+    {
+        return SYS_DEVICE_ERROR;
+    }
+
+    pEndpoint->pTransferBuffer = pBuffer;
+    pEndpoint->TransferLength  = Length;
+    pEndpoint->TransferCount   = 0U;
+    pEndpoint->IsIn            = 0U;
+    pEndpoint->Number          = EndpointAddress & USB_ENDPOINT_MASK;
+
+    (void)StartTransfer(pEndpoint);
+
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       GetReceiveCount
+//
+//  Parameter(s):   EndpointAddress, pCount
+//  Return:         SystemState_e
+//
+//  Description:    Get Receive Count.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::GetReceiveCount(uint8_t EndpointAddress, uint32_t* pCount) const
+{
+    if((IsEndpointValid(EndpointAddress) == false) || (pCount == nullptr))
+    {
+        return SYS_WRONG_VALUE;
+    }
+    *pCount = m_OutEndpoint[EndpointAddress & USB_ENDPOINT_MASK].TransferCount;
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       Transmit
+//
+//  Parameter(s):   EndpointAddress, pBuffer, Length
+//  Return:         SystemState_e
+//
+//  Description:    Start an IN transfer; the caller retains the buffer until completion.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::Transmit(uint8_t EndpointAddress, uint8_t* pBuffer, uint32_t Length)
+{
+    if((Length != 0U) && (pBuffer == nullptr))
+    {
+        return SYS_WRONG_VALUE;
+    }
+
+    if(IsEndpointValid(EndpointAddress) == false)
+    {
+        return SYS_WRONG_VALUE;
+    }
+
+    USB_Endpoint_t* pEndpoint;
+
+    pEndpoint = &m_InEndpoint[EndpointAddress & USB_ENDPOINT_MASK];
+
+    if(pEndpoint->MaxPacketSize == 0U)
+    {
+        return SYS_DEVICE_ERROR;
+    }
+
+    pEndpoint->pTransferBuffer    = pBuffer;
+    pEndpoint->TransferLength     = Length;
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+    pEndpoint->DoubleBufferFill   = 1U;
+    pEndpoint->DoubleBufferLength = Length;
+#endif
+    pEndpoint->TransferCount      = 0U;
+    pEndpoint->IsIn               = 1U;
+    pEndpoint->Number             = EndpointAddress & USB_ENDPOINT_MASK;
+
+    (void)StartTransfer(pEndpoint);
+
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       SetStall
+//
+//  Parameter(s):   EndpointAddress
+//  Return:         SystemState_e
+//
+//  Description:    Set Stall.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::SetStall(uint8_t EndpointAddress)
+{
+    if(IsEndpointValid(EndpointAddress) == false)
+    {
+        return SYS_WRONG_VALUE;
+    }
+
+    USB_Endpoint_t* pEndpoint;
+
+    if((0x80U & EndpointAddress) == 0x80U)
+    {
+        pEndpoint       = &m_InEndpoint[EndpointAddress & USB_ENDPOINT_MASK];
+        pEndpoint->IsIn = 1U;
+    }
+    else
+    {
+        pEndpoint       = &m_OutEndpoint[EndpointAddress];
+        pEndpoint->IsIn = 0U;
+    }
+
+    pEndpoint->IsStall = 1U;
+    pEndpoint->Number  = EndpointAddress & USB_ENDPOINT_MASK;
+
+    if(Lock() == false)
+    {
+        return SYS_BUSY;
+    }
+
+    (void)SetEndpointStall(pEndpoint);
+
+    Unlock();
+
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       ClearStall
+//
+//  Parameter(s):   EndpointAddress
+//  Return:         SystemState_e
+//
+//  Description:    Clear Stall.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::ClearStall(uint8_t EndpointAddress)
+{
+    if(IsEndpointValid(EndpointAddress) == false)
+    {
+        return SYS_WRONG_VALUE;
+    }
+
+    USB_Endpoint_t* pEndpoint;
+
+    if((0x80U & EndpointAddress) == 0x80U)
+    {
+        pEndpoint       = &m_InEndpoint[EndpointAddress & USB_ENDPOINT_MASK];
+        pEndpoint->IsIn = 1U;
+    }
+    else
+    {
+        pEndpoint       = &m_OutEndpoint[EndpointAddress & USB_ENDPOINT_MASK];
+        pEndpoint->IsIn = 0U;
+    }
+
+    pEndpoint->IsStall = 0U;
+    pEndpoint->Number  = EndpointAddress & USB_ENDPOINT_MASK;
+
+    if(Lock() == false)
+    {
+        return SYS_BUSY;
+    }
+    (void)ClearEndpointStall(pEndpoint);
+    Unlock();
+
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       Abort
+//
+//  Parameter(s):   EndpointAddress
+//  Return:         SystemState_e
+//
+//  Description:    Abort.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::Abort(uint8_t EndpointAddress)
+{
+    if(IsEndpointValid(EndpointAddress) == false)
+    {
+        return SYS_WRONG_VALUE;
+    }
+
+    SystemState_e   Status;
+    USB_Endpoint_t* pEndpoint;
+
+    if((0x80U & EndpointAddress) == 0x80U)
+    {
+        pEndpoint = &m_InEndpoint[EndpointAddress & USB_ENDPOINT_MASK];
+    }
+    else
+    {
+        pEndpoint = &m_OutEndpoint[EndpointAddress & USB_ENDPOINT_MASK];
+    }
+
+    Status = StopTransfer(pEndpoint);
+
+    return Status;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       Flush
+//
+//  Parameter(s):   EndpointAddress
+//  Return:         SystemState_e
+//
+//  Description:    Flush.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::Flush(uint8_t EndpointAddress)
+{
+    if(IsEndpointValid(EndpointAddress) == false)
+    {
+        return SYS_WRONG_VALUE;
+    }
+    // USB FS has no FIFO separate from PMA; use Abort() to cancel a transfer.
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       ActivateRemoteWakeup
+//
+//  Parameter(s):   None
+//  Return:         SystemState_e
+//
+//  Description:    Activate Remote Wakeup.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::ActivateRemoteWakeup(void)
+{
+    return (StartRemoteWakeup());
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       DeActivateRemoteWakeup
+//
+//  Parameter(s):   None
+//  Return:         SystemState_e
+//
+//  Description:    De Activate Remote Wakeup.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::DeActivateRemoteWakeup(void)
+{
+    return (StopRemoteWakeup());
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       GetState
+//
+//  Parameter(s):   None
+//  Return:         USB_State_e
+//
+//  Description:    Get State.
+//
+//-------------------------------------------------------------------------------------------------
+USB_State_e USB_Driver::GetState(void)
+{
+    return m_State;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       EndpointIRQHandler
+//
+//  Parameter(s):   None
+//  Return:         SystemState_e
+//
+//  Description:    Endpoint IRQ Handler.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::EndpointIRQHandler(void)
+{
+    USB_Endpoint_t* pEndpoint;
+    uint16_t        Count;
+    uint16_t        Interrupt;
+    uint16_t        EndpointValue;
+    uint16_t        PacketSize;
+    uint8_t         EndpointIndex;
+
+    while((m_pUSB->ISTR & USB_ISTR_CTR) != 0U)
+    {
+        Interrupt = m_pUSB->ISTR;
+
+        EndpointIndex = (uint8_t)(Interrupt & USB_ISTR_EP_ID);
+
+        if(EndpointIndex == 0U)
         {
-            if(Endpoint == 0)
+            if((Interrupt & USB_ISTR_DIR) == 0U)
             {
-                uint8_t Packet[USB_CONTROL_PACKET_SIZE];
-                uint16_t Length = USB_TABLE[3] & 0x3FF;
-                bool IsSetup = (Register & USB_EP_SETUP) != 0;
+                ClearEndpointTxEvent(0U);
+                pEndpoint = &m_InEndpoint[0];
 
-                if(Length <= USB_CONTROL_PACKET_SIZE)
+                pEndpoint->TransferCount = GetEndpointTxCount(pEndpoint->Number);
+                if(pEndpoint->TransferCount != 0U)
                 {
-                    ReadPMA(USB_TABLE[2], Packet, Length);
+                    pEndpoint->pTransferBuffer += pEndpoint->TransferCount;
                 }
 
-                ClearEndpointEvent(0, USB_EP_CTR_RX | (IsSetup ? USB_EP_CTR_TX : 0));
-                USB_TABLE[3] = 0x8400;
+                DataInStageCallback(0U);
 
-                if((IsSetup == true) && (Length == 8))
+                if((m_Address > 0U) && (pEndpoint->TransferLength == 0U))
                 {
-                    Setup(Packet);
+                    m_pUSB->DADDR = ((uint16_t)m_Address | USB_DADDR_EF);
+                    m_Address     = 0U;
                 }
-                else if((IsSetup == false) && (Length <= USB_CONTROL_PACKET_SIZE))
+            }
+            else
+            {
+                pEndpoint     = &m_OutEndpoint[0];
+                EndpointValue = ReadEndpointRegister(0U);
+
+                if((EndpointValue & USB_EP_SETUP) != 0U)
                 {
-                    if(Length == 0)
+                    pEndpoint->TransferCount = GetEndpointRxCount(pEndpoint->Number);
+
+                    if(pEndpoint->TransferCount != 8U)
                     {
-                        m_ControlRemaining = 0;
-                        m_ControlZLP = false;
-                        SetEndpointStatus(0, USB_EPTX_STAT, USB_EP_TX_NAK);
+                        SetEndpointRxStatus(0U, USB_EP_RX_STALL);
+                        SetEndpointTxStatus(0U, USB_EP_TX_STALL);
+
+                        ClearEndpointRxEvent(0U);
+
+                        return SYS_READY;
+                    }
+
+                    ReadPMA((uint8_t*)m_Setup, pEndpoint->PMA_Address, (uint16_t)pEndpoint->TransferCount);
+
+                    ClearEndpointRxEvent(0U);
+                    ClearEndpointTxEvent(0U);
+                    m_Address = 0U;
+                    m_InEndpoint[0].IsStall = 0U;
+                    m_OutEndpoint[0].IsStall = 0U;
+
+                    SetupStageCallback();
+                }
+                else if((EndpointValue & USB_EP_CTR_RX) != 0U)
+                {
+                    ClearEndpointRxEvent(0U);
+
+                    pEndpoint->TransferCount = GetEndpointRxCount(pEndpoint->Number);
+
+                    if(pEndpoint->TransferCount == 0U)
+                    {
+                        SetEndpointRxStatus(0U, USB_EP_RX_VALID);
+                        DataOutStageCallback(0U);
                     }
                     else
                     {
-                        HandleClassControlOut(Packet, Length);
+                        if(pEndpoint->pTransferBuffer != 0U)
+                        {
+                            ReadPMA(pEndpoint->pTransferBuffer, pEndpoint->PMA_Address,
+                                    (uint16_t)pEndpoint->TransferCount);
+
+                            pEndpoint->pTransferBuffer += pEndpoint->TransferCount;
+
+                            DataOutStageCallback(0U);
+                        }
                     }
+                }
+            }
+        }
+        else
+        {
+            EndpointValue = ReadEndpointRegister(EndpointIndex);
+
+            if((EndpointValue & USB_EP_CTR_RX) != 0U)
+            {
+                ClearEndpointRxEvent(EndpointIndex);
+                pEndpoint = &m_OutEndpoint[EndpointIndex];
+
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+                if(pEndpoint->DoubleBuffer == 0U)
+#endif
+                {
+                    Count = (uint16_t)GetEndpointRxCount(pEndpoint->Number);
+
+                    if(Count != 0U)
+                    {
+                        ReadPMA(pEndpoint->pTransferBuffer, pEndpoint->PMA_Address, Count);
+                    }
+                }
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+                else
+                {
+#if (DIGINI_USE_USB_ISOCHRONOUS == DEF_ENABLED)
+                    if(pEndpoint->Type == USB_ENDPOINT_BULK)
+#endif
+                    {
+                        Count = ReceiveDoubleBuffer(pEndpoint, EndpointValue);
+                    }
+#if (DIGINI_USE_USB_ISOCHRONOUS == DEF_ENABLED)
+                    else
+                    {
+                        ReleaseBuffer(pEndpoint->Number, 0U);
+
+                        if((ReadEndpointRegister(pEndpoint->Number) & USB_EP_DTOG_RX) != 0U)
+                        {
+                            Count = (uint16_t)GetEndpointBuffer0Count(pEndpoint->Number);
+
+                            if(Count != 0U)
+                            {
+                                ReadPMA(pEndpoint->pTransferBuffer, pEndpoint->PMA_Address0, Count);
+                            }
+                        }
+                        else
+                        {
+                            Count = (uint16_t)GetEndpointBuffer1Count(pEndpoint->Number);
+
+                            if(Count != 0U)
+                            {
+                                ReadPMA(pEndpoint->pTransferBuffer, pEndpoint->PMA_Address1, Count);
+                            }
+                        }
+                    }
+#endif
+                }
+#endif
+
+                pEndpoint->TransferCount += Count;
+
+                if((pEndpoint->TransferLength == 0U) || (Count < pEndpoint->MaxPacketSize))
+                {
+                    DataOutStageCallback(pEndpoint->Number);
                 }
                 else
                 {
-                    StallControl();
-                }
-
-                if((USB_ENDPOINT(0) & USB_EPRX_STAT) != USB_EP_RX_STALL)
-                {
-                    SetEndpointStatus(0, USB_EPRX_STAT, USB_EP_RX_VALID);
-                }
-
-                if(IsSetup == true)
-                {
-                    continue;
+                    pEndpoint->pTransferBuffer += Count;
+                    (void)StartTransfer(pEndpoint);
                 }
             }
-            else
+
+            if((EndpointValue & USB_EP_CTR_TX) != 0U)
             {
-                ClearEndpointEvent(Endpoint, USB_EP_CTR_RX);
+                pEndpoint = &m_InEndpoint[EndpointIndex];
 
-                HandleClassEndpointRx(Endpoint);
-            }
-        }
+                ClearEndpointTxEvent(EndpointIndex);
 
-        if((USB_ENDPOINT(Endpoint) & USB_EP_CTR_TX) != 0)
-        {
-            ClearEndpointEvent(Endpoint, USB_EP_CTR_TX);
-
-            if(Endpoint == 0)
-            {
-                if((m_AddressPending == true) || (m_ControlRemaining != 0) || (m_ControlZLP == true))
+#if (DIGINI_USE_USB_ISOCHRONOUS == DEF_ENABLED)
+                if(pEndpoint->Type == USB_ENDPOINT_ISOCHRONOUS)
                 {
-                    ControlIn();
+                    pEndpoint->TransferLength = 0U;
+
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+                    if(pEndpoint->DoubleBuffer != 0U)
+                    {
+                        if((EndpointValue & USB_EP_DTOG_TX) != 0U)
+                        {
+                            SetEndpointBuffer0Count(pEndpoint->Number, pEndpoint->IsIn, 0U);
+                        }
+                        else
+                        {
+                            SetEndpointBuffer1Count(pEndpoint->Number, pEndpoint->IsIn, 0U);
+                        }
+                    }
+#endif
+
+                    DataInStageCallback(pEndpoint->Number);
                 }
-            }
-            else
-            {
-                HandleClassEndpointTx(Endpoint);
+                else
+#endif
+                {
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+                    if((EndpointValue & USB_EP_KIND) == 0U)
+#endif
+                    {
+                        PacketSize = (uint16_t)GetEndpointTxCount(pEndpoint->Number);
+
+                        if(pEndpoint->TransferLength > PacketSize)
+                        {
+                            pEndpoint->TransferLength -= PacketSize;
+                        }
+                        else
+                        {
+                            pEndpoint->TransferLength = 0U;
+                        }
+
+                        if(pEndpoint->TransferLength == 0U)
+                        {
+                            DataInStageCallback(pEndpoint->Number);
+                        }
+                        else
+                        {
+                            pEndpoint->pTransferBuffer += PacketSize;
+                            pEndpoint->TransferCount += PacketSize;
+                            (void)StartTransfer(pEndpoint);
+                        }
+                    }
+
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+                    else
+                    {
+                        (void)TransmitDoubleBuffer(pEndpoint, EndpointValue);
+                    }
+#endif
+                }
             }
         }
     }
 
-    Process();
+    return SYS_READY;
 }
 
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       ReceiveDoubleBuffer
+//
+//  Parameter(s):   pEndpoint, EndpointValue
+//  Return:         uint16_t
+//
+//  Description:    Receive Double Buffer.
+//
+//-------------------------------------------------------------------------------------------------
+uint16_t USB_Driver::ReceiveDoubleBuffer(USB_Endpoint_t* pEndpoint, uint16_t EndpointValue)
+{
+    uint16_t Count;
+
+    if((EndpointValue & USB_EP_DTOG_RX) != 0U)
+    {
+        Count = (uint16_t)GetEndpointBuffer0Count(pEndpoint->Number);
+
+        if(pEndpoint->TransferLength >= Count)
+        {
+            pEndpoint->TransferLength -= Count;
+        }
+        else
+        {
+            pEndpoint->TransferLength = 0U;
+        }
+
+        if(pEndpoint->TransferLength == 0U)
+        {
+            SetEndpointRxStatus(pEndpoint->Number, USB_EP_RX_NAK);
+        }
+
+        if((EndpointValue & USB_EP_DTOG_TX) != 0U)
+        {
+            ReleaseBuffer(pEndpoint->Number, 0U);
+        }
+
+        if(Count != 0U)
+        {
+            ReadPMA(pEndpoint->pTransferBuffer, pEndpoint->PMA_Address0, Count);
+        }
+    }
+
+    else
+    {
+        Count = (uint16_t)GetEndpointBuffer1Count(pEndpoint->Number);
+
+        if(pEndpoint->TransferLength >= Count)
+        {
+            pEndpoint->TransferLength -= Count;
+        }
+        else
+        {
+            pEndpoint->TransferLength = 0U;
+        }
+
+        if(pEndpoint->TransferLength == 0U)
+        {
+            SetEndpointRxStatus(pEndpoint->Number, USB_EP_RX_NAK);
+        }
+
+        if((EndpointValue & USB_EP_DTOG_TX) == 0U)
+        {
+            ReleaseBuffer(pEndpoint->Number, 0U);
+        }
+
+        if(Count != 0U)
+        {
+            ReadPMA(pEndpoint->pTransferBuffer, pEndpoint->PMA_Address1, Count);
+        }
+    }
+
+    return Count;
+}
 #endif
+
+
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       TransmitDoubleBuffer
+//
+//  Parameter(s):   pEndpoint, EndpointValue
+//  Return:         SystemState_e
+//
+//  Description:    Transmit Double Buffer.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::TransmitDoubleBuffer(USB_Endpoint_t* pEndpoint, uint16_t EndpointValue)
+{
+    uint32_t Length;
+    uint16_t PacketSize;
+
+    if((EndpointValue & USB_EP_DTOG_TX) != 0U)
+    {
+        PacketSize = (uint16_t)GetEndpointBuffer0Count(pEndpoint->Number);
+
+        if(pEndpoint->TransferLength > PacketSize)
+        {
+            pEndpoint->TransferLength -= PacketSize;
+        }
+        else
+        {
+            pEndpoint->TransferLength = 0U;
+        }
+
+        if(pEndpoint->TransferLength == 0U)
+        {
+            SetEndpointBuffer0Count(pEndpoint->Number, pEndpoint->IsIn, 0U);
+            SetEndpointBuffer1Count(pEndpoint->Number, pEndpoint->IsIn, 0U);
+
+            if(pEndpoint->Type == USB_ENDPOINT_BULK)
+            {
+                SetEndpointTxStatus(pEndpoint->Number, USB_EP_TX_NAK);
+            }
+
+            DataInStageCallback(pEndpoint->Number);
+
+            if((EndpointValue & USB_EP_DTOG_RX) != 0U)
+            {
+                ReleaseBuffer(pEndpoint->Number, 1U);
+            }
+
+            return SYS_READY;
+        }
+        else
+        {
+            if((EndpointValue & USB_EP_DTOG_RX) != 0U)
+            {
+                ReleaseBuffer(pEndpoint->Number, 1U);
+            }
+
+            if(pEndpoint->DoubleBufferFill == 1U)
+            {
+                pEndpoint->pTransferBuffer += PacketSize;
+                pEndpoint->TransferCount += PacketSize;
+
+                if(pEndpoint->DoubleBufferLength >= pEndpoint->MaxPacketSize)
+                {
+                    Length = pEndpoint->MaxPacketSize;
+                    pEndpoint->DoubleBufferLength -= Length;
+                }
+                else if(pEndpoint->DoubleBufferLength == 0U)
+                {
+                    Length                      = PacketSize;
+                    pEndpoint->DoubleBufferFill = 0U;
+                }
+                else
+                {
+                    pEndpoint->DoubleBufferFill   = 0U;
+                    Length                        = pEndpoint->DoubleBufferLength;
+                    pEndpoint->DoubleBufferLength = 0U;
+                }
+
+                SetEndpointBuffer0Count(pEndpoint->Number, pEndpoint->IsIn, Length);
+
+                WritePMA(pEndpoint->pTransferBuffer, pEndpoint->PMA_Address0, (uint16_t)Length);
+            }
+        }
+    }
+    else
+    {
+        PacketSize = (uint16_t)GetEndpointBuffer1Count(pEndpoint->Number);
+
+        if(pEndpoint->TransferLength >= PacketSize)
+        {
+            pEndpoint->TransferLength -= PacketSize;
+        }
+        else
+        {
+            pEndpoint->TransferLength = 0U;
+        }
+
+        if(pEndpoint->TransferLength == 0U)
+        {
+            SetEndpointBuffer0Count(pEndpoint->Number, pEndpoint->IsIn, 0U);
+            SetEndpointBuffer1Count(pEndpoint->Number, pEndpoint->IsIn, 0U);
+
+            if(pEndpoint->Type == USB_ENDPOINT_BULK)
+            {
+                SetEndpointTxStatus(pEndpoint->Number, USB_EP_TX_NAK);
+            }
+
+            DataInStageCallback(pEndpoint->Number);
+
+            if((EndpointValue & USB_EP_DTOG_RX) == 0U)
+            {
+                ReleaseBuffer(pEndpoint->Number, 1U);
+            }
+
+            return SYS_READY;
+        }
+        else
+        {
+            if((EndpointValue & USB_EP_DTOG_RX) == 0U)
+            {
+                ReleaseBuffer(pEndpoint->Number, 1U);
+            }
+
+            if(pEndpoint->DoubleBufferFill == 1U)
+            {
+                pEndpoint->pTransferBuffer += PacketSize;
+                pEndpoint->TransferCount += PacketSize;
+
+                if(pEndpoint->DoubleBufferLength >= pEndpoint->MaxPacketSize)
+                {
+                    Length = pEndpoint->MaxPacketSize;
+                    pEndpoint->DoubleBufferLength -= Length;
+                }
+                else if(pEndpoint->DoubleBufferLength == 0U)
+                {
+                    Length                      = PacketSize;
+                    pEndpoint->DoubleBufferFill = 0U;
+                }
+                else
+                {
+                    Length                        = pEndpoint->DoubleBufferLength;
+                    pEndpoint->DoubleBufferLength = 0U;
+                    pEndpoint->DoubleBufferFill   = 0;
+                }
+
+                SetEndpointBuffer1Count(pEndpoint->Number, pEndpoint->IsIn, Length);
+
+                WritePMA(pEndpoint->pTransferBuffer, pEndpoint->PMA_Address1, (uint16_t)Length);
+            }
+        }
+    }
+
+    SetEndpointTxStatus(pEndpoint->Number, USB_EP_TX_VALID);
+
+    return SYS_READY;
+}
+#endif
+
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       ConfigurePMA
+//
+//  Parameter(s):   EndpointAddress, BufferMode, PMA_Address
+//  Return:         SystemState_e
+//
+//  Description:    Assign single or double packet-memory buffers to an endpoint.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::ConfigurePMA(uint16_t EndpointAddress, uint16_t BufferMode, uint32_t PMA_Address)
+{
+#if (DIGINI_USE_USB_DOUBLE_BUFFER != DEF_ENABLED)
+    if(BufferMode != USB_SINGLE_BUFFER)
+    {
+        return SYS_WRONG_VALUE;
+    }
+#endif
+    uint16_t Address0 = uint16_t(PMA_Address);
+    uint16_t Address1 = uint16_t(PMA_Address >> 16);
+    if((EndpointAddress > 0xFFU) || (IsEndpointValid(uint8_t(EndpointAddress)) == false) ||
+       (BufferMode > USB_DOUBLE_BUFFER) || ((Address0 & 1U) != 0U) || (Address0 < USB_ENDPOINT_COUNT * 8U) ||
+       (Address0 >= USB_PMA_SIZE) || ((BufferMode == USB_SINGLE_BUFFER) && (Address1 != 0U)) ||
+       ((BufferMode == USB_DOUBLE_BUFFER) && (((Address1 & 1U) != 0U) || (Address1 < USB_ENDPOINT_COUNT * 8U) ||
+                                              (Address1 >= USB_PMA_SIZE) || (Address0 == Address1))))
+    {
+        return SYS_WRONG_VALUE;
+    }
+
+    USB_Endpoint_t* pEndpoint;
+
+    if((0x80U & EndpointAddress) == 0x80U)
+    {
+        pEndpoint = &m_InEndpoint[EndpointAddress & USB_ENDPOINT_MASK];
+    }
+    else
+    {
+        pEndpoint = &m_OutEndpoint[EndpointAddress];
+    }
+
+    if(pEndpoint->MaxPacketSize != 0U)
+    {
+        return SYS_BUSY;
+    }
+
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+    if(BufferMode == USB_SINGLE_BUFFER)
+    {
+        pEndpoint->DoubleBuffer = 0U;
+#endif
+        pEndpoint->PMA_Address = (uint16_t)PMA_Address;
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+    }
+    else
+    {
+        pEndpoint->DoubleBuffer = 1U;
+
+        pEndpoint->PMA_Address0 = (uint16_t)(PMA_Address & 0xFFFFU);
+        pEndpoint->PMA_Address1 = (uint16_t)((PMA_Address & 0xFFFF0000U) >> 16);
+    }
+#endif
+
+    return SYS_READY;
+}
+
+#if (DIGINI_USE_USB_BCD == DEF_ENABLED)
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       ActivateBCD
+//
+//  Parameter(s):   None
+//  Return:         SystemState_e
+//
+//  Description:    Activate BCD.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::ActivateBCD(void)
+{
+    m_BCD_Active = 1U;
+
+    m_pUSB->BCDR &= ~(USB_BCDR_PDEN);
+    m_pUSB->BCDR &= ~(USB_BCDR_SDEN);
+
+    m_pUSB->BCDR |= USB_BCDR_BCDEN;
+
+    return SYS_READY;
+}
+#endif
+
+
+#if (DIGINI_USE_USB_BCD == DEF_ENABLED)
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       DeActivateBCD
+//
+//  Parameter(s):   None
+//  Return:         SystemState_e
+//
+//  Description:    De Activate BCD.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::DeActivateBCD(void)
+{
+    m_BCD_Active = 0U;
+
+    m_pUSB->BCDR &= ~(USB_BCDR_BCDEN);
+
+    return SYS_READY;
+}
+#endif
+
+
+#if (DIGINI_USE_USB_BCD == DEF_ENABLED)
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       DetectBatteryCharging
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    Detect a standard, charging or dedicated downstream port.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::DetectBatteryCharging(void)
+{
+    nOS_TickCounter StartTick = nOS_GetTickCount();
+
+    LIB_Delay_mSec(350U);
+
+    m_pUSB->BCDR |= (USB_BCDR_PDEN);
+    LIB_Delay_mSec(50U);
+
+    if((m_pUSB->BCDR & USB_BCDR_PDET) == USB_BCDR_PDET)
+    {
+        m_pUSB->BCDR &= ~(USB_BCDR_PDEN);
+        LIB_Delay_mSec(50U);
+        m_pUSB->BCDR |= (USB_BCDR_SDEN);
+        LIB_Delay_mSec(50U);
+
+        if((m_pUSB->BCDR & USB_BCDR_SDET) == USB_BCDR_SDET)
+        {
+            BCD_Callback(USB_BCD_DEDICATED_CHARGING_PORT);
+        }
+        else
+        {
+            BCD_Callback(USB_BCD_CHARGING_DOWNSTREAM_PORT);
+        }
+    }
+    else
+    {
+        BCD_Callback(USB_BCD_STD_DOWNSTREAM_PORT);
+    }
+
+    (void)DeActivateBCD();
+
+    if(nOS_TickCounter(nOS_GetTickCount() - StartTick) > NOS_CONFIG_TICKS_PER_SECOND)
+    {
+        BCD_Callback(USB_BCD_ERROR);
+    }
+    else
+    {
+        BCD_Callback(USB_BCD_DISCOVERY_COMPLETED);
+    }
+}
+#endif
+
+
+#if (DIGINI_USE_USB_LPM == DEF_ENABLED)
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       ActivateLPM
+//
+//  Parameter(s):   None
+//  Return:         SystemState_e
+//
+//  Description:    Activate LPM.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::ActivateLPM(void)
+{
+    m_LPM_Active = 1U;
+    m_LPM_State  = USB_LPM_L0;
+
+    m_pUSB->LPMCSR |= USB_LPMCSR_LMPEN;
+    m_pUSB->LPMCSR |= USB_LPMCSR_LPMACK;
+
+    return SYS_READY;
+}
+#endif
+
+
+#if (DIGINI_USE_USB_LPM == DEF_ENABLED)
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       DeActivateLPM
+//
+//  Parameter(s):   None
+//  Return:         SystemState_e
+//
+//  Description:    De Activate LPM.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::DeActivateLPM(void)
+{
+    m_LPM_Active = 0U;
+
+    m_pUSB->LPMCSR &= ~(USB_LPMCSR_LMPEN);
+    m_pUSB->LPMCSR &= ~(USB_LPMCSR_LPMACK);
+
+    return SYS_READY;
+}
+#endif
+
+
+#if (DIGINI_USE_USB_LPM == DEF_ENABLED)
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       LPM_Callback
+//
+//  Parameter(s):   Message
+//  Return:         None
+//
+//  Description:    Callback.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::LPM_Callback(USB_LPM_Message_e Message)
+{
+    Notify(m_pLPMCallback, USB_CALLBACK_LPM, Message);
+}
+#endif
+
+
+#if (DIGINI_USE_USB_BCD == DEF_ENABLED)
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       BCD_Callback
+//
+//  Parameter(s):   Message
+//  Return:         None
+//
+//  Description:    Callback.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::BCD_Callback(USB_BCD_Message_e Message)
+{
+    Notify(m_pBCDCallback, USB_CALLBACK_BCD, Message);
+}
+#endif
+
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       EnableInterrupts
+//
+//  Parameter(s):   None
+//  Return:         SystemState_e
+//
+//  Description:    Device Enable Global Int.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::EnableInterrupts(void)
+{
+    uint32_t InterruptMask;
+
+    m_pUSB->ISTR = 0U;
+
+    InterruptMask = USB_CNTR_CTRM | USB_CNTR_WKUPM | USB_CNTR_SUSPM | USB_CNTR_ERRM | USB_CNTR_SOFM | USB_CNTR_ESOFM |
+                    USB_CNTR_RESETM | USB_CNTR_L1REQM;
+    if(m_Info.SOF_Enable == false)
+    {
+        InterruptMask &= ~USB_CNTR_SOFM;
+    }
+#if (DIGINI_USE_USB_LPM != DEF_ENABLED)
+    InterruptMask &= ~USB_CNTR_L1REQM;
+#endif
+
+    m_pUSB->CNTR = (uint16_t)InterruptMask;
+
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       DisableInterrupts
+//
+//  Parameter(s):   None
+//  Return:         SystemState_e
+//
+//  Description:    Device Disable Global Int.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::DisableInterrupts(void)
+{
+    uint32_t InterruptMask;
+
+    InterruptMask = USB_CNTR_CTRM | USB_CNTR_WKUPM | USB_CNTR_SUSPM | USB_CNTR_ERRM | USB_CNTR_SOFM | USB_CNTR_ESOFM |
+                    USB_CNTR_RESETM | USB_CNTR_L1REQM;
+
+    m_pUSB->CNTR &= (uint16_t)(~InterruptMask);
+
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       InitializeDevice
+//
+//  Parameter(s):   None
+//  Return:         SystemState_e
+//
+//  Description:    Device Dev Init.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::InitializeDevice(void)
+{
+    m_pUSB->CNTR = (uint16_t)USB_CNTR_FRES;
+
+    m_pUSB->CNTR = 0U;
+
+    m_pUSB->ISTR = 0U;
+
+    m_pUSB->BTABLE = USB_BTABLE_ADDRESS;
+
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       ActivateEndpoint
+//
+//  Parameter(s):   pEndpoint
+//  Return:         SystemState_e
+//
+//  Description:    Device Activate Endpoint.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::ActivateEndpoint(USB_Endpoint_t* pEndpoint)
+{
+    SystemState_e Status = SYS_READY;
+    uint16_t      EndpointValue;
+
+    EndpointValue = ReadEndpointRegister(pEndpoint->Number) & USB_EP_T_MASK;
+
+    switch(pEndpoint->Type)
+    {
+    case USB_ENDPOINT_CONTROL:
+        EndpointValue |= USB_EP_CONTROL;
+        break;
+
+    case USB_ENDPOINT_BULK:
+        EndpointValue |= USB_EP_BULK;
+        break;
+
+    case USB_ENDPOINT_INTERRUPT:
+        EndpointValue |= USB_EP_INTERRUPT;
+        break;
+
+#if (DIGINI_USE_USB_ISOCHRONOUS == DEF_ENABLED)
+    case USB_ENDPOINT_ISOCHRONOUS:
+        EndpointValue |= USB_EP_ISOCHRONOUS;
+        break;
+#endif
+
+    default:
+        Status = SYS_ERROR;
+        break;
+    }
+
+    WriteEndpointRegister(pEndpoint->Number, (EndpointValue | USB_EP_CTR_RX | USB_EP_CTR_TX));
+
+    SetEndpointAddress(pEndpoint->Number, pEndpoint->Number);
+
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+    if(pEndpoint->DoubleBuffer == 0U)
+#endif
+    {
+        if(pEndpoint->IsIn != 0U)
+        {
+            SetEndpointTxAddress(pEndpoint->Number, pEndpoint->PMA_Address);
+            ClearEndpointTxToggle(pEndpoint->Number);
+
+#if (DIGINI_USE_USB_ISOCHRONOUS == DEF_ENABLED)
+            if(pEndpoint->Type != USB_ENDPOINT_ISOCHRONOUS)
+#endif
+            {
+                SetEndpointTxStatus(pEndpoint->Number, USB_EP_TX_NAK);
+            }
+#if (DIGINI_USE_USB_ISOCHRONOUS == DEF_ENABLED)
+            else
+            {
+                SetEndpointTxStatus(pEndpoint->Number, USB_EP_TX_DIS);
+            }
+#endif
+        }
+        else
+        {
+            SetEndpointRxAddress(pEndpoint->Number, pEndpoint->PMA_Address);
+
+            SetEndpointRxCount(pEndpoint->Number, pEndpoint->MaxPacketSize);
+            ClearEndpointRxToggle(pEndpoint->Number);
+
+            if(pEndpoint->Number == 0U)
+            {
+                SetEndpointRxStatus(pEndpoint->Number, USB_EP_RX_VALID);
+            }
+            else
+            {
+                SetEndpointRxStatus(pEndpoint->Number, USB_EP_RX_NAK);
+            }
+        }
+    }
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+    else
+    {
+        if(pEndpoint->Type == USB_ENDPOINT_BULK)
+        {
+            SetBulkDoubleBuffer(pEndpoint->Number);
+        }
+        else
+        {
+            ClearEndpointKind(pEndpoint->Number);
+        }
+
+        SetEndpointBufferAddress(pEndpoint->Number, pEndpoint->PMA_Address0, pEndpoint->PMA_Address1);
+
+        if(pEndpoint->IsIn == 0U)
+        {
+            ClearEndpointRxToggle(pEndpoint->Number);
+            ClearEndpointTxToggle(pEndpoint->Number);
+
+            SetEndpointBufferCount(pEndpoint->Number, pEndpoint->IsIn, pEndpoint->MaxPacketSize);
+
+            SetEndpointRxStatus(pEndpoint->Number, USB_EP_RX_VALID);
+            SetEndpointTxStatus(pEndpoint->Number, USB_EP_TX_DIS);
+        }
+        else
+        {
+            ClearEndpointRxToggle(pEndpoint->Number);
+            ClearEndpointTxToggle(pEndpoint->Number);
+
+#if (DIGINI_USE_USB_ISOCHRONOUS == DEF_ENABLED)
+            if(pEndpoint->Type != USB_ENDPOINT_ISOCHRONOUS)
+#endif
+            {
+                SetEndpointTxStatus(pEndpoint->Number, USB_EP_TX_NAK);
+            }
+#if (DIGINI_USE_USB_ISOCHRONOUS == DEF_ENABLED)
+            else
+            {
+                SetEndpointTxStatus(pEndpoint->Number, USB_EP_TX_DIS);
+            }
+#endif
+
+            SetEndpointRxStatus(pEndpoint->Number, USB_EP_RX_DIS);
+        }
+    }
+#endif
+
+    return Status;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       DeactivateEndpoint
+//
+//  Parameter(s):   pEndpoint
+//  Return:         SystemState_e
+//
+//  Description:    Device Deactivate Endpoint.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::DeactivateEndpoint(USB_Endpoint_t* pEndpoint)
+{
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+    if(pEndpoint->DoubleBuffer == 0U)
+#endif
+    {
+        if(pEndpoint->IsIn != 0U)
+        {
+            ClearEndpointTxToggle(pEndpoint->Number);
+
+            SetEndpointTxStatus(pEndpoint->Number, USB_EP_TX_DIS);
+        }
+
+        else
+        {
+            ClearEndpointRxToggle(pEndpoint->Number);
+
+            SetEndpointRxStatus(pEndpoint->Number, USB_EP_RX_DIS);
+        }
+    }
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+    else
+    {
+        if(pEndpoint->IsIn == 0U)
+        {
+            ClearEndpointRxToggle(pEndpoint->Number);
+            ClearEndpointTxToggle(pEndpoint->Number);
+
+            ToggleEndpointTx(pEndpoint->Number);
+
+            SetEndpointRxStatus(pEndpoint->Number, USB_EP_RX_DIS);
+            SetEndpointTxStatus(pEndpoint->Number, USB_EP_TX_DIS);
+        }
+        else
+        {
+            ClearEndpointRxToggle(pEndpoint->Number);
+            ClearEndpointTxToggle(pEndpoint->Number);
+            ToggleEndpointRx(pEndpoint->Number);
+
+            SetEndpointTxStatus(pEndpoint->Number, USB_EP_TX_DIS);
+            SetEndpointRxStatus(pEndpoint->Number, USB_EP_RX_DIS);
+        }
+    }
+#endif
+
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+    if((pEndpoint->DoubleBuffer != 0U) || (pEndpoint->IsIn != 0U))
+#else
+    if(pEndpoint->IsIn != 0U)
+#endif
+    {
+        ClearEndpointTxEvent(pEndpoint->Number);
+    }
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+    if((pEndpoint->DoubleBuffer != 0U) || (pEndpoint->IsIn == 0U))
+#else
+    if(pEndpoint->IsIn == 0U)
+#endif
+    {
+        ClearEndpointRxEvent(pEndpoint->Number);
+    }
+
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       StartTransfer
+//
+//  Parameter(s):   pEndpoint
+//  Return:         SystemState_e
+//
+//  Description:    Device EP Start Xfer.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::StartTransfer(USB_Endpoint_t* pEndpoint)
+{
+    uint32_t Length;
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+    uint16_t PMA_Address;
+    uint16_t EndpointValue;
+#endif
+
+    if(pEndpoint->IsIn == 1U)
+    {
+        if(pEndpoint->TransferLength > pEndpoint->MaxPacketSize)
+        {
+            Length = pEndpoint->MaxPacketSize;
+        }
+        else
+        {
+            Length = pEndpoint->TransferLength;
+        }
+
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+        if(pEndpoint->DoubleBuffer == 0U)
+#endif
+        {
+            WritePMA(pEndpoint->pTransferBuffer, pEndpoint->PMA_Address, (uint16_t)Length);
+            SetEndpointTxCount(pEndpoint->Number, Length);
+        }
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+        else
+        {
+#if (DIGINI_USE_USB_ISOCHRONOUS == DEF_ENABLED)
+            if(pEndpoint->Type == USB_ENDPOINT_BULK)
+#endif
+            {
+                if(pEndpoint->DoubleBufferLength > pEndpoint->MaxPacketSize)
+                {
+                    SetBulkDoubleBuffer(pEndpoint->Number);
+
+                    pEndpoint->DoubleBufferLength -= Length;
+
+                    if((ReadEndpointRegister(pEndpoint->Number) & USB_EP_DTOG_TX) != 0U)
+                    {
+                        SetEndpointBuffer1Count(pEndpoint->Number, pEndpoint->IsIn, Length);
+                        PMA_Address = pEndpoint->PMA_Address1;
+
+                        WritePMA(pEndpoint->pTransferBuffer, PMA_Address, (uint16_t)Length);
+                        pEndpoint->pTransferBuffer += Length;
+
+                        if(pEndpoint->DoubleBufferLength > pEndpoint->MaxPacketSize)
+                        {
+                            pEndpoint->DoubleBufferLength -= Length;
+                        }
+                        else
+                        {
+                            Length                        = pEndpoint->DoubleBufferLength;
+                            pEndpoint->DoubleBufferLength = 0U;
+                        }
+
+                        SetEndpointBuffer0Count(pEndpoint->Number, pEndpoint->IsIn, Length);
+                        PMA_Address = pEndpoint->PMA_Address0;
+
+                        WritePMA(pEndpoint->pTransferBuffer, PMA_Address, (uint16_t)Length);
+                    }
+                    else
+                    {
+                        SetEndpointBuffer0Count(pEndpoint->Number, pEndpoint->IsIn, Length);
+                        PMA_Address = pEndpoint->PMA_Address0;
+
+                        WritePMA(pEndpoint->pTransferBuffer, PMA_Address, (uint16_t)Length);
+                        pEndpoint->pTransferBuffer += Length;
+
+                        if(pEndpoint->DoubleBufferLength > pEndpoint->MaxPacketSize)
+                        {
+                            pEndpoint->DoubleBufferLength -= Length;
+                        }
+                        else
+                        {
+                            Length                        = pEndpoint->DoubleBufferLength;
+                            pEndpoint->DoubleBufferLength = 0U;
+                        }
+
+                        SetEndpointBuffer1Count(pEndpoint->Number, pEndpoint->IsIn, Length);
+                        PMA_Address = pEndpoint->PMA_Address1;
+
+                        WritePMA(pEndpoint->pTransferBuffer, PMA_Address, (uint16_t)Length);
+                    }
+                }
+
+                else
+                {
+                    Length = pEndpoint->DoubleBufferLength;
+
+                    ClearBulkDoubleBuffer(pEndpoint->Number);
+
+                    SetEndpointTxCount(pEndpoint->Number, Length);
+                    PMA_Address = pEndpoint->PMA_Address0;
+
+                    WritePMA(pEndpoint->pTransferBuffer, PMA_Address, (uint16_t)Length);
+                }
+            }
+#if (DIGINI_USE_USB_ISOCHRONOUS == DEF_ENABLED)
+            else
+            {
+                pEndpoint->DoubleBufferLength -= Length;
+
+                if((ReadEndpointRegister(pEndpoint->Number) & USB_EP_DTOG_TX) != 0U)
+                {
+                    SetEndpointBuffer1Count(pEndpoint->Number, pEndpoint->IsIn, Length);
+                    PMA_Address = pEndpoint->PMA_Address1;
+
+                    WritePMA(pEndpoint->pTransferBuffer, PMA_Address, (uint16_t)Length);
+                }
+                else
+                {
+                    SetEndpointBuffer0Count(pEndpoint->Number, pEndpoint->IsIn, Length);
+                    PMA_Address = pEndpoint->PMA_Address0;
+
+                    WritePMA(pEndpoint->pTransferBuffer, PMA_Address, (uint16_t)Length);
+                }
+            }
+#endif
+        }
+#endif
+
+        SetEndpointTxStatus(pEndpoint->Number, USB_EP_TX_VALID);
+    }
+    else
+    {
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+        if(pEndpoint->DoubleBuffer == 0U)
+#endif
+        {
+            if((pEndpoint->TransferLength == 0U) && (pEndpoint->Type == USB_ENDPOINT_CONTROL))
+            {
+                SetOutStatus(pEndpoint->Number);
+            }
+            else
+            {
+                ClearOutStatus(pEndpoint->Number);
+            }
+
+            if(pEndpoint->TransferLength > pEndpoint->MaxPacketSize)
+            {
+                pEndpoint->TransferLength -= pEndpoint->MaxPacketSize;
+            }
+            else
+            {
+                pEndpoint->TransferLength = 0U;
+            }
+        }
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+        else
+        {
+            if(pEndpoint->Type == USB_ENDPOINT_BULK)
+            {
+                if(pEndpoint->TransferCount != 0U)
+                {
+                    EndpointValue = ReadEndpointRegister(pEndpoint->Number);
+
+                    if((((EndpointValue & USB_EP_DTOG_RX) != 0U) && ((EndpointValue & USB_EP_DTOG_TX) != 0U)) ||
+                       (((EndpointValue & USB_EP_DTOG_RX) == 0U) && ((EndpointValue & USB_EP_DTOG_TX) == 0U)))
+                    {
+                        ReleaseBuffer(pEndpoint->Number, 0U);
+                    }
+                }
+            }
+
+#if (DIGINI_USE_USB_ISOCHRONOUS == DEF_ENABLED)
+            else if(pEndpoint->Type == USB_ENDPOINT_ISOCHRONOUS)
+            {
+                pEndpoint->TransferLength = 0U;
+            }
+#endif
+            else
+            {
+                return SYS_ERROR;
+            }
+        }
+#endif
+
+        SetEndpointRxStatus(pEndpoint->Number, USB_EP_RX_VALID);
+    }
+
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       SetEndpointStall
+//
+//  Parameter(s):   pEndpoint
+//  Return:         SystemState_e
+//
+//  Description:    Device EP Set Stall.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::SetEndpointStall(USB_Endpoint_t* pEndpoint)
+{
+    if(pEndpoint->IsIn != 0U)
+    {
+        SetEndpointTxStatus(pEndpoint->Number, USB_EP_TX_STALL);
+    }
+    else
+    {
+        SetEndpointRxStatus(pEndpoint->Number, USB_EP_RX_STALL);
+    }
+
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       ClearEndpointStall
+//
+//  Parameter(s):   pEndpoint
+//  Return:         SystemState_e
+//
+//  Description:    Device EP Clear Stall.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::ClearEndpointStall(USB_Endpoint_t* pEndpoint)
+{
+    if(pEndpoint->IsIn != 0U)
+    {
+        ClearEndpointTxToggle(pEndpoint->Number);
+
+#if (DIGINI_USE_USB_ISOCHRONOUS == DEF_ENABLED)
+        if(pEndpoint->Type != USB_ENDPOINT_ISOCHRONOUS)
+#endif
+        {
+            SetEndpointTxStatus(pEndpoint->Number, USB_EP_TX_NAK);
+        }
+    }
+    else
+    {
+        ClearEndpointRxToggle(pEndpoint->Number);
+
+        SetEndpointRxStatus(pEndpoint->Number, USB_EP_RX_VALID);
+    }
+
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       StopTransfer
+//
+//  Parameter(s):   pEndpoint
+//  Return:         SystemState_e
+//
+//  Description:    Device EP Stop Xfer.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::StopTransfer(USB_Endpoint_t* pEndpoint)
+{
+    if(pEndpoint->IsIn == 1U)
+    {
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+        if(pEndpoint->DoubleBuffer == 0U)
+#endif
+        {
+#if (DIGINI_USE_USB_ISOCHRONOUS == DEF_ENABLED)
+            if(pEndpoint->Type != USB_ENDPOINT_ISOCHRONOUS)
+#endif
+            {
+                SetEndpointTxStatus(pEndpoint->Number, USB_EP_TX_NAK);
+            }
+#if (DIGINI_USE_USB_ISOCHRONOUS == DEF_ENABLED)
+            else
+            {
+                SetEndpointTxStatus(pEndpoint->Number, USB_EP_TX_DIS);
+            }
+#endif
+        }
+    }
+    else
+    {
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+        if(pEndpoint->DoubleBuffer == 0U)
+#endif
+        {
+#if (DIGINI_USE_USB_ISOCHRONOUS == DEF_ENABLED)
+            if(pEndpoint->Type != USB_ENDPOINT_ISOCHRONOUS)
+#endif
+            {
+                SetEndpointRxStatus(pEndpoint->Number, USB_EP_RX_NAK);
+            }
+#if (DIGINI_USE_USB_ISOCHRONOUS == DEF_ENABLED)
+            else
+            {
+                SetEndpointRxStatus(pEndpoint->Number, USB_EP_RX_DIS);
+            }
+#endif
+        }
+    }
+
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       StopDevice
+//
+//  Parameter(s):   None
+//  Return:         SystemState_e
+//
+//  Description:    Device Stop Device.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::StopDevice(void)
+{
+    m_pUSB->CNTR = (uint16_t)USB_CNTR_FRES;
+
+    m_pUSB->ISTR = 0U;
+
+    m_pUSB->CNTR = (uint16_t)(USB_CNTR_FRES | USB_CNTR_PDWN);
+
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       SetDeviceAddress
+//
+//  Parameter(s):   Address
+//  Return:         SystemState_e
+//
+//  Description:    Device Set Dev Address.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::SetDeviceAddress(uint8_t Address)
+{
+    if(Address == 0U)
+    {
+        m_pUSB->DADDR = (uint16_t)USB_DADDR_EF;
+    }
+
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       ConnectDevice
+//
+//  Parameter(s):   None
+//  Return:         SystemState_e
+//
+//  Description:    Device Dev Connect.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::ConnectDevice(void)
+{
+    m_pUSB->BCDR |= (uint16_t)USB_BCDR_DPPU;
+
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       DisconnectDevice
+//
+//  Parameter(s):   None
+//  Return:         SystemState_e
+//
+//  Description:    Device Dev Disconnect.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::DisconnectDevice(void)
+{
+    m_pUSB->BCDR &= (uint16_t)(~(USB_BCDR_DPPU));
+
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       ReadInterrupts
+//
+//  Parameter(s):   None
+//  Return:         uint32_t
+//
+//  Description:    Device Read Interrupts.
+//
+//-------------------------------------------------------------------------------------------------
+uint32_t USB_Driver::ReadInterrupts(void)
+{
+    uint32_t Value;
+
+    Value = m_pUSB->ISTR;
+    return Value;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       StartRemoteWakeup
+//
+//  Parameter(s):   None
+//  Return:         SystemState_e
+//
+//  Description:    Device Activate Remote Wakeup.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::StartRemoteWakeup(void)
+{
+    m_pUSB->CNTR |= (uint16_t)USB_CNTR_RESUME;
+
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       StopRemoteWakeup
+//
+//  Parameter(s):   None
+//  Return:         SystemState_e
+//
+//  Description:    Device De Activate Remote Wakeup.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::StopRemoteWakeup(void)
+{
+    m_pUSB->CNTR &= (uint16_t)(~USB_CNTR_RESUME);
+
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       WritePMA
+//
+//  Parameter(s):   pBuffer, PMA_Address, Length
+//  Return:         None
+//
+//  Description:    Copy bytes to packet memory without reading past an odd-length buffer.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::WritePMA(const uint8_t* pBuffer, uint16_t PMA_Address, uint16_t Length)
+{
+    volatile uint16_t* pMemory = reinterpret_cast<volatile uint16_t*>(uintptr_t(m_pUSB) + 0x400U + PMA_Address);
+    while(Length >= 2U)
+    {
+        *pMemory++ = uint16_t(pBuffer[0]) | (uint16_t(pBuffer[1]) << 8);
+        pBuffer += 2;
+        Length -= 2U;
+    }
+    if(Length != 0U)
+    {
+        *pMemory = pBuffer[0];
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       ReadPMA
+//
+//  Parameter(s):   pBuffer, PMA_Address, Length
+//  Return:         None
+//
+//  Description:    Device Read PMA.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::ReadPMA(uint8_t* pBuffer, uint16_t PMA_Address, uint16_t Length)
+{
+    volatile const uint16_t* pMemory =
+        reinterpret_cast<volatile const uint16_t*>(uintptr_t(m_pUSB) + 0x400U + PMA_Address);
+    while(Length >= 2U)
+    {
+        uint16_t Value = *pMemory++;
+        *pBuffer++     = uint8_t(Value);
+        *pBuffer++     = uint8_t(Value >> 8);
+        Length -= 2U;
+    }
+    if(Length != 0U)
+    {
+        *pBuffer = uint8_t(*pMemory);
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       WriteEndpointRegister
+//
+//  Parameter(s):   Endpoint, Value
+//  Return:         None
+//
+//  Description:    Set Endpoint.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::WriteEndpointRegister(uint16_t Endpoint, uint16_t Value)
+{
+    (*(__IO uint16_t*)(&(m_pUSB)->EP0R + ((Endpoint)*2U)) = (uint16_t)(Value));
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       ReadEndpointRegister
+//
+//  Parameter(s):   Endpoint
+//  Return:         uint16_t
+//
+//  Description:    Get Endpoint.
+//
+//-------------------------------------------------------------------------------------------------
+uint16_t USB_Driver::ReadEndpointRegister(uint16_t Endpoint)
+{
+    return (*(__IO uint16_t*)(&(m_pUSB)->EP0R + ((Endpoint)*2U)));
+}
+
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       ReleaseBuffer
+//
+//  Parameter(s):   Endpoint, Direction
+//  Return:         None
+//
+//  Description:    Free User Buffer.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::ReleaseBuffer(uint16_t Endpoint, uint16_t Direction)
+{
+    if((Direction) == 0U)
+    {
+        ToggleEndpointTx((Endpoint));
+    }
+    else if((Direction) == 1U)
+    {
+        ToggleEndpointRx((Endpoint));
+    }
+}
+#endif
+
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       SetEndpointTxStatus
+//
+//  Parameter(s):   Endpoint, State
+//  Return:         None
+//
+//  Description:    Set Ep Tx Status.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::SetEndpointTxStatus(uint16_t Endpoint, uint16_t State)
+{
+    uint16_t RegisterValue;
+    RegisterValue = ReadEndpointRegister((Endpoint)) & USB_EPTX_DTOGMASK;
+    if((USB_EPTX_DTOG1 & (State)) != 0U)
+    {
+        RegisterValue ^= USB_EPTX_DTOG1;
+    }
+    if((USB_EPTX_DTOG2 & (State)) != 0U)
+    {
+        RegisterValue ^= USB_EPTX_DTOG2;
+    }
+    WriteEndpointRegister((Endpoint), (RegisterValue | USB_EP_CTR_RX | USB_EP_CTR_TX));
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       SetEndpointRxStatus
+//
+//  Parameter(s):   Endpoint, State
+//  Return:         None
+//
+//  Description:    Set Ep Rx Status.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::SetEndpointRxStatus(uint16_t Endpoint, uint16_t State)
+{
+    uint16_t RegisterValue;
+    RegisterValue = ReadEndpointRegister((Endpoint)) & USB_EPRX_DTOGMASK;
+    if((USB_EPRX_DTOG1 & (State)) != 0U)
+    {
+        RegisterValue ^= USB_EPRX_DTOG1;
+    }
+    if((USB_EPRX_DTOG2 & (State)) != 0U)
+    {
+        RegisterValue ^= USB_EPRX_DTOG2;
+    }
+    WriteEndpointRegister((Endpoint), (RegisterValue | USB_EP_CTR_RX | USB_EP_CTR_TX));
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       SetEndpointKind
+//
+//  Parameter(s):   Endpoint
+//  Return:         None
+//
+//  Description:    Set Ep Kind.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::SetEndpointKind(uint16_t Endpoint)
+{
+    uint16_t RegisterValue;
+    RegisterValue = ReadEndpointRegister((Endpoint)) & USB_EPREG_MASK;
+    WriteEndpointRegister((Endpoint), (RegisterValue | USB_EP_CTR_RX | USB_EP_CTR_TX | USB_EP_KIND));
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       ClearEndpointKind
+//
+//  Parameter(s):   Endpoint
+//  Return:         None
+//
+//  Description:    Clear Ep Kind.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::ClearEndpointKind(uint16_t Endpoint)
+{
+    uint16_t RegisterValue;
+    RegisterValue = ReadEndpointRegister((Endpoint)) & USB_EPKIND_MASK;
+    WriteEndpointRegister((Endpoint), (RegisterValue | USB_EP_CTR_RX | USB_EP_CTR_TX));
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       SetOutStatus
+//
+//  Parameter(s):   Endpoint
+//  Return:         None
+//
+//  Description:    Set Out Status.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::SetOutStatus(uint16_t Endpoint)
+{
+    SetEndpointKind((Endpoint));
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       ClearOutStatus
+//
+//  Parameter(s):   Endpoint
+//  Return:         None
+//
+//  Description:    Clear Out Status.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::ClearOutStatus(uint16_t Endpoint)
+{
+    ClearEndpointKind((Endpoint));
+}
+
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       SetBulkDoubleBuffer
+//
+//  Parameter(s):   Endpoint
+//  Return:         None
+//
+//  Description:    Set Bulk Ep Dbuf.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::SetBulkDoubleBuffer(uint16_t Endpoint)
+{
+    SetEndpointKind((Endpoint));
+}
+#endif
+
+
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       ClearBulkDoubleBuffer
+//
+//  Parameter(s):   Endpoint
+//  Return:         None
+//
+//  Description:    Clear Bulk Ep Dbuf.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::ClearBulkDoubleBuffer(uint16_t Endpoint)
+{
+    ClearEndpointKind((Endpoint));
+}
+#endif
+
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       ClearEndpointRxEvent
+//
+//  Parameter(s):   Endpoint
+//  Return:         None
+//
+//  Description:    Clear Rx Ep Ctr.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::ClearEndpointRxEvent(uint16_t Endpoint)
+{
+    uint16_t RegisterValue;
+    RegisterValue = ReadEndpointRegister((Endpoint)) & (0x7FFFU & USB_EPREG_MASK);
+    WriteEndpointRegister((Endpoint), (RegisterValue | USB_EP_CTR_TX));
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       ClearEndpointTxEvent
+//
+//  Parameter(s):   Endpoint
+//  Return:         None
+//
+//  Description:    Clear Tx Ep Ctr.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::ClearEndpointTxEvent(uint16_t Endpoint)
+{
+    uint16_t RegisterValue;
+    RegisterValue = ReadEndpointRegister((Endpoint)) & (0xFF7FU & USB_EPREG_MASK);
+    WriteEndpointRegister((Endpoint), (RegisterValue | USB_EP_CTR_RX));
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       ToggleEndpointRx
+//
+//  Parameter(s):   Endpoint
+//  Return:         None
+//
+//  Description:    Rx Dtog.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::ToggleEndpointRx(uint16_t Endpoint)
+{
+    uint16_t EndpointValue;
+    EndpointValue = ReadEndpointRegister((Endpoint)) & USB_EPREG_MASK;
+    WriteEndpointRegister((Endpoint), (EndpointValue | USB_EP_CTR_RX | USB_EP_CTR_TX | USB_EP_DTOG_RX));
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       ToggleEndpointTx
+//
+//  Parameter(s):   Endpoint
+//  Return:         None
+//
+//  Description:    Tx Dtog.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::ToggleEndpointTx(uint16_t Endpoint)
+{
+    uint16_t EndpointValue;
+    EndpointValue = ReadEndpointRegister((Endpoint)) & USB_EPREG_MASK;
+    WriteEndpointRegister((Endpoint), (EndpointValue | USB_EP_CTR_RX | USB_EP_CTR_TX | USB_EP_DTOG_TX));
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       ClearEndpointRxToggle
+//
+//  Parameter(s):   Endpoint
+//  Return:         None
+//
+//  Description:    Clear Rx Dtog.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::ClearEndpointRxToggle(uint16_t Endpoint)
+{
+    uint16_t RegisterValue;
+    RegisterValue = ReadEndpointRegister((Endpoint));
+    if((RegisterValue & USB_EP_DTOG_RX) != 0U)
+    {
+        ToggleEndpointRx((Endpoint));
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       ClearEndpointTxToggle
+//
+//  Parameter(s):   Endpoint
+//  Return:         None
+//
+//  Description:    Clear Tx Dtog.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::ClearEndpointTxToggle(uint16_t Endpoint)
+{
+    uint16_t RegisterValue;
+    RegisterValue = ReadEndpointRegister((Endpoint));
+    if((RegisterValue & USB_EP_DTOG_TX) != 0U)
+    {
+        ToggleEndpointTx((Endpoint));
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       SetEndpointAddress
+//
+//  Parameter(s):   Endpoint, Address
+//  Return:         None
+//
+//  Description:    Set Ep Address.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::SetEndpointAddress(uint16_t Endpoint, uint16_t Address)
+{
+    uint16_t RegisterValue;
+    RegisterValue = (ReadEndpointRegister((Endpoint)) & USB_EPREG_MASK) | (Address);
+    WriteEndpointRegister((Endpoint), (RegisterValue | USB_EP_CTR_RX | USB_EP_CTR_TX));
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       GetEndpointTxCountRegister
+//
+//  Parameter(s):   Endpoint
+//  Return:         volatile uint16_t*
+//
+//  Description:    Ep Tx Cnt.
+//
+//-------------------------------------------------------------------------------------------------
+volatile uint16_t* USB_Driver::GetEndpointTxCountRegister(uint16_t Endpoint)
+{
+    return ((volatile uint16_t*)((((uint32_t)m_pUSB->BTABLE + ((uint32_t)(Endpoint)*8U) + 2U) * USB_PMA_ACCESS) +
+                                 (uintptr_t(m_pUSB) + 0x400U)));
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       GetEndpointRxCountRegister
+//
+//  Parameter(s):   Endpoint
+//  Return:         volatile uint16_t*
+//
+//  Description:    Ep Rx Cnt.
+//
+//-------------------------------------------------------------------------------------------------
+volatile uint16_t* USB_Driver::GetEndpointRxCountRegister(uint16_t Endpoint)
+{
+    return ((volatile uint16_t*)((((uint32_t)m_pUSB->BTABLE + ((uint32_t)(Endpoint)*8U) + 6U) * USB_PMA_ACCESS) +
+                                 (uintptr_t(m_pUSB) + 0x400U)));
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       SetEndpointTxAddress
+//
+//  Parameter(s):   Endpoint, Address
+//  Return:         None
+//
+//  Description:    Set Ep Tx Address.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::SetEndpointTxAddress(uint16_t Endpoint, uint16_t Address)
+{
+    __IO uint16_t* RegisterValue;
+    uintptr_t      RegisterBase = uintptr_t(m_pUSB);
+    RegisterBase += (uint32_t)m_pUSB->BTABLE;
+    RegisterValue  = (__IO uint16_t*)(RegisterBase + 0x400U + (((uint32_t)(Endpoint)*8U) * USB_PMA_ACCESS));
+    *RegisterValue = ((Address) >> 1) << 1;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       SetEndpointRxAddress
+//
+//  Parameter(s):   Endpoint, Address
+//  Return:         None
+//
+//  Description:    Set Ep Rx Address.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::SetEndpointRxAddress(uint16_t Endpoint, uint16_t Address)
+{
+    __IO uint16_t* RegisterValue;
+    uintptr_t      RegisterBase = uintptr_t(m_pUSB);
+    RegisterBase += (uint32_t)m_pUSB->BTABLE;
+    RegisterValue  = (__IO uint16_t*)(RegisterBase + 0x400U + ((((uint32_t)(Endpoint)*8U) + 4U) * USB_PMA_ACCESS));
+    *RegisterValue = ((Address) >> 1) << 1;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       SetEndpointRxBuffer0Count
+//
+//  Parameter(s):   Endpoint, Count
+//  Return:         None
+//
+//  Description:    Set Ep Rx Dbuf Cnt.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::SetEndpointRxBuffer0Count(uint16_t Endpoint, uint16_t Count)
+{
+    uintptr_t RegisterBase = uintptr_t(m_pUSB);
+    __IO uint16_t* pRegister;
+    RegisterBase += (uint32_t)m_pUSB->BTABLE;
+    pRegister = (__IO uint16_t*)(RegisterBase + 0x400U + ((((uint32_t)(Endpoint)*8U) + 2U) * USB_PMA_ACCESS));
+    SetReceiveCountRegister(pRegister, (Count));
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       SetEndpointTxCount
+//
+//  Parameter(s):   Endpoint, Count
+//  Return:         None
+//
+//  Description:    Set Ep Tx Cnt.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::SetEndpointTxCount(uint16_t Endpoint, uint16_t Count)
+{
+    uintptr_t RegisterBase = uintptr_t(m_pUSB);
+    __IO uint16_t* RegisterValue;
+    RegisterBase += (uint32_t)m_pUSB->BTABLE;
+    RegisterValue  = (__IO uint16_t*)(RegisterBase + 0x400U + ((((uint32_t)(Endpoint)*8U) + 2U) * USB_PMA_ACCESS));
+    *RegisterValue = (uint16_t)(Count);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       SetEndpointRxCount
+//
+//  Parameter(s):   Endpoint, Count
+//  Return:         None
+//
+//  Description:    Set Ep Rx Cnt.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::SetEndpointRxCount(uint16_t Endpoint, uint16_t Count)
+{
+    uintptr_t RegisterBase = uintptr_t(m_pUSB);
+    __IO uint16_t* RegisterValue;
+    RegisterBase += (uint32_t)m_pUSB->BTABLE;
+    RegisterValue = (__IO uint16_t*)(RegisterBase + 0x400U + ((((uint32_t)(Endpoint)*8U) + 6U) * USB_PMA_ACCESS));
+    SetReceiveCountRegister(RegisterValue, (Count));
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       GetEndpointTxCount
+//
+//  Parameter(s):   Endpoint
+//  Return:         uint16_t
+//
+//  Description:    Get Ep Tx Cnt.
+//
+//-------------------------------------------------------------------------------------------------
+uint16_t USB_Driver::GetEndpointTxCount(uint16_t Endpoint)
+{
+    return ((uint32_t)(*GetEndpointTxCountRegister((Endpoint))) & 0x3ffU);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       GetEndpointRxCount
+//
+//  Parameter(s):   Endpoint
+//  Return:         uint16_t
+//
+//  Description:    Get Ep Rx Cnt.
+//
+//-------------------------------------------------------------------------------------------------
+uint16_t USB_Driver::GetEndpointRxCount(uint16_t Endpoint)
+{
+    return ((uint32_t)(*GetEndpointRxCountRegister((Endpoint))) & 0x3ffU);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       SetEndpointBuffer0Address
+//
+//  Parameter(s):   Endpoint, Address0
+//  Return:         None
+//
+//  Description:    Set Ep Dbuf Addr.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::SetEndpointBuffer0Address(uint16_t Endpoint, uint16_t Address0)
+{
+    SetEndpointTxAddress((Endpoint), (Address0));
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       SetEndpointBuffer1Address
+//
+//  Parameter(s):   Endpoint, Address1
+//  Return:         None
+//
+//  Description:    Set Ep Dbuf Addr.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::SetEndpointBuffer1Address(uint16_t Endpoint, uint16_t Address1)
+{
+    SetEndpointRxAddress((Endpoint), (Address1));
+}
+
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       SetEndpointBufferAddress
+//
+//  Parameter(s):   Endpoint, Address0, Address1
+//  Return:         None
+//
+//  Description:    Set Ep Dbuf Addr.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::SetEndpointBufferAddress(uint16_t Endpoint, uint16_t Address0, uint16_t Address1)
+{
+    SetEndpointBuffer0Address((Endpoint), (Address0));
+    SetEndpointBuffer1Address((Endpoint), (Address1));
+}
+#endif
+
+
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       SetEndpointBuffer0Count
+//
+//  Parameter(s):   Endpoint, Direction, Count
+//  Return:         None
+//
+//  Description:    Set Ep Dbuf Cnt.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::SetEndpointBuffer0Count(uint16_t Endpoint, uint16_t Direction, uint16_t Count)
+{
+    if((Direction) == 0U)
+    {
+        SetEndpointRxBuffer0Count((Endpoint), (Count));
+    }
+    else
+    {
+        if((Direction) == 1U)
+        {
+            SetEndpointTxCount((Endpoint), (Count));
+        }
+    }
+}
+#endif
+
+
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       SetEndpointBuffer1Count
+//
+//  Parameter(s):   Endpoint, Direction, Count
+//  Return:         None
+//
+//  Description:    Set Ep Dbuf Cnt.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::SetEndpointBuffer1Count(uint16_t Endpoint, uint16_t Direction, uint16_t Count)
+{
+    uintptr_t BaseAddress = uintptr_t(m_pUSB);
+    __IO uint16_t* pRegister;
+    if((Direction) == 0U)
+    {
+        SetEndpointRxCount((Endpoint), (Count));
+    }
+    else
+    {
+        if((Direction) == 1U)
+        {
+            BaseAddress += (uint32_t)m_pUSB->BTABLE;
+            pRegister  = (__IO uint16_t*)(BaseAddress + 0x400U + ((((uint32_t)(Endpoint)*8U) + 6U) * USB_PMA_ACCESS));
+            *pRegister = (uint16_t)(Count);
+        }
+    }
+}
+#endif
+
+
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       SetEndpointBufferCount
+//
+//  Parameter(s):   Endpoint, Direction, Count
+//  Return:         None
+//
+//  Description:    Set Ep Dbuf Cnt.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::SetEndpointBufferCount(uint16_t Endpoint, uint16_t Direction, uint16_t Count)
+{
+    SetEndpointBuffer0Count((Endpoint), (Direction), (Count));
+    SetEndpointBuffer1Count((Endpoint), (Direction), (Count));
+}
+#endif
+
+
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       GetEndpointBuffer0Count
+//
+//  Parameter(s):   Endpoint
+//  Return:         uint16_t
+//
+//  Description:    Get Ep Dbuf Cnt.
+//
+//-------------------------------------------------------------------------------------------------
+uint16_t USB_Driver::GetEndpointBuffer0Count(uint16_t Endpoint)
+{
+    return (GetEndpointTxCount((Endpoint)));
+}
+#endif
+
+
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       GetEndpointBuffer1Count
+//
+//  Parameter(s):   Endpoint
+//  Return:         uint16_t
+//
+//  Description:    Get Ep Dbuf Cnt.
+//
+//-------------------------------------------------------------------------------------------------
+uint16_t USB_Driver::GetEndpointBuffer1Count(uint16_t Endpoint)
+{
+    return (GetEndpointRxCount((Endpoint)));
+}
+#endif
+
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       SetReceiveCountRegister
+//
+//  Parameter(s):   pRegister, Count
+//  Return:         None
+//
+//  Description:    Set Receive Count.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::SetReceiveCountRegister(volatile uint16_t* pRegister, uint16_t Count)
+{
+    uint16_t Blocks;
+    uint16_t Value = *pRegister & 0x03FFU;
+    if(Count == 0U)
+    {
+        Value |= USB_CNTRX_BLSIZE;
+    }
+    else if(Count <= 62U)
+    {
+        Blocks = (Count + 1U) >> 1;
+        Value |= Blocks << 10;
+    }
+    else
+    {
+        Blocks = (Count - 1U) >> 5;
+        Value |= (Blocks << 10) | USB_CNTRX_BLSIZE;
+    }
+    *pRegister = Value;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       Lock
+//
+//  Parameter(s):   None
+//  Return:         bool - True when the controller lock was acquired
+//
+//  Description:    Acquire the lock while preserving the caller's interrupt mask.
+//
+//-------------------------------------------------------------------------------------------------
+bool USB_Driver::Lock(void)
+{
+    uint32_t Mask = __get_PRIMASK();
+    __disable_irq();
+    bool Available = (m_Locked == false);
+    if(Available)
+    {
+        m_Locked = true;
+    }
+    __set_PRIMASK(Mask);
+    return Available;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       Unlock
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    Release the controller lock.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::Unlock(void)
+{
+    m_Locked = false;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       IsEndpointValid
+//
+//  Parameter(s):   EndpointAddress
+//  Return:         bool - True when the address identifies a configured endpoint number
+//
+//  Description:    Check the endpoint address bits and configured endpoint count.
+//
+//-------------------------------------------------------------------------------------------------
+bool USB_Driver::IsEndpointValid(uint8_t EndpointAddress) const
+{
+    return ((EndpointAddress & 0x78U) == 0U) && ((EndpointAddress & USB_ENDPOINT_MASK) < m_Info.EndpointCount);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       IsPMA_Valid
+//
+//  Parameter(s):   pEndpoint, MaxPacketSize
+//  Return:         bool - True when the endpoint buffers fit in packet memory
+//
+//  Description:    Check packet-memory bounds and double-buffer overlap with RX size rounding.
+//
+//-------------------------------------------------------------------------------------------------
+bool USB_Driver::IsPMA_Valid(const USB_Endpoint_t* pEndpoint, uint16_t MaxPacketSize) const
+{
+    uint32_t Size = (MaxPacketSize + 1U) & ~1U;
+    if((pEndpoint->IsIn == 0U) && (MaxPacketSize > 62U))
+    {
+        Size = (MaxPacketSize + 31U) & ~31U;
+    }
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+    uint32_t Address0 = (pEndpoint->DoubleBuffer != 0U) ? pEndpoint->PMA_Address0 : pEndpoint->PMA_Address;
+#else
+    uint32_t Address0 = pEndpoint->PMA_Address;
+#endif
+    if((Address0 < USB_ENDPOINT_COUNT * 8U) || ((Address0 + Size) > USB_PMA_SIZE))
+    {
+        return false;
+    }
+#if (DIGINI_USE_USB_DOUBLE_BUFFER == DEF_ENABLED)
+    if(pEndpoint->DoubleBuffer != 0U)
+    {
+        uint32_t Address1 = pEndpoint->PMA_Address1;
+        if((Address1 < USB_ENDPOINT_COUNT * 8U) || ((Address1 + Size) > USB_PMA_SIZE) ||
+           ((Address0 < (Address1 + Size)) && (Address1 < (Address0 + Size))))
+        {
+            return false;
+        }
+    }
+#endif
+    return true;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       GetEndpoint
+//
+//  Parameter(s):   EndpointAddress
+//  Return:         const USB_Endpoint_t* - Endpoint state or nullptr for an invalid address
+//
+//  Description:    Return read-only transfer state for the selected endpoint direction.
+//
+//-------------------------------------------------------------------------------------------------
+const USB_Endpoint_t* USB_Driver::GetEndpoint(uint8_t EndpointAddress) const
+{
+    if(IsEndpointValid(EndpointAddress) == false)
+    {
+        return nullptr;
+    }
+    return ((EndpointAddress & 0x80U) != 0U) ? &m_InEndpoint[EndpointAddress & USB_ENDPOINT_MASK]
+                                             : &m_OutEndpoint[EndpointAddress & USB_ENDPOINT_MASK];
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       SetEndpointStatus
+//
+//  Parameter(s):   EndpointAddress, Status
+//  Return:         SystemState_e
+//
+//  Description:    Set one endpoint direction's status while preserving pending transfer events.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::SetEndpointStatus(uint8_t EndpointAddress, uint16_t Status)
+{
+    bool In = (EndpointAddress & 0x80U) != 0U;
+    uint16_t Mask = In ? USB_EPTX_STAT : USB_EPRX_STAT;
+    if((IsEndpointValid(EndpointAddress) == false) || ((Status & ~Mask) != 0U))
+    {
+        return SYS_WRONG_VALUE;
+    }
+    if(In)
+    {
+        SetEndpointTxStatus(EndpointAddress & USB_ENDPOINT_MASK, Status);
+    }
+    else
+    {
+        SetEndpointRxStatus(EndpointAddress & USB_ENDPOINT_MASK, Status);
+    }
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       GetEndpointStatus
+//
+//  Parameter(s):   EndpointAddress, pStatus
+//  Return:         SystemState_e
+//
+//  Description:    Read the selected endpoint direction's hardware status.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e USB_Driver::GetEndpointStatus(uint8_t EndpointAddress, uint16_t* pStatus) const
+{
+    if((IsEndpointValid(EndpointAddress) == false) || (pStatus == nullptr))
+    {
+        return SYS_WRONG_VALUE;
+    }
+    const volatile uint16_t* pRegister = reinterpret_cast<const volatile uint16_t*>(
+        uintptr_t(m_pUSB) + (EndpointAddress & USB_ENDPOINT_MASK) * 4U);
+    *pStatus = *pRegister & (((EndpointAddress & 0x80U) != 0U) ? USB_EPTX_STAT : USB_EPRX_STAT);
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       Notify
+//
+//  Parameter(s):   pCallback, Event, Value
+//  Return:         None
+//
+//  Description:    Dispatch an event with a temporary context valid only during the callback.
+//
+//-------------------------------------------------------------------------------------------------
+void USB_Driver::Notify(CallbackInterface* pCallback, USB_Callback_e Event, uint32_t Value)
+{
+    if(pCallback != nullptr)
+    {
+        USB_CallbackInfo_t Info = {this, Value};
+        pCallback->CallbackFunction(Event, &Info);
+    }
+}
+
+#endif // (USE_USB_DRIVER == DEF_ENABLED) && defined(STM32L4xx)

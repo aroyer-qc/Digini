@@ -135,6 +135,18 @@ void SystemInit(void)
     WaitForClockRegister(&RCC->CR, RCC_CR_PLLRDY, RCC_CR_PLLRDY);
   #endif
 
+  #if (CFG_USB_CLK48_SOURCE == CFG_RCC_CCIPR_CLK48SEL_PLLQ)
+    #if (CFG_ENABLE_PLL_Q == 0) || (CFG_PLL_Q_FREQUENCY != 48000000ULL)
+      #error "USB PLLQ must be enabled and configured to 48 MHz in clock_cfg.h"
+    #endif
+  #elif (CFG_USB_CLK48_SOURCE == CFG_RCC_CCIPR_CLK48SEL_HSI48)
+    SET_BIT(RCC->CRRCR, RCC_CRRCR_HSI48ON);
+    WaitForClockRegister(&RCC->CRRCR, RCC_CRRCR_HSI48RDY, RCC_CRRCR_HSI48RDY);
+  #else
+    #error "Unsupported USB 48 MHz source in clock_cfg.h"
+  #endif
+    MODIFY_REG(RCC->CCIPR, RCC_CCIPR_CLK48SEL, CFG_USB_CLK48_SOURCE);
+
     MODIFY_REG(RCC->CFGR, RCC_CFGR_SW, CFG_SYS_CLOCK_MUX);
     WaitForClockRegister(&RCC->CFGR, RCC_CFGR_SWS, CFG_SYS_CLOCK_MUX << RCC_CFGR_SWS_Pos);
     SystemCoreClock = SYSTEM_CORE_CLOCK;

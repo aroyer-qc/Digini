@@ -93,6 +93,9 @@
 #define CFG_RCC_PLLCFGR_PLLSRC_HSI                  0x00000002U
 #define CFG_RCC_PLLCFGR_PLLSRC_HSE                  0x00000003U
 
+#define CFG_RCC_CCIPR_CLK48SEL_HSI48                0x00000000U
+#define CFG_RCC_CCIPR_CLK48SEL_PLLQ                 0x00000001U
+
 #define CFG_RCC_BDCR_RTCSEL_NO_CLOCK                0x00000000U
 #define CFG_RCC_BDCR_RTCSEL_LSE                     0x00000100U
 #define CFG_RCC_BDCR_RTCSEL_LSI                     0x00000200U
@@ -137,7 +140,12 @@
 
 #define CFG_HSI_VALUE                              HSI_CLOCK_FREQUENCY
 #define CFG_MSI_VALUE                              4000000U
-#define CFG_USE_PLL                                ((CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_PLL) || (CFG_MCO_SOURCE_MUX == CFG_RCC_CFGR_MCOSEL_PLL))
+// +++++++++++++
+// Keep PLL initialization enabled when USB selects PLLQ, even if SYSCLK/MCO use another source.
+// +++++++++++++
+#define CFG_USE_PLL                                ((CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_PLL) || \
+                                                    (CFG_MCO_SOURCE_MUX == CFG_RCC_CFGR_MCOSEL_PLL) || \
+                                                    (CFG_USB_CLK48_SOURCE == CFG_RCC_CCIPR_CLK48SEL_PLLQ))
 
 #if (CFG_RTC_CLOCK_SOURCE != CFG_RCC_BDCR_RTCSEL_NO_CLOCK) && (CFG_RTC_CLOCK_SOURCE != CFG_RCC_BDCR_RTCSEL_LSE) && (CFG_RTC_CLOCK_SOURCE != CFG_RCC_BDCR_RTCSEL_LSI) && (CFG_RTC_CLOCK_SOURCE != CFG_RCC_BDCR_RTCSEL_HSE)
   #error Invalid RTC clock source

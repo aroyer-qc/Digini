@@ -55,7 +55,7 @@ class ClassTaskCOMM
 {
     public:
 
-        nOS_Error       Initialize         (Console* m_pConsole, UART_Driver* pUart, const char* pTaskName);
+        nOS_Error       Initialize         (Console* pConsole, SerialPortInterface* pSerialPort, const char* pTaskName);
         void            Run                (void);
 
     private:

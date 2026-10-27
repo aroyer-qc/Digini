@@ -26,6 +26,8 @@
 
 #pragma once
 
+#include "../../interface/lib_class_serial_port_interface.h"
+
 //-------------------------------------------------------------------------------------------------
 
 #if (USE_VIRTUAL_UART_DRIVER == DEF_ENABLED)
@@ -98,34 +100,27 @@ struct UART_Info_t
     UART_Config_e       Config;
 };
 
-struct UART_Transfer_t
-{
-    uint8_t*            pBuffer;
-    union
-    {
-        size_t          Size;
-        size_t          Head;               // if used in circular buffer
-    } u;
-    size_t              StaticSize;
-};
+using UART_Transfer_t = SerialTransfer_t;
 
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
 // create an interface
-class VUART_Driver
+class VUART_Driver : public SerialPortInterface
 {
     public:
 
                             VUART_Driver                    (VUART_ID_e VuartID);
 
         void                Initialize                      (void);
+        void                InitializeTransport             (void) override                              { Initialize(); }
+        void                SetReceiveBuffer                (uint8_t* pBuffer, size_t Capacity) override { DMA_ConfigRX(pBuffer, Capacity); }
         void                SetConfig                       (UART_Config_e Config, UART_Baud_e BaudID);     { VAR_UNUSED(Config); VAR_UNUSED(BaudID);   }
         void                SetBaudRate                     (UART_Baud_e BaudID)                            { VAR_UNUSED(BaudID);                       }
         void                SetCustomBaudRate               (uint32_t Speed)                                { VAR_UNUSED(Speed);                        }
         uint32_t            GetBaudRate                     (void)                                          { return UART_BAUD_IS_VIRTUAL;              }
 
-        SystemState_e       SendData                        (const uint8_t* p_BufferTX, size_t* pSizeTX);
+        SystemState_e       SendData                        (const uint8_t* p_BufferTX, size_t* pSizeTX) override;
 
         bool                IsItBusy                        (void);
 
@@ -141,6 +136,24 @@ class VUART_Driver
         void                RegisterCallback                (CallbackInterface* pCallback);
         void                EnableCallbackType              (int CallbackType);
       #endif
+
+        void                RegisterReceiveCallback         (CallbackInterface* pCallback) override
+        {
+          #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED)
+            RegisterCallback(pCallback);
+          #else
+            (void)pCallback;
+          #endif
+        }
+
+        void                EnableReceiveCallbacks          (int CallbackTypes) override
+        {
+          #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED)
+            EnableCallbackType(CallbackTypes);
+          #else
+            (void)CallbackTypes;
+          #endif
+        }
 
         void                Enable                          (void);
         void                Disable                         (void);

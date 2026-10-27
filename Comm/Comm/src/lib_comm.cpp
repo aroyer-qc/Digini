@@ -73,14 +73,14 @@ extern "C" void ClassTaskCOMM_Wrapper(void* pvParameters)
 //  Description:    Initialize
 //
 //-------------------------------------------------------------------------------------------------
-nOS_Error ClassTaskCOMM::Initialize(Console* pConsole, UART_Driver* pUart, const char* pTaskName)
+nOS_Error ClassTaskCOMM::Initialize(Console* pConsole, SerialPortInterface* pSerialPort, const char* pTaskName)
 {
     nOS_Error Error = NOS_OK;
 
     m_pConsole = pConsole;
 
     // Uart console Command Line and VT100 terminal
-    m_pConsole->Initialize(pUart);
+    m_pConsole->Initialize(pSerialPort);
 
     Error = nOS_ThreadCreate(&m_Handle,
                              ClassTaskCOMM_Wrapper,

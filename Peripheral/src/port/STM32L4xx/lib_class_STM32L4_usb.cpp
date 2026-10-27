@@ -35,7 +35,7 @@
 #if (USE_USB_DRIVER == DEF_ENABLED)
 
 #if (CFG_ENABLE_PLL_Q == 0) || (CFG_PLL_Q_FREQUENCY != 48000000ULL)
-#error USB CDC requires a 48 MHz PLLQ clock
+#error USB requires a 48 MHz PLLQ clock
 #endif
 
 //-------------------------------------------------------------------------------------------------
@@ -46,16 +46,38 @@
 #define USB_ENDPOINT(Number) (*reinterpret_cast<volatile uint16_t*>(USB_BASE + 4U * (Number)))
 #define USB_TABLE reinterpret_cast<volatile uint16_t*>(USB_PMAADDR)
 
+#define USB_CDC_DEFAULT_BAUD_RATE        115200UL
+#define USB_CDC_STOP_BITS_1              0
+#define USB_CDC_PARITY_NONE              0
+#define USB_CDC_DATA_BITS_8              8
+
+//-------------------------------------------------------------------------------------------------
+// Private variable(s) and constant(s)
+//-------------------------------------------------------------------------------------------------
+
+#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
+const uint8_t USB_CDC_ACM_Driver::m_DefaultLineCoding[USB_CDC_LINE_CODING_SIZE] =
+{
+    static_cast<uint8_t>(USB_CDC_DEFAULT_BAUD_RATE),
+    static_cast<uint8_t>(USB_CDC_DEFAULT_BAUD_RATE >> 8),
+    static_cast<uint8_t>(USB_CDC_DEFAULT_BAUD_RATE >> 16),
+    static_cast<uint8_t>(USB_CDC_DEFAULT_BAUD_RATE >> 24),
+    USB_CDC_STOP_BITS_1,
+    USB_CDC_PARITY_NONE,
+    USB_CDC_DATA_BITS_8
+};
+#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
+
 //-------------------------------------------------------------------------------------------------
 //
-// Name:           USB_STM32L4_Port
+// Name:           USB_Driver
 // Parameter(s):   void
 // Return:         void
 //
 // Description:    Initialize generic USB port state
 //
 //-------------------------------------------------------------------------------------------------
-USB_STM32L4_Port::USB_STM32L4_Port(void)
+USB_Driver::USB_Driver(void)
 {
     m_Configured        = false;
     m_Suspended         = false;
@@ -77,21 +99,151 @@ USB_STM32L4_Port::USB_STM32L4_Port(void)
 // Description:    Initialize CDC ACM class state
 //
 //-------------------------------------------------------------------------------------------------
+#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
 USB_CDC_ACM_Driver::USB_CDC_ACM_Driver(void)
 {
-    m_TxBusy            = false;
-    m_RxHead            = 0;
-    m_RxTail            = 0;
-    m_TxHead            = 0;
-    m_TxTail            = 0;
-    m_ControlLines      = 0;
-    m_TxZLP             = false;
-    m_TxPacketLength    = 0;
-    m_ExpectLineCoding  = false;
+    m_TxBusy                     = false;
+    m_RxHead                     = 0;
+    m_RxTail                     = 0;
+    m_TxHead                     = 0;
+    m_TxTail                     = 0;
+    m_ControlLines               = 0;
+    m_TxZLP                      = false;
+    m_TxPacketLength             = 0;
+    m_ExpectLineCoding           = false;
+    m_pReceiveBuffer             = nullptr;
+    m_ReceiveBufferCapacity      = 0;
+    m_ReceiveBufferHead          = 0;
+    m_ReceiveTransfer.pBuffer    = nullptr;
+    m_ReceiveTransfer.u.Head     = 0;
+    m_ReceiveTransfer.StaticSize = 0;
+    m_pReceiveCallback           = nullptr;
+    m_ReceiveCallbackTypes       = 0;
 
-    const uint8_t DefaultLineCoding[7] = { 0x00, 0xC2, 0x01, 0x00, 0, 0, 8 };
-    memcpy(m_LineCoding, DefaultLineCoding, sizeof(m_LineCoding));
+    memcpy(m_LineCoding, m_DefaultLineCoding, sizeof(m_LineCoding));
 }
+#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------
+//
+// Name:           InitializeTransport
+// Parameter(s):   void
+// Return:         void
+//
+// Description:    Initialize the USB-backed serial transport
+//
+//-------------------------------------------------------------------------------------------------
+#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
+void USB_CDC_ACM_Driver::InitializeTransport(void)
+{
+    (void)Initialize();
+}
+#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------
+//
+// Name:           SetReceiveBuffer
+// Parameter(s):   pBuffer - circular receive buffer
+//                 Capacity - buffer capacity
+// Return:         void
+//
+// Description:    Attach the Console receive buffer to the CDC packet stream
+//
+//-------------------------------------------------------------------------------------------------
+#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
+void USB_CDC_ACM_Driver::SetReceiveBuffer(uint8_t* pBuffer, size_t Capacity)
+{
+    m_pReceiveBuffer          = pBuffer;
+    m_ReceiveBufferCapacity   = Capacity;
+    m_ReceiveBufferHead       = 0;
+    m_ReceiveTransfer.pBuffer = pBuffer;
+    m_ReceiveTransfer.u.Head  = 0;
+    m_ReceiveTransfer.StaticSize = Capacity;
+}
+#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------
+//
+// Name:           SendData
+// Parameter(s):   pData - data to send
+//                 pSize - requested size and accepted size on return
+// Return:         SystemState_e - ready, busy, or device error
+//
+// Description:    Queue serial data through the CDC ACM transmit ring
+//
+//-------------------------------------------------------------------------------------------------
+#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
+SystemState_e USB_CDC_ACM_Driver::SendData(const uint8_t* pData, size_t* pSize)
+{
+    if((pSize == nullptr) || ((*pSize != 0) && (pData == nullptr)))
+    {
+        return SYS_WRONG_VALUE;
+    }
+
+    size_t Requested = *pSize;
+    size_t Accepted = 0;
+    const size_t MaxChunk = static_cast<size_t>(UINT16_MAX);
+
+    while(Accepted < Requested)
+    {
+        size_t Remaining = Requested - Accepted;
+        uint16_t Chunk = static_cast<uint16_t>((Remaining > MaxChunk) ? MaxChunk : Remaining);
+        uint16_t Written = Write(pData + Accepted, Chunk);
+        Accepted += Written;
+
+        if(Written < Chunk)
+        {
+            break;
+        }
+    }
+
+    *pSize = Accepted;
+
+    if(Accepted == Requested)
+    {
+        return SYS_READY;
+    }
+
+    if(IsConfigured() == true)
+    {
+        return SYS_BUSY;
+    }
+
+    return SYS_DEVICE_ERROR;
+}
+#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------
+//
+// Name:           RegisterReceiveCallback
+// Parameter(s):   pCallback - serial receive callback
+// Return:         void
+//
+// Description:    Register the Console callback for CDC receive events
+//
+//-------------------------------------------------------------------------------------------------
+#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
+void USB_CDC_ACM_Driver::RegisterReceiveCallback(CallbackInterface* pCallback)
+{
+    m_pReceiveCallback = pCallback;
+}
+#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------
+//
+// Name:           EnableReceiveCallbacks
+// Parameter(s):   CallbackTypes - enabled serial callback types
+// Return:         void
+//
+// Description:    Select CDC receive events to forward to the registered callback
+//
+//-------------------------------------------------------------------------------------------------
+#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
+void USB_CDC_ACM_Driver::EnableReceiveCallbacks(int CallbackTypes)
+{
+    m_ReceiveCallbackTypes = CallbackTypes;
+}
+#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -103,7 +255,7 @@ USB_CDC_ACM_Driver::USB_CDC_ACM_Driver(void)
 // Description:    Initialize the USB peripheral and enable its interrupt
 //
 //-------------------------------------------------------------------------------------------------
-bool USB_STM32L4_Port::Initialize(void)
+bool USB_Driver::Initialize(void)
 {
     if(m_Initialized == true)
     {
@@ -150,7 +302,7 @@ bool USB_STM32L4_Port::Initialize(void)
 // Description:    Update endpoint status fields while preserving other register bits
 //
 //-------------------------------------------------------------------------------------------------
-void USB_STM32L4_Port::SetEndpointStatus(uint8_t Endpoint, uint16_t Mask, uint16_t Status)
+void USB_Driver::SetEndpointStatus(uint8_t Endpoint, uint16_t Mask, uint16_t Status)
 {
     uint16_t Value = USB_ENDPOINT(Endpoint);
     USB_ENDPOINT(Endpoint) = (Value & (USB_EP_T_FIELD | USB_EP_KIND | USB_EPADDR_FIELD)) | USB_EP_CTR_RX | USB_EP_CTR_TX | ((Value ^ Status) & Mask);
@@ -167,7 +319,7 @@ void USB_STM32L4_Port::SetEndpointStatus(uint8_t Endpoint, uint16_t Mask, uint16
 // Description:    Clear selected endpoint events without changing its status fields
 //
 //-------------------------------------------------------------------------------------------------
-void USB_STM32L4_Port::ClearEndpointEvent(uint8_t Endpoint, uint16_t Event)
+void USB_Driver::ClearEndpointEvent(uint8_t Endpoint, uint16_t Event)
 {
     USB_ENDPOINT(Endpoint) = (USB_ENDPOINT(Endpoint) & (USB_EP_T_FIELD | USB_EP_KIND | USB_EPADDR_FIELD)) | ((USB_EP_CTR_RX | USB_EP_CTR_TX) & ~Event);
 }
@@ -184,7 +336,7 @@ void USB_STM32L4_Port::ClearEndpointEvent(uint8_t Endpoint, uint16_t Event)
 // Description:    Configure an endpoint and its packet memory buffer addresses
 //
 //-------------------------------------------------------------------------------------------------
-void USB_STM32L4_Port::ConfigureEndpoint(uint8_t Endpoint, uint16_t Type, uint16_t TxAddress, uint16_t RxAddress)
+void USB_Driver::ConfigureEndpoint(uint8_t Endpoint, uint16_t Type, uint16_t TxAddress, uint16_t RxAddress)
 {
     USB_TABLE[Endpoint * 4] = TxAddress;
     USB_TABLE[Endpoint * 4 + 1] = 0;
@@ -202,7 +354,7 @@ void USB_STM32L4_Port::ConfigureEndpoint(uint8_t Endpoint, uint16_t Type, uint16
 // Description:    Check whether an endpoint transmit status is NAK
 //
 //-------------------------------------------------------------------------------------------------
-bool USB_STM32L4_Port::IsEndpointTxReady(uint8_t Endpoint) const
+bool USB_Driver::IsEndpointTxReady(uint8_t Endpoint) const
 {
     return (USB_ENDPOINT(Endpoint) & USB_EPTX_STAT) == USB_EP_TX_NAK;
 }
@@ -216,7 +368,7 @@ bool USB_STM32L4_Port::IsEndpointTxReady(uint8_t Endpoint) const
 // Description:    Check whether the endpoint transmit direction is stalled
 //
 //-------------------------------------------------------------------------------------------------
-bool USB_STM32L4_Port::IsEndpointTxStalled(uint8_t Endpoint) const
+bool USB_Driver::IsEndpointTxStalled(uint8_t Endpoint) const
 {
     return (USB_ENDPOINT(Endpoint) & USB_EPTX_STAT) == USB_EP_TX_STALL;
 }
@@ -230,7 +382,7 @@ bool USB_STM32L4_Port::IsEndpointTxStalled(uint8_t Endpoint) const
 // Description:    Check whether the endpoint receive direction is blocked
 //
 //-------------------------------------------------------------------------------------------------
-bool USB_STM32L4_Port::IsEndpointRxBlocked(uint8_t Endpoint) const
+bool USB_Driver::IsEndpointRxBlocked(uint8_t Endpoint) const
 {
     return (USB_ENDPOINT(Endpoint) & USB_EPRX_STAT) == USB_EP_RX_NAK;
 }
@@ -245,7 +397,7 @@ bool USB_STM32L4_Port::IsEndpointRxBlocked(uint8_t Endpoint) const
 // Description:    Set the PMA receive capacity and enable endpoint reception
 //
 //-------------------------------------------------------------------------------------------------
-void USB_STM32L4_Port::EnableEndpointRx(uint8_t Endpoint, uint16_t Capacity)
+void USB_Driver::EnableEndpointRx(uint8_t Endpoint, uint16_t Capacity)
 {
     uint16_t Allocation = 0;
 
@@ -272,7 +424,7 @@ void USB_STM32L4_Port::EnableEndpointRx(uint8_t Endpoint, uint16_t Capacity)
 // Description:    Read the received byte count from endpoint packet memory
 //
 //-------------------------------------------------------------------------------------------------
-uint16_t USB_STM32L4_Port::GetEndpointRxLength(uint8_t Endpoint) const
+uint16_t USB_Driver::GetEndpointRxLength(uint8_t Endpoint) const
 {
     return USB_TABLE[Endpoint * 4 + 3] & 0x03FF;
 }
@@ -288,7 +440,7 @@ uint16_t USB_STM32L4_Port::GetEndpointRxLength(uint8_t Endpoint) const
 // Description:    Copy an endpoint receive packet from PMA to a class buffer
 //
 //-------------------------------------------------------------------------------------------------
-void USB_STM32L4_Port::ReadEndpointRx(uint8_t Endpoint, uint8_t* pData, uint16_t Length)
+void USB_Driver::ReadEndpointRx(uint8_t Endpoint, uint8_t* pData, uint16_t Length)
 {
     ReadPMA(USB_TABLE[Endpoint * 4 + 2], pData, Length);
 }
@@ -305,7 +457,7 @@ void USB_STM32L4_Port::ReadEndpointRx(uint8_t Endpoint, uint8_t* pData, uint16_t
 // Description:    Copy data to USB packet memory using 16-bit accesses
 //
 //-------------------------------------------------------------------------------------------------
-void USB_STM32L4_Port::WritePMA(uint16_t Address, const uint8_t* pData, uint16_t Length)
+void USB_Driver::WritePMA(uint16_t Address, const uint8_t* pData, uint16_t Length)
 {
     volatile uint16_t* pMemory = reinterpret_cast<volatile uint16_t*>(USB_PMAADDR + Address);
     
@@ -334,7 +486,7 @@ void USB_STM32L4_Port::WritePMA(uint16_t Address, const uint8_t* pData, uint16_t
 // Description:    Copy data from USB packet memory using 16-bit accesses
 //
 //-------------------------------------------------------------------------------------------------
-void USB_STM32L4_Port::ReadPMA(uint16_t Address, uint8_t* pData, uint16_t Length)
+void USB_Driver::ReadPMA(uint16_t Address, uint8_t* pData, uint16_t Length)
 {
     volatile uint16_t* pMemory = reinterpret_cast<volatile uint16_t*>(USB_PMAADDR + Address);
     
@@ -362,7 +514,7 @@ void USB_STM32L4_Port::ReadPMA(uint16_t Address, uint8_t* pData, uint16_t Length
 // Description:    Write endpoint data to packet memory and start transmission
 //
 //-------------------------------------------------------------------------------------------------
-void USB_STM32L4_Port::Transmit(uint8_t Endpoint, const uint8_t* pData, uint16_t Length)
+void USB_Driver::Transmit(uint8_t Endpoint, const uint8_t* pData, uint16_t Length)
 {
     WritePMA(USB_TABLE[Endpoint * 4], pData, Length);
     USB_TABLE[Endpoint * 4 + 1] = Length;
@@ -378,7 +530,7 @@ void USB_STM32L4_Port::Transmit(uint8_t Endpoint, const uint8_t* pData, uint16_t
 // Description:    Reset USB state and initialize the control endpoint
 //
 //-------------------------------------------------------------------------------------------------
-void USB_STM32L4_Port::Reset(void)
+void USB_Driver::Reset(void)
 {
     m_Configured = false;
     m_Suspended = false;
@@ -417,7 +569,7 @@ void USB_STM32L4_Port::Reset(void)
 // Description:    Configure CDC endpoints for the current USB configuration
 //
 //-------------------------------------------------------------------------------------------------
-void USB_STM32L4_Port::ConfigureEndpoints(void)
+void USB_Driver::ConfigureEndpoints(void)
 {
     m_Configured = false;
 
@@ -449,6 +601,7 @@ void USB_STM32L4_Port::ConfigureEndpoints(void)
 // Description:    Reset CDC buffers and class-specific transfer state
 //
 //-------------------------------------------------------------------------------------------------
+#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
 void USB_CDC_ACM_Driver::ResetClassState(void)
 {
     m_TxBusy = false;
@@ -460,7 +613,16 @@ void USB_CDC_ACM_Driver::ResetClassState(void)
     m_TxTail = 0;
     m_ControlLines = 0;
     m_ExpectLineCoding = false;
+    m_ReceiveBufferHead = 0;
+    m_ReceiveTransfer.u.Head = 0;
+
+    if((m_pReceiveCallback != nullptr) &&
+       ((m_ReceiveCallbackTypes & SERIAL_CALLBACK_RX_IDLE) != 0))
+    {
+        m_pReceiveCallback->CallbackFunction(SERIAL_CALLBACK_RX_IDLE, &m_ReceiveTransfer);
+    }
 }
+#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -471,6 +633,7 @@ void USB_CDC_ACM_Driver::ResetClassState(void)
 // Description:    Configure the CDC notification and bulk endpoints
 //
 //-------------------------------------------------------------------------------------------------
+#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
 void USB_CDC_ACM_Driver::ConfigureClassEndpoints(void)
 {
     ConfigureEndpoint(1, USB_EP_INTERRUPT, 0xC0, 0);
@@ -480,6 +643,7 @@ void USB_CDC_ACM_Driver::ConfigureClassEndpoints(void)
     EnableEndpointRx(2, USB_CDC_PACKET_SIZE);
     SetEndpointStatus(2, USB_EPTX_STAT, USB_EP_TX_NAK);
 }
+#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -492,6 +656,7 @@ void USB_CDC_ACM_Driver::ConfigureClassEndpoints(void)
 // Description:    Select and send a USB device, configuration, or string descriptor
 //
 //-------------------------------------------------------------------------------------------------
+#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
 bool USB_CDC_ACM_Driver::GetClassDescriptor(uint16_t Value, uint16_t Requested)
 {
     static const uint8_t Device[] = {
@@ -593,6 +758,7 @@ bool USB_CDC_ACM_Driver::GetClassDescriptor(uint16_t Value, uint16_t Requested)
 
     return true;
 }
+#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
     
 //-------------------------------------------------------------------------------------------------
 //
@@ -606,7 +772,7 @@ bool USB_CDC_ACM_Driver::GetClassDescriptor(uint16_t Value, uint16_t Requested)
 // Description:    Prepare a control response and start its first packet
 //
 //-------------------------------------------------------------------------------------------------
-void USB_STM32L4_Port::ControlSend(const uint8_t* pData, uint16_t Length, uint16_t Requested)
+void USB_Driver::ControlSend(const uint8_t* pData, uint16_t Length, uint16_t Requested)
 {
     m_pControlData = pData;
 
@@ -625,7 +791,7 @@ void USB_STM32L4_Port::ControlSend(const uint8_t* pData, uint16_t Length, uint16
 // Description:    Send the next packet of a control response
 //
 //-------------------------------------------------------------------------------------------------
-void USB_STM32L4_Port::ControlIn(void)
+void USB_Driver::ControlIn(void)
 {
 
     if(m_AddressPending == true)
@@ -662,7 +828,7 @@ void USB_STM32L4_Port::ControlIn(void)
 // Description:    Stall the control endpoint and cancel any pending control transfer
 //
 //-------------------------------------------------------------------------------------------------
-void USB_STM32L4_Port::StallControl(void)
+void USB_Driver::StallControl(void)
 {
     m_ControlRemaining = 0;
     m_ControlZLP = false;
@@ -679,10 +845,12 @@ void USB_STM32L4_Port::StallControl(void)
 // Description:    Cancel any pending CDC-specific control request
 //
 //-------------------------------------------------------------------------------------------------
+#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
 void USB_CDC_ACM_Driver::CancelClassControl(void)
 {
     m_ExpectLineCoding = false;
 }
+#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -694,7 +862,7 @@ void USB_CDC_ACM_Driver::CancelClassControl(void)
 // Description:    Decode standard and CDC class setup requests
 //
 //-------------------------------------------------------------------------------------------------
-void USB_STM32L4_Port::Setup(const uint8_t* pSetup)
+void USB_Driver::Setup(const uint8_t* pSetup)
 {
     uint8_t Type = pSetup[0];
     uint8_t Request = pSetup[1];
@@ -837,6 +1005,7 @@ void USB_STM32L4_Port::Setup(const uint8_t* pSetup)
 // Description:    Handle CDC ACM class-specific control requests
 //
 //-------------------------------------------------------------------------------------------------
+#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
 bool USB_CDC_ACM_Driver::HandleClassSetup(uint8_t Type, uint8_t Request, uint16_t Value,
                                           uint16_t Index, uint16_t Length)
 {
@@ -871,6 +1040,7 @@ bool USB_CDC_ACM_Driver::HandleClassSetup(uint8_t Type, uint8_t Request, uint16_
 
     return false;
 }
+#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -883,6 +1053,7 @@ bool USB_CDC_ACM_Driver::HandleClassSetup(uint8_t Type, uint8_t Request, uint16_
 // Description:    Validate and accept CDC line coding data
 //
 //-------------------------------------------------------------------------------------------------
+#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
 void USB_CDC_ACM_Driver::HandleClassControlOut(const uint8_t* pData, uint16_t Length)
 {
     if(m_ExpectLineCoding == true)
@@ -905,6 +1076,7 @@ void USB_CDC_ACM_Driver::HandleClassControlOut(const uint8_t* pData, uint16_t Le
         StallControl();
     }
 }
+#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -916,6 +1088,7 @@ void USB_CDC_ACM_Driver::HandleClassControlOut(const uint8_t* pData, uint16_t Le
 // Description:    Start the next queued CDC packet when the transmit endpoint is available
 //
 //-------------------------------------------------------------------------------------------------
+#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
 void USB_CDC_ACM_Driver::StartTransmit(void)
 {
 
@@ -957,6 +1130,7 @@ void USB_CDC_ACM_Driver::StartTransmit(void)
     m_TxBusy = true;
     Transmit(2, Packet, Length);
 }
+#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -968,24 +1142,59 @@ void USB_CDC_ACM_Driver::StartTransmit(void)
 // Description:    Receive one bulk packet into the RX ring buffer
 //
 //-------------------------------------------------------------------------------------------------
+#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
 void USB_CDC_ACM_Driver::Receive(void)
 {
     uint16_t Length = GetEndpointRxLength(2);
     uint16_t Free = (m_RxTail - m_RxHead - 1) & (USB_CDC_BUFFER_SIZE - 1);
+    bool InternalBufferHasSpace = Length <= Free;
+    bool ExternalBufferAttached = (m_pReceiveBuffer != nullptr) && (m_ReceiveBufferCapacity != 0);
 
-    if((Length <= USB_CDC_PACKET_SIZE) && (Length <= Free))
+    if((Length <= USB_CDC_PACKET_SIZE) &&
+       ((InternalBufferHasSpace == true) || (ExternalBufferAttached == true)))
     {
         uint8_t Packet[USB_CDC_PACKET_SIZE];
         ReadEndpointRx(2, Packet, Length);
+
         for(uint16_t Position = 0; Position < Length; ++Position)
         {
-            m_RxBuffer[m_RxHead] = Packet[Position];
-            m_RxHead = (m_RxHead + 1) & (USB_CDC_BUFFER_SIZE - 1);
+            if(InternalBufferHasSpace == true)
+            {
+                m_RxBuffer[m_RxHead] = Packet[Position];
+                m_RxHead = (m_RxHead + 1) & (USB_CDC_BUFFER_SIZE - 1);
+            }
+
+            if(ExternalBufferAttached == true)
+            {
+                m_pReceiveBuffer[m_ReceiveBufferHead] = Packet[Position];
+                m_ReceiveBufferHead++;
+
+                if(m_ReceiveBufferHead == m_ReceiveBufferCapacity)
+                {
+                    m_ReceiveBufferHead = 0;
+                }
+            }
+        }
+
+        if((m_pReceiveCallback != nullptr) && (m_pReceiveBuffer != nullptr) &&
+           (m_ReceiveBufferCapacity != 0))
+        {
+            m_ReceiveTransfer.u.Head = m_ReceiveBufferHead;
+
+            if((m_ReceiveCallbackTypes & SERIAL_CALLBACK_RX_IDLE) != 0)
+            {
+                m_pReceiveCallback->CallbackFunction(SERIAL_CALLBACK_RX_IDLE, &m_ReceiveTransfer);
+            }
+            else if((m_ReceiveCallbackTypes & SERIAL_CALLBACK_RX_NOT_EMPTY) != 0)
+            {
+                m_pReceiveCallback->CallbackFunction(SERIAL_CALLBACK_RX_NOT_EMPTY, &m_ReceiveTransfer);
+            }
         }
     }
 
     Process();
 }
+#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -997,7 +1206,7 @@ void USB_CDC_ACM_Driver::Receive(void)
 // Description:    Re-enable RX when buffer space is available and advance queued TX data
 //
 //-------------------------------------------------------------------------------------------------
-void USB_STM32L4_Port::Process(void)
+void USB_Driver::Process(void)
 {
     if(m_Initialized == false)
     {
@@ -1021,18 +1230,23 @@ void USB_STM32L4_Port::Process(void)
 // Description:    Service CDC receive flow control and pending transmissions
 //
 //-------------------------------------------------------------------------------------------------
+#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
 void USB_CDC_ACM_Driver::ProcessClass(void)
 {
+    bool InternalBufferHasSpace =
+        (((m_RxTail - m_RxHead - 1) & (USB_CDC_BUFFER_SIZE - 1)) >= USB_CDC_PACKET_SIZE);
+    bool ExternalBufferAttached = (m_pReceiveBuffer != nullptr) && (m_ReceiveBufferCapacity != 0);
 
     if((m_Configured == true) && (m_Suspended == false) &&
        (IsEndpointRxBlocked(2) == true) &&
-       (((m_RxTail - m_RxHead - 1) & (USB_CDC_BUFFER_SIZE - 1)) >= USB_CDC_PACKET_SIZE))
+       ((InternalBufferHasSpace == true) || (ExternalBufferAttached == true)))
     {
         EnableEndpointRx(2, USB_CDC_PACKET_SIZE);
     }
 
     StartTransmit();
 }
+#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -1044,7 +1258,7 @@ void USB_CDC_ACM_Driver::ProcessClass(void)
 // Description:    Report whether the USB device can currently transfer data
 //
 //-------------------------------------------------------------------------------------------------
-bool USB_STM32L4_Port::IsConfigured(void) const
+bool USB_Driver::IsConfigured(void) const
 {
     return (m_Configured == true) && (m_Suspended == false);
 }
@@ -1058,10 +1272,12 @@ bool USB_STM32L4_Port::IsConfigured(void) const
 // Description:    Report the number of interfaces in the CDC ACM configuration
 //
 //-------------------------------------------------------------------------------------------------
+#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
 uint8_t USB_CDC_ACM_Driver::GetInterfaceCount(void) const
 {
     return 2;
 }
+#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -1073,10 +1289,12 @@ uint8_t USB_CDC_ACM_Driver::GetInterfaceCount(void) const
 // Description:    Validate an endpoint address against the CDC endpoint map
 //
 //-------------------------------------------------------------------------------------------------
+#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
 bool USB_CDC_ACM_Driver::IsEndpointAvailable(uint8_t Endpoint, bool In) const
 {
     return ((Endpoint == 1) && (In == true)) || (Endpoint == 2);
 }
+#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -1087,6 +1305,7 @@ bool USB_CDC_ACM_Driver::IsEndpointAvailable(uint8_t Endpoint, bool In) const
 // Description:    Resume CDC transmission when the host clears a bulk endpoint halt
 //
 //-------------------------------------------------------------------------------------------------
+#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
 void USB_CDC_ACM_Driver::HandleEndpointHaltCleared(uint8_t Endpoint)
 {
     if(Endpoint == 2)
@@ -1094,6 +1313,7 @@ void USB_CDC_ACM_Driver::HandleEndpointHaltCleared(uint8_t Endpoint)
         StartTransmit();
     }
 }
+#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -1104,6 +1324,7 @@ void USB_CDC_ACM_Driver::HandleEndpointHaltCleared(uint8_t Endpoint)
 // Description:    Dispatch received CDC endpoint data
 //
 //-------------------------------------------------------------------------------------------------
+#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
 void USB_CDC_ACM_Driver::HandleClassEndpointRx(uint8_t Endpoint)
 {
     if((Endpoint == 2) && (m_Configured == true))
@@ -1111,6 +1332,7 @@ void USB_CDC_ACM_Driver::HandleClassEndpointRx(uint8_t Endpoint)
         Receive();
     }
 }
+#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -1121,6 +1343,7 @@ void USB_CDC_ACM_Driver::HandleClassEndpointRx(uint8_t Endpoint)
 // Description:    Complete a CDC bulk IN packet and schedule the next one
 //
 //-------------------------------------------------------------------------------------------------
+#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
 void USB_CDC_ACM_Driver::HandleClassEndpointTx(uint8_t Endpoint)
 {
     if(Endpoint == 2)
@@ -1131,6 +1354,7 @@ void USB_CDC_ACM_Driver::HandleClassEndpointTx(uint8_t Endpoint)
         StartTransmit();
     }
 }
+#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -1142,10 +1366,12 @@ void USB_CDC_ACM_Driver::HandleClassEndpointTx(uint8_t Endpoint)
 // Description:    Report the current CDC DTR control-line state
 //
 //-------------------------------------------------------------------------------------------------
+#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
 bool USB_CDC_ACM_Driver::IsDTR(void) const
 {
     return (IsConfigured() == true) && ((m_ControlLines & 1) != 0);
 }
+#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -1157,10 +1383,12 @@ bool USB_CDC_ACM_Driver::IsDTR(void) const
 // Description:    Report the current CDC RTS control-line state
 //
 //-------------------------------------------------------------------------------------------------
+#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
 bool USB_CDC_ACM_Driver::IsRTS(void) const
 {
     return (IsConfigured() == true) && ((m_ControlLines & 2) != 0);
 }
+#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -1172,6 +1400,7 @@ bool USB_CDC_ACM_Driver::IsRTS(void) const
 // Description:    Read the baud rate from the most recently accepted line coding
 //
 //-------------------------------------------------------------------------------------------------
+#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
 uint32_t USB_CDC_ACM_Driver::GetBaudRate(void) const
 {
     uint32_t InterruptState = __get_PRIMASK();
@@ -1181,6 +1410,7 @@ uint32_t USB_CDC_ACM_Driver::GetBaudRate(void) const
     __set_PRIMASK(InterruptState);
     return Baud;
 }
+#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -1192,6 +1422,7 @@ uint32_t USB_CDC_ACM_Driver::GetBaudRate(void) const
 // Description:    Return the number of buffered receive bytes
 //
 //-------------------------------------------------------------------------------------------------
+#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
 uint16_t USB_CDC_ACM_Driver::Available(void) const
 {
     uint32_t InterruptState = __get_PRIMASK();
@@ -1200,6 +1431,7 @@ uint16_t USB_CDC_ACM_Driver::Available(void) const
     __set_PRIMASK(InterruptState);
     return Count;
 }
+#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -1212,6 +1444,7 @@ uint16_t USB_CDC_ACM_Driver::Available(void) const
 // Description:    Read buffered CDC data and resume reception when space is available
 //
 //-------------------------------------------------------------------------------------------------
+#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
 uint16_t USB_CDC_ACM_Driver::Read(uint8_t* pData, uint16_t Length)
 {
     if(pData == nullptr)
@@ -1233,6 +1466,7 @@ uint16_t USB_CDC_ACM_Driver::Read(uint8_t* pData, uint16_t Length)
     __set_PRIMASK(InterruptState);
     return Count;
 }
+#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -1245,6 +1479,7 @@ uint16_t USB_CDC_ACM_Driver::Read(uint8_t* pData, uint16_t Length)
 // Description:    Queue CDC data for transmission to the host
 //
 //-------------------------------------------------------------------------------------------------
+#if (USE_USB_CDC_DRIVER == DEF_ENABLED)
 uint16_t USB_CDC_ACM_Driver::Write(const uint8_t* pData, uint16_t Length)
 {
     if(pData == nullptr)
@@ -1269,6 +1504,7 @@ uint16_t USB_CDC_ACM_Driver::Write(const uint8_t* pData, uint16_t Length)
     __set_PRIMASK(InterruptState);
     return Count;
 }
+#endif // (USE_USB_CDC_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -1280,7 +1516,7 @@ uint16_t USB_CDC_ACM_Driver::Write(const uint8_t* pData, uint16_t Length)
 // Description:    Handle USB reset, suspend, wakeup, and endpoint events
 //
 //-------------------------------------------------------------------------------------------------
-void USB_STM32L4_Port::IRQHandler(void)
+void USB_Driver::IRQHandler(void)
 {
     uint16_t Status = USB_REGS->ISTR;
 

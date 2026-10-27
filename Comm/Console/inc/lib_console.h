@@ -28,10 +28,12 @@
 
 //-------------------------------------------------------------------------------------------------
 
+#include "./Peripheral/inc/interface/lib_class_serial_port_interface.h"
+
 #if (DIGINI_USE_CONSOLE == DEF_ENABLED)
 
-#if (USE_UART_DRIVER != DEF_ENABLED)
-  #error USE_UART_DRIVER must be define DEF_ENABLED
+#if (USE_UART_DRIVER != DEF_ENABLED) && (USE_USB_DRIVER != DEF_ENABLED)
+  #error USE_UART_DRIVER or USE_USB_DRIVER must be enabled
 #endif
 
 //-------------------------------------------------------------------------------------------------
@@ -68,7 +70,7 @@ class Console : public CallbackInterface
 {
     public:
 
-        void                        Initialize                 (UART_Driver* pUartDriver);
+        void                        Initialize                 (SerialPortInterface* pSerialPort);
         void                        Process                    (void);
         void                        GiveControlToChildProcess  (ChildProcessInterface* pChildProcess);
         void                        ReleaseControl             (void);
@@ -135,7 +137,7 @@ class Console : public CallbackInterface
     // --------------------------------------------------------------------------------------------
 
     // need to add echo on or off for child process.. Console need it, but menu don't need it!
-        UART_Driver*                            m_pUartDriver;
+        SerialPortInterface*                    m_pSerialPort;
         FIFO_Buffer                             m_Fifo;
         nOS_Sem                                 m_RX_IdleSem;
 

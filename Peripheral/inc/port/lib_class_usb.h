@@ -31,13 +31,14 @@
 #if defined STM32F1xx
  //#include "./Peripheral/inc/port/STM32F1xx/lib_class_STM32F1_usb.h"
 #elif defined STM32F4xx
- //#include "./Peripheral/inc/port/STM32F4xx/lib_class_STM32F4_usb.h"
+ #include "./Peripheral/inc/port/interface/lib_class_usb_device.h"
 #elif defined STM32L4xx
  #include "./Peripheral/inc/port/STM32L4xx/lib_class_STM32L4_usb.h"
+ #include "./Peripheral/inc/port/STM32L4xx/lib_class_STM32L4_usb_backend.h"
 #elif defined STM32F7xx
- //#include "./Peripheral/inc/port/STM32F7xx/lib_class_STM32F7_usb.h"
+ #include "./Peripheral/inc/port/interface/lib_class_usb_device.h"
 #elif defined STM32H7xx
- //#include "./Peripheral/inc/port/STM32F7xx/lib_class_STM32H7_usb.h"
+ #include "./Peripheral/inc/port/interface/lib_class_usb_device.h"
 #endif
 
 //-------------------------------------------------------------------------------------------------
@@ -45,4 +46,3 @@
 #endif // (USE_USB_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
-

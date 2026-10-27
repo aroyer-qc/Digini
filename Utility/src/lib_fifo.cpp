@@ -243,7 +243,7 @@ bool FIFO_Buffer::ReadyWrite(void)
 //  Description:    Return the free space available in the FIFO.
 //
 //-------------------------------------------------------------------------------------------------
-size_t FIFO_Buffer::CheckFreeSpace(void)
+size_t FIFO_Buffer::CheckFreeSpace(void) const
 {
     return (m_Size - 1) - CheckUsedSpace();
 }
@@ -275,7 +275,7 @@ size_t FIFO_Buffer::CheckFreeSpace(void)
 //  Description:    Return the used space in the FIFO.
 //
 //-------------------------------------------------------------------------------------------------
-size_t FIFO_Buffer::CheckUsedSpace(void)
+size_t FIFO_Buffer::CheckUsedSpace(void) const
 {
     return (m_PushIndex + m_Size - m_PopIndex) % m_Size;
 }

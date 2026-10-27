@@ -1,6 +1,17 @@
 # Digini
 GUI and low level library C++
 
+## USB middleware licensing exception
+
+The shared USB class base and optional HID, MSC and DFU adaptations in [usb/inc](usb/inc) and
+[usb/src](usb/src) are derived from
+STMicroelectronics STM32 USB Device middleware v2.11.6. They retain ST copyright
+and are covered by [SLA0044 Rev6](usb/LICENSE_ST_USB.md), **not MIT**. Their use and
+execution are restricted to STMicroelectronics processing units as specified
+in that license. CDC also uses this shared base, so the same dependency
+conditions apply to CDC-only builds. The original CDC files keep their notices.
+This exception does not relicense the rest of Digini.
+
 ![alt text](https://github.com/aroyer-qc/Digini/blob/master/Digini.png)
 
 # Digini
@@ -54,5 +65,3 @@ Digini is a HAL and GUI library written in embedded C++. It is highly optimized 
 >    * SERV_ID_SKLD    Service to return percentage of the skin loading progression
 >    * SERV_ID_TIME    Service to return the timeof the system into a formatted string (can handle all format defined by user).
 >    * SERV_ID_XCHG    Service to exchange data via structure between page. (title, min, max, value, edit type)
-
-

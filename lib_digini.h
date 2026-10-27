@@ -67,9 +67,7 @@
 //-------------------------------------------------------------------------------------------------
 // Real Time OS
 
-#if (DIGINI_USE_NOS == DEF_ENABLED)
 #include "nOS.h"
-#endif
 
 //-------------------------------------------------------------------------------------------------
 // Common configuration header
@@ -80,6 +78,9 @@
 // Need to integrate a dependency check for all DEF_ENABLED
 
 #include "driver_cfg.h"
+#if (USE_USB_DRIVER == DEF_ENABLED)
+#include "usb_cfg.h"
+#endif
 #include "bsp_io_def.h"
 #include "dma_cfg.h"
 
@@ -133,10 +134,8 @@
 #include "./Digini/inc/lib_class_cbi.h"                      // Callback interface
 #include "./Digini/inc/lib_label.h"
 #include "./String/inc/lib_string.h"
-#if (DIGINI_USE_NOS == DEF_ENABLED)
 #include "./RTOS_Wrapper/inc/nOS/lib_class_queue.h"
 #include "./RTOS_Wrapper/inc/nOS/lib_class_timer.h"
-#endif
 #include "./Utility/inc/lib_utility.h"
 #include "./Utility/inc/lib_delay.h"
 #include "./Peripheral/inc/port/lib_isr.h"
@@ -275,7 +274,14 @@ class NetworkContext;
 #endif
 
 #if (USE_USB_DRIVER == DEF_ENABLED)
+// The shared class base and ST-derived profiles retain their SLA0044 conditions.
+#include "./usb/inc/lib_class_usb_class_base.h"
+#include "./usb/inc/lib_class_usb_cdc.h"
 #include "./Peripheral/inc/port/lib_class_usb.h"
+#include "./usb/inc/lib_class_usb_device_manager.h"
+#include "./usb/inc/lib_class_usb_hid.h"
+#include "./usb/inc/lib_class_usb_msc.h"
+#include "./usb/inc/lib_class_usb_dfu.h"
 #endif
 
 //-------------------------------------------------------------------------------------------------

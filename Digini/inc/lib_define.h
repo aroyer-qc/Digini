@@ -30,11 +30,7 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#if (DIGINI_USE_NOS == DEF_ENABLED)
 #define TickCount_t                                 nOS_TickCounter
-#else
-#define TickCount_t                                 uint32_t
-#endif
 
 // ---------- General define ----------
 #ifdef DEBUG
@@ -147,5 +143,22 @@
 #define TIME_TICKS_PER_DAY                          TIME_SECONDS_PER_DAY    * CFG_SYSTICK_RATE
 
 #define TICKS_PER_SECOND                            CFG_SYSTICK_RATE
+
+#define BIT_15			                            0x8000
+#define BIT_14			                            0x4000
+#define BIT_13			                            0x2000
+#define BIT_12			                            0x1000
+#define BIT_11			                            0x0800
+#define BIT_10			                            0x0400
+#define BIT_9			                            0x0200
+#define BIT_8			                            0x0100
+#define BIT_7			                            0x0080
+#define BIT_6			                            0x0040
+#define BIT_5			                            0x0020
+#define BIT_4			                            0x0010
+#define BIT_3			                            0x0008
+#define BIT_2			                            0x0004
+#define BIT_1			                            0x0002
+#define BIT_0			                            0x0001
 
 //-------------------------------------------------------------------------------------------------

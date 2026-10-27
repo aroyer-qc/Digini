@@ -82,16 +82,15 @@ void Console::Initialize(SerialPortInterface* pSerialPort)
         m_pChildProcess[i]  = nullptr;
     }
 
-        pSerialPort->InitializeTransport();
+    pSerialPort->InitializeTransport();
     m_Fifo.Initialize(CON_FIFO_PARSER_RX_SIZE);
     pBuffer = m_Fifo.GetBufferPointer();
 
     nOS_SemCreate(&m_RX_IdleSem, 0, CON_RX_NB_OF_SEMAPHORE_COUNT);
-        pSerialPort->SetReceiveBuffer(pBuffer, CON_FIFO_PARSER_RX_SIZE);
-        pSerialPort->RegisterReceiveCallback(this);
-        pSerialPort->EnableReceiveCallbacks(SERIAL_CALLBACK_RX_NOT_EMPTY | SERIAL_CALLBACK_RX_IDLE |
+    pSerialPort->SetReceiveBuffer(pBuffer, CON_FIFO_PARSER_RX_SIZE);
+    pSerialPort->RegisterReceiveCallback(this);
+    pSerialPort->EnableReceiveCallbacks(SERIAL_CALLBACK_RX_NOT_EMPTY | SERIAL_CALLBACK_RX_IDLE |
                                                                                 SERIAL_CALLBACK_TX_COMPLETED | SERIAL_CALLBACK_RX_ERROR);
-
   #if (CON_TRAP_COMMENT_INCOMING_LINE == DEF_ENABLED)
     m_InTrapForCommentLine = false;
     m_IsItIdle             = true;
@@ -562,22 +561,22 @@ void Console::CallbackFunction(int Type, void* pContext)
 {
     switch(Type)
     {
-                case SERIAL_CALLBACK_RX_NOT_EMPTY:
+        case SERIAL_CALLBACK_RX_NOT_EMPTY:
         {
             nOS_SemGive(&m_RX_IdleSem);
         }
         break;
 
-                case SERIAL_CALLBACK_RX_IDLE:
+        case SERIAL_CALLBACK_RX_IDLE:
         {
-                        SerialTransfer_t* pTransfer = static_cast<SerialTransfer_t*>(pContext);
+            SerialTransfer_t* pTransfer = static_cast<SerialTransfer_t*>(pContext);
             m_Fifo.SetNewHeadPosition(pTransfer->u.Head);
             nOS_SemGive(&m_RX_IdleSem);
         }
         break;
 
-                case SERIAL_CALLBACK_TX_COMPLETED:
-                case SERIAL_CALLBACK_RX_ERROR:
+        case SERIAL_CALLBACK_TX_COMPLETED:
+        case SERIAL_CALLBACK_RX_ERROR:
         {
             __asm("nop");
             // nothing so far

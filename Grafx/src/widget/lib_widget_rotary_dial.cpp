@@ -314,22 +314,22 @@ void WidgetRotaryDial::Draw(ServiceReturn_t* pService)
 	uint16_t RotaryOffset = ((ServiceType1_t*)pService)->Data;
 
 	Text_t Text = {};
-	Text.Box.Size.Width = 100;
+	Text.Box.Size.Width = 20;
 	Text.Box.Size.Height = 20;
 	Text.Font = m_pRotaryDial->FontID;
 	Text.Blend = BlendMode;
 	Text.Label = LBL_INT;
 	Text.Color[0] = 0x00FF0000;
 
-	for(i = 0; i < 60; i++)
+	for(int i = 0; i < 60; i++)
 	{
 		((ServiceType1_t*)pService)->Data = ((i % 6) != 0) ? ' ' : (i / 6) + '0';
-		
+
 		RotaryOffset += i;
 		RotaryOffset % 60;
 		ComputeCircularPlacement(m_pRotaryDial->Arc.Circle.Pos.X, m_pRotaryDial->Arc.Circle.Pos.Y, m_pRotaryDial->Arc.Circle.Radius, RotaryOffset, &Text.Box.Pos.X,  &Text.Box.Pos.Y, m_pRotaryDial->RotationTable);
 
-		if((Text.Box.Pos.X < 280) && (Text.Box.Pos.Y < 220))
+		if((Text.Box.Pos.X < 320) && (Text.Box.Pos.Y < 220))
 		{
 			DisplayLayer::SetDrawing(CONSTRUCTION_FOREGROUND_LAYER);
 		   #if (GRAFX_USE_CONSTRUCTION_ON_SINGLE_LAYER == DEF_ENABLED)

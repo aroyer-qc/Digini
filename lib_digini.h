@@ -30,7 +30,7 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define DIGINI_VERSION              "V2.01"
+#define DIGINI_VERSION              				"V2.01"
 
 #ifndef DEF_DISABLED
 #define DEF_DISABLED                                0               // Use this for macro only

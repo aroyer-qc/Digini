@@ -156,7 +156,7 @@ DisplayLayer::DisplayLayer(Layer_e          VirtualLayer,
     m_Size.X         = SizeX;
     m_Size.Y         = SizeY;
     m_PixelSize      = DisplayLayer::GetPixelSize(PixelFormat);
-    m_TotalSize      = (uint32_t)SizeX * (uint32_t)SizeY * (uint32_t)m_PixelSize;
+    m_TotalSize      = (ActiveOnLayer == LAYER_DUMMY) ? 0 : (uint32_t)SizeX * (uint32_t)SizeY * (uint32_t)m_PixelSize;
     m_PixelFormat    = PixelFormat;
     m_Alpha          = 255;
     m_Color          = GetFormatColor(PixelFormat, BLACK);

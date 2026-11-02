@@ -38,7 +38,7 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if (DIGINI_USE_GRAFX == DEF_ENABLED)
+#if (DIGINI_USE_GRAFX == DEF_ENABLED) && ((GRAFX_USE_LOAD_SKIN == DEF_ENABLED) || (GRAFX_USE_RAM_DATABASE == DEF_ENABLED))
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)

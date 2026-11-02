@@ -40,7 +40,7 @@
 // Expand macro(s)
 //-------------------------------------------------------------------------------------------------
 
-#define EXPAND_X_LAYER_AS_CALC(ENUM_ID, WORK_LAYER, PIXEL_FORMAT, SIZE_X, SIZE_Y) ((SIZE_X * SIZE_Y) * GFX_PixelSize[PIXEL_FORMAT]) +
+#define EXPAND_X_LAYER_AS_CALC(ENUM_ID, WORK_LAYER, PIXEL_FORMAT, SIZE_X, SIZE_Y) ((WORK_LAYER == LAYER_DUMMY) ? 0 : ((SIZE_X * SIZE_Y) * GFX_PixelSize[PIXEL_FORMAT])) +
 #define EXPAND_X_STATIC_IMAGE_AS_POINTER(ENUM_ID, SII) &SII,
 
 //-------------------------------------------------------------------------------------------------
@@ -112,8 +112,12 @@ SystemState_e GRAFX_Initialize(void)
   #endif
 
     DisplayLayer::SetActiveLayer(LAYER_FOREGROUND, FOREGROUND_DISPLAY_LAYER_0);
+  #if (GRAFX_USE_CONSTRUCTION_ON_SINGLE_LAYER == DEF_DISABLED)
     DisplayLayer::SetActiveLayer(LAYER_BACKGROUND, BACKGROUND_DISPLAY_LAYER_0);
     DisplayLayer::SetDrawing(BACKGROUND_DISPLAY_LAYER_0);
+  #else
+    DisplayLayer::SetDrawing(GRAFX_SelectForegroundDrawingLayer());
+  #endif
 
     return SYS_READY;
 }
@@ -191,7 +195,9 @@ SystemState_e GRAFX_PostInitialize(void)
 //-------------------------------------------------------------------------------------------------
 Layer_e GRAFX_SelectBackgroundDrawingLayer(void)
 {
-   #if (GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER == DEF_ENABLED)
+   #if (GRAFX_USE_CONSTRUCTION_ON_SINGLE_LAYER == DEF_ENABLED)
+     return GRAFX_SelectForegroundDrawingLayer();
+   #elif (GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER == DEF_ENABLED)
      return CONSTRUCTION_BACKGROUND_LAYER;
    #else
      return BACKGROUND_DISPLAY_LAYER_0;

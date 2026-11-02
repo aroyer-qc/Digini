@@ -144,6 +144,7 @@ SystemState_e CS43L22::Initialize(void* pArg)
    // uint8_t Standard;
 
     m_pI2C = (I2C_Driver*)pArg;                                             // I2C already initialize.
+  m_DeviceAddress = CS43L22_I2C_SLAVE_ADDRESS;
     m_IsItStopped = true;
 
     Status &= Write(CS43L22_REG_POWER_CTL1,     0x01);                      // Keep CODEC powered OFF.
@@ -433,15 +434,20 @@ SystemState_e CS43L22::SetOutputMode(uint8_t Mode)
 //-------------------------------------------------------------------------------------------------
 SystemState_e CS43L22::Write(uint8_t Register, uint8_t Data)
 {
-    bool Status = true;
-
-    m_pI2C->WriteRegister(Register, Data, m_DeviceAddress);
+  bool Status = (m_pI2C->WriteRegister(Register, Data, m_DeviceAddress) == SYS_READY);
 
   #ifdef CS43L22_VERIFY_WRITTEN_DATA
-    // Verify that the data has been correctly written
-    uint8_t TempValue;
-    m_pI2C->ReadRegister(Register, &TempValue, m_DeviceAddress);
-    Status &= (TempValue == Register) ? true : false;
+  uint8_t TempValue = 0;
+
+  if(Status == true)
+  {
+    Status = (m_pI2C->ReadRegister(Register, &TempValue, m_DeviceAddress) == SYS_READY);
+  }
+
+  if(Status == true)
+  {
+    Status = (TempValue == Data);
+  }
   #endif // CS43L22_VERIFY_WRITTEN_DATA
 
     return (Status) ? SYS_READY : SYS_DEVICE_ERROR;

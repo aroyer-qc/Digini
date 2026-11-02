@@ -39,17 +39,18 @@
 #include "./lib_digini.h"
 #undef  LIB_ST7735_GLOBAL
 
+#if DIGINI_USE_GRAFX == DEF_ENABLED
 
 
 const ST7735_InitCMD_t GrafxDriver::m_InitCMD[GRAFX_NUMBER_OF_INIT_CMD] =
 {
-    {ST7735_SWRESET,   nullptr, 0, 50},
-    {,             SSD2119_OSCILLATOR_ENABLE},          // Enable oscillator
-    {,              SSD2119_POWER_CONTROL_1_VALUE},      // Power step 1
-    {,              SSD2119_POWER_CONTROL_2_VALUE},      // Power step 2
-    {ST7735_INVCTR, 0x03, 1,              },      // Power step 3
-    {,              SSD2119_POWER_CONTROL_4_VALUE},      // Power step 4
-    {,              SSD2119_POWER_CONTROL_5_VALUE},      // Power step 5
+    {ST7735_SWRESET,    nullptr, 0, 50},
+    {,                  SSD2119_OSCILLATOR_ENABLE},          // Enable oscillator
+    {,                  SSD2119_POWER_CONTROL_1_VALUE},      // Power step 1
+    {,                  SSD2119_POWER_CONTROL_2_VALUE},      // Power step 2
+    {ST7735_INVCTR,     0x03, 1,              },      // Power step 3
+    {,                  SSD2119_POWER_CONTROL_4_VALUE},      // Power step 4
+    {,                  SSD2119_POWER_CONTROL_5_VALUE},      // Power step 5
     {,                   SSD2119_VCOM_OTP_1_VALUE},           // VCOM amplitude
     {,                   SSD2119_VCOM_OTP_2_VALUE},           // VCOM amplitude
     {,                   SSD2119_DISPLAY_EXIT_SLEEP_MODE},    // Exit sleep
@@ -71,7 +72,7 @@ const ST7735_InitCMD_t GrafxDriver::m_InitCMD[GRAFX_NUMBER_OF_INIT_CMD] =
     {,              0x0100},
     {,             0x0504},
     {,              SSD2119_DISPLAY_ON_VALUE}             // Display ON
-};
+}
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -401,6 +402,7 @@ void GrafxDriver::SetWindow(Box_t* pBox)
     WriteCommand(SSD2119_VERTICAL_RAM_POSITION_REGISTER, Vertical);     // Vertical window (Y) packed into one register
     SetRAM_Pointer(StartX, StartY);                                     // Set GRAM cursor to top-left of window
 }
+
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name: SetWindow
@@ -424,7 +426,7 @@ void GrafxDriver::SetWindow(uint8_t PosX1, uint8_t PosY1, uint8_t PosX2, uint8_t
     //uint16_t StartY = pBox->Pos.Y;
     //uint16_t EndY   = StartY + pBox->Size.Height - 1;
 
-??
+//??
 
     Data[1] = PosX1;                // X start
     Data[3] = PosX2;                // X end
@@ -553,7 +555,7 @@ void GrafxDriver::WriteRLE32(StaticImageRLE_32_t* pData, uint32_t* pDestination,
 
 
 
-/*
+#if 0
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -1025,8 +1027,6 @@ void GrafxDriver::Clear(void)
 }
 
 //-------------------------------------------------------------------------------------------------
-
-#if 0
 
 /**************************************************************************/
 /*!
@@ -1551,4 +1551,4 @@ IO_SetPinHigh(IO_ST7735_CS);
 
 #endif
 
-*/
+

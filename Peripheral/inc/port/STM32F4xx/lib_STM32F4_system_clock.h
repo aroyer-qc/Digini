@@ -162,6 +162,10 @@
 
 #include "clock_cfg.h"
 
+#if (CFG_I2S_SOURCE_MUX == CFG_I2S_PLLI2S_R) && (CFG_ENABLE_PLLI2S == 0)
+  #error "PLLI2S must be enabled when selected as the I2S clock source"
+#endif
+
 //-------------------------------------------------------------------------------------------------
 // default
 //-------------------------------------------------------------------------------------------------
@@ -235,7 +239,7 @@
     #pragma message "XSTR(CFG_PLLSAI_N_MULTIPLIER)"
     #error I2S PLLN is out of range
   #else
-    #define CFG_RCC_PLLI2S_CFGR_PLLN                (CFG_PLLI2S_N_MULTIPLIER << RCC_PLLI2S_CFGR_PLL_N_POS)
+    #define CFG_RCC_PLLI2S_CFGR_PLLN                (CFG_PLLI2S_N_MULTIPLIER << RCC_PLLI2SCFGR_PLLI2SN_Pos)
   #endif
 
  #if defined(STM32F427xx) || defined(STM32F429xx) || defined(STM32F437xx) || defined(STM32F439xx) || defined(STM32F469xx) || defined(STM32F479xx)
@@ -243,7 +247,7 @@
     #pragma message "XSTR(CFG_PLLI2S_Q_DIVIDER)"
     #error I2S PLLQ is out of range
   #else
-    #define CFG_RCC_PLLI2S_CFGR_PLLQ                (CFG_PLLI2S_Q_DIVIDER << RCC_PLLI2S_CFGR_PLL_Q_POS)
+    #define CFG_RCC_PLLI2S_CFGR_PLLQ                (CFG_PLLI2S_Q_DIVIDER << RCC_PLLI2SCFGR_PLLI2SQ_Pos)
   #endif
  #endif
 
@@ -251,12 +255,17 @@
     #pragma message "XSTR(CFG_PLLI2S_R_DIVIDER)"
     #error I2S PLLR is out of range
   #else
-    #define CFG_RCC_PLLI2S_CFGR_PLLR                (CFG_PLLI2S_R_DIVIDER << RCC_PLLI2S_CFGR_PLL_R_POS)
+     #define CFG_RCC_PLLI2S_CFGR_PLLR               (CFG_PLLI2S_R_DIVIDER << RCC_PLLI2SCFGR_PLLI2SR_Pos)
   #endif
 
-  #define CFG_RCC_PLLI2S_CFGR                       (CFG_RCC_PLLI2S_CFGR_PLLN |   \
+   #if defined(STM32F427xx) || defined(STM32F429xx) || defined(STM32F437xx) || defined(STM32F439xx) || defined(STM32F469xx) || defined(STM32F479xx)
+    #define CFG_RCC_PLLI2S_CFGR                     (CFG_RCC_PLLI2S_CFGR_PLLN |   \
                                                      CFG_RCC_PLLI2S_CFGR_PLLQ |   \
-                                                     CFG_RCC_PLLI2S_CFGR_PLLQ)
+                                                     CFG_RCC_PLLI2S_CFGR_PLLR)
+   #else
+    #define CFG_RCC_PLLI2S_CFGR                     (CFG_RCC_PLLI2S_CFGR_PLLN |   \
+                                                     CFG_RCC_PLLI2S_CFGR_PLLR)
+   #endif
 
   #define PLLI2SN_CLOCK_FREQUENCY                   ((CFG_PLL_SOURCE / CFG_PLL_M_DIVIDER) * CFG_PLLI2S_N_MULTIPLIER)
  #if defined(STM32F427xx) || defined(STM32F429xx) || defined(STM32F437xx) || defined(STM32F439xx) || defined(STM32F469xx) || defined(STM32F479xx)

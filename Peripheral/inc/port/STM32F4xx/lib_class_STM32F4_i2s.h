@@ -156,8 +156,7 @@ class I2S_Driver
         volatile size_t                         m_Size;
         volatile SystemState_e                  m_Status;
         volatile uint8_t                        m_Timeout;
-        static const uint32_t                   m_PLLN[NB_OF_I2S_FREQUENCY];
-        static const uint32_t                   m_PLLR[NB_OF_I2S_FREQUENCY];
+        static const uint32_t                   m_SampleRate[NB_OF_I2S_FREQUENCY];
 
         CallbackInterface*                      m_pCallback;
         int                                     m_CallBackType;

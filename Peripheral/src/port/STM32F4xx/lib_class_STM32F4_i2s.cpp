@@ -43,7 +43,6 @@
 #define CR1_CLEAR_MASK                  ((uint16_t)0xFBF5)          // I2S registers Masks
 #define FLAG_MASK                       ((uint32_t)0x00FFFFFF)      // I2S FLAG mask
 #define I2S_TIME_OUT                    100                         // Milliseconds
-#define I2S_PLL_TIME_OUT                5                           // Milliseconds
 
 // SPI_I2S_DMA_transfer_requests
 #define SPI_I2S_DMAReq_Tx               ((uint16_t)0x0002)
@@ -115,9 +114,7 @@
 // variable(s)
 //-------------------------------------------------------------------------------------------------
 
-// These PLL parameters are valid when the f(VCO clock) = 1Mhz
-const uint32_t I2S_Driver::m_PLLN[NB_OF_I2S_FREQUENCY] = {256, 429, 213, 429, 426, 271, 258, 344, 0/*xxx*/};
-const uint32_t I2S_Driver::m_PLLR[NB_OF_I2S_FREQUENCY] = {5,   4,   4,   4,   4,   6,   3,   1,   0/*xxx*/};
+const uint32_t I2S_Driver::m_SampleRate[NB_OF_I2S_FREQUENCY] = {8000, 11025, 16000, 22050, 32000, 44100, 48000, 96000, 192000};
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -183,16 +180,25 @@ void I2S_Driver::Initialize(void)
 
     // ---- Module configuration ----
     m_Status = SYS_IDLE;
-    //m_NoMemoryIncrement = false; ??
 
-    // Preinit register that won't change
+    m_pInfo->pI2Sx->I2SCFGR = uint32_t(SPI_I2SCFGR_I2SMOD) |
+                  uint32_t(m_pInfo->Mode) |
+                  uint32_t(m_pInfo->Standard) |
+                  uint32_t(m_pInfo->DataFormat) |
+                  uint32_t(m_pInfo->CPOL_Level);
+
+    if(this->SetFrequency(m_pInfo->Frequency) != SYS_READY)
+    {
+      m_Status = SYS_DEVICE_ERROR;
+      return;
+    }
 
     m_DMA.Initialize(&m_pInfo->DMA);
-    m_DMA.SetSource((void*)&m_pInfo->pI2Sx->DR);
-
+    m_DMA.SetDestination((void*)&m_pInfo->pI2Sx->DR);
     m_DMA.EnableTransmitCompleteInterrupt();
-    //m_DMA.();
     m_DMA.EnableIRQ();
+
+    m_Status = SYS_READY;
 
 #if 0
 /**
@@ -366,47 +372,64 @@ void I2S_Driver::EnableCallbackType(int CallBackType, void* pContext)
 //-------------------------------------------------------------------------------------------------
 SystemState_e I2S_Driver::SetFrequency(I2S_Frequency_e Frequency)
 {
-    nOS_TickCounter TickStart;
+  uint32_t SampleRate;
+  uint32_t FrameDivider;
+  uint32_t Divider;
+  uint32_t I2SDivider;
+  uint32_t Odd;
+  bool IsPeripheralEnabled;
 
-    // Disable the PLLI2S
-    CLEAR_BIT(RCC->CR, RCC_CR_PLLI2SON);
+  if(uint32_t(Frequency) >= uint32_t(NB_OF_I2S_FREQUENCY))
+  {
+    return SYS_ERROR;
+  }
 
-    // Wait here until PLLI2S is disabled or time out
-    TickStart = GetTick();
+  if((RCC->CR & RCC_CR_PLLI2SRDY) == 0)
+  {
+    return SYS_DEVICE_ERROR;
+  }
 
-    while((RCC->CR & RCC_CR_PLLI2SRDY) != 0)
-    {
-        if(TickHasTimeOut(TickStart, I2S_PLL_TIME_OUT) == true)
-        {
-            return SYS_TIME_OUT;            // Return in case of timeout detected
-        }
-    }
+  if(m_Status == SYS_BUSY_TX)
+  {
+    return SYS_BUSY;
+  }
 
+  SampleRate = m_SampleRate[uint32_t(Frequency)];
+  FrameDivider = (m_pInfo->DataFormat == I2S_DATAFORMAT_16B) ? 32 : 64;
 
-// clock is not set into lib_class_STM32F4_i2S.cppclock
-    // I2S clock config
-    // PLLI2S_VCO = f(VCO clock) = f(PLLI2S clock input) × (PLLI2SN/PLLM)
-    // I2SCLK = f(PLLI2S clock output) = f(VCO clock) / PLLI2SR
- //   RCC->PLLI2SCFGR = (I2S_Driver::m_PLLN[Frequency] << RCC_PLLI2SCFGR_PLLI2SN_Pos) | (I2S_Driver::m_PLLR[Frequency] << RCC_PLLI2SCFGR_PLLI2SR_Pos);
+  if(m_pInfo->CLK_Output == I2S_MCLK_OUTPUT_ENABLE)
+  {
+    FrameDivider = 256;
+  }
 
-    // Enable the PLLI2S
- //   SET_BIT(RCC->CR, RCC_CR_PLLI2SON);
+  Divider = (PLLI2SR_CLOCK_FREQUENCY + ((FrameDivider * SampleRate) / 2)) /
+        (FrameDivider * SampleRate);
+  I2SDivider = Divider / 2;
+  Odd = Divider % 2;
 
-    // Wait till PLLI2S is ready
- //   TickStart = GetTick();
+  if((I2SDivider < 2) || (I2SDivider > 0xFF))
+  {
+    return SYS_ERROR;
+  }
 
- //   while((RCC->CR & RCC_CR_PLLI2SRDY) == 0)
- //   {
- //       if(TickHasTimeOut(TickStart, I2S_PLL_TIME_OUT) == true)
- //       {
- //           return SYS_TIME_OUT;            // Return in case of timeout detected
- //       }
- //   }
+  IsPeripheralEnabled = ((m_pInfo->pI2Sx->I2SCFGR & SPI_I2SCFGR_I2SE) != 0);
+
+  if(IsPeripheralEnabled == true)
+  {
+    CLEAR_BIT(m_pInfo->pI2Sx->I2SCFGR, SPI_I2SCFGR_I2SE);
+  }
+
+  m_pInfo->pI2Sx->I2SPR = I2SDivider |
+               ((Odd != 0) ? SPI_I2SPR_ODD : 0) |
+               uint32_t(m_pInfo->CLK_Output);
+  m_pInfo->Frequency = Frequency;
+
+  if(IsPeripheralEnabled == true)
+  {
+    SET_BIT(m_pInfo->pI2Sx->I2SCFGR, SPI_I2SCFGR_I2SE);
+  }
 
   return SYS_READY;
-
-// Update the I2S audio frequency configuration
-//??? why I2S3_Init(AudioFreq);
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -86,6 +86,7 @@ void SystemInit(void)
                  CFG_MCO2_SOURCE_MUX  |
                  CFG_MCO1_CLK_DIVIDER |
                  CFG_MCO2_CLK_DIVIDER);                                                 // Set CFGR register
+    MODIFY_REG(RCC->CFGR, RCC_CFGR_I2SSRC, CFG_I2S_SOURCE_MUX);
     CLEAR_BIT(RCC->CR, (RCC_CR_CSSON | RCC_CR_PLLON | RCC_CR_HSEBYP));                  // Reset HSEBYP, CSSON and PLLON bits
 
   #if (CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_PLL)
@@ -145,14 +146,8 @@ void SystemInit(void)
 
 //--------------------------------------------------------------------------
 
-  #ifdef CFG_ENABLE_PLLI2S
-    RCC->PLLI2SCFGR  = (CFG_PLLI2S_N_MULTIPLIER << RCC_PLLI2SCFGR_PLLI2SN_Pos) |
-   #if defined(STM32F427xx) || defined(STM32F429xx) || defined(STM32F437xx) || defined(STM32F439xx) || defined(STM32F469xx) || defined(STM32F479xx)
-                       (CFG_PLLI2S_Q_DIVIDER    << RCC_PLLI2SCFGR_PLLI2SQ_Pos) |
-   #endif
-                       (CFG_PLLI2S_R_DIVIDER    << RCC_PLLI2SCFGR_PLLI2SR_Pos);
-
-    // TODO need to use the enable for this
+  #if (CFG_ENABLE_PLLI2S == 1)
+    RCC->PLLI2SCFGR = CFG_RCC_PLLI2S_CFGR;
     RCC->CR |= RCC_CR_PLLI2SON;
     while((RCC->CR & RCC_CR_PLLI2SRDY) == 0);
   #endif

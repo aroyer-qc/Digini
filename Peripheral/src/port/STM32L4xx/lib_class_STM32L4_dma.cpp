@@ -42,9 +42,9 @@
 // Variable(s)
 //-------------------------------------------------------------------------------------------------
 
-//#if (DIGINI_USE_DMA_MEM2MEM_FUNCTION == DEF_ENABLED)
-//nOS_Mutex MEM2MEM_Mutex;
-//#endif
+#if (DIGINI_USE_DMA_MEM2MEM_FUNCTION == DEF_ENABLED)
+nOS_Mutex MEM2MEM_Mutex;
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -374,23 +374,23 @@ void DMA_Memcpy(void* pSource, void* pDestination, size_t Size, uint32_t Paramet
         return;
     }
 
-    RCC->AHB1ENR |= DMA_MEM2MEM_ENABLE;
-    DMA_MEM2MEM_STREAM->CR = 0;
-    while(DMA_MEM2MEM_STREAM->CR & DMA_SxCR_EN){};
-    DMA_MEM2MEM_MODULE->DMA_IFCR = DMA_FLAG;
+    DMA_MEM2MEM_CLOCK_REGISTER |= DMA_MEM2MEM_ENABLE;
+    DMA_MEM2MEM_CHANNEL_PTR->CCR = 0;
+    while(DMA_MEM2MEM_CHANNEL_PTR->CCR & DMA_CCR_EN){};
+    DMA_IFCR = DMA_FLAG;
 
     // Configure DMA
-    DMA_MEM2MEM_STREAM->PAR  = (uint32_t)pSource;
-    DMA_MEM2MEM_STREAM->M0AR = (uint32_t)pDestination;
-    DMA_MEM2MEM_STREAM->NDTR = Size;
-    DMA_MEM2MEM_STREAM->CR   = (DMA_MEM2MEM_CHANNEL << DMA_SxCR_CHSEL_Pos) | DMA_SxCR_DIR_1 | Parameter;
-    DMA_MEM2MEM_STREAM->CR  |= DMA_SxCR_EN;
+    DMA_MEM2MEM_CHANNEL_PTR->CPAR  = (uint32_t)pSource;
+    DMA_MEM2MEM_CHANNEL_PTR->CMAR  = (uint32_t)pDestination;
+    DMA_MEM2MEM_CHANNEL_PTR->CNDTR = Size;
+    DMA_MEM2MEM_CHANNEL_PTR->CCR   = DMA_CCR_MEM2MEM | Parameter;
+    DMA_MEM2MEM_CHANNEL_PTR->CCR  |= DMA_CCR_EN;
 
     // Wait for completion
-    while((DMA_MEM2MEM_MODULE->DMA_ISR & DMA_TCIF) == 0) nOS_Yield();
-    DMA_MEM2MEM_MODULE->DMA_IFCR = DMA_FLAG;
-    DMA_MEM2MEM_STREAM->CR &= ~DMA_SxCR_EN;
-    while(DMA_MEM2MEM_STREAM->CR & DMA_SxCR_EN);
+    while((DMA_ISR & DMA_TCIF) == 0) nOS_Yield();
+    DMA_IFCR = DMA_FLAG;
+    DMA_MEM2MEM_CHANNEL_PTR->CCR &= ~DMA_CCR_EN;
+    while(DMA_MEM2MEM_CHANNEL_PTR->CCR & DMA_CCR_EN);
 
     nOS_MutexUnlock(&MEM2MEM_Mutex);
 }

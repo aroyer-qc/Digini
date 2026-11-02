@@ -365,27 +365,27 @@ void DMA_Memcpy(void* pSource, void* pDestination, size_t Size, uint32_t Increme
 
     RCC->AHB1ENR |= DMA_MEM2MEM_ENABLE;
 
-    DMA_MEM2MEM_STREAM->CR = 0;
-    while(DMA_MEM2MEM_STREAM->CR & DMA_SxCR_EN);
+    DMA_MEM2MEM_STREAM_PTR->CR = 0;
+    while(DMA_MEM2MEM_STREAM_PTR->CR & DMA_SxCR_EN);
 
-    DMA_MEM2MEM_MODULE->DMA_IFCR = DMA_FLAG;
+    DMA_IFCR = DMA_FLAG;
 
     AlignedSize = Size & ~0x3;
 
     if(AlignedSize >= 4)
     {
-        DMA_MEM2MEM_STREAM->PAR  = (uint32_t)pSource;
-        DMA_MEM2MEM_STREAM->M0AR = (uint32_t)pDestination;
-        DMA_MEM2MEM_STREAM->NDTR = AlignedSize / 4;
+        DMA_MEM2MEM_STREAM_PTR->PAR  = (uint32_t)pSource;
+        DMA_MEM2MEM_STREAM_PTR->M0AR = (uint32_t)pDestination;
+        DMA_MEM2MEM_STREAM_PTR->NDTR = AlignedSize / 4;
 
-        DMA_MEM2MEM_STREAM->CR   =
+        DMA_MEM2MEM_STREAM_PTR->CR   =
               (DMA_MEM2MEM_CHANNEL << DMA_SxCR_CHSEL_Pos)
             | DMA_SxCR_DIR_0
             | Increment
             | DMA_SxCR_MSIZE_0
             | DMA_SxCR_PSIZE_0;
 
-        DMA_MEM2MEM_STREAM->CR |= DMA_SxCR_EN;
+        DMA_MEM2MEM_STREAM_PTR->CR |= DMA_SxCR_EN;
     }
 
     for(uint32_t i = AlignedSize; i < Size; ++i)
@@ -397,7 +397,7 @@ void DMA_Memcpy(void* pSource, void* pDestination, size_t Size, uint32_t Increme
     {
         for(;;)
         {
-            uint32_t isr = DMA_MEM2MEM_MODULE->DMA_ISR;
+            uint32_t isr = DMA_ISR;
 
             if(isr & DMA_TCIF)
             {
@@ -412,10 +412,10 @@ void DMA_Memcpy(void* pSource, void* pDestination, size_t Size, uint32_t Increme
             nOS_Yield();
         }
 
-        DMA_MEM2MEM_MODULE->DMA_IFCR = DMA_FLAG;
+        DMA_IFCR = DMA_FLAG;
 
-        DMA_MEM2MEM_STREAM->CR &= ~DMA_SxCR_EN;
-        while(DMA_MEM2MEM_STREAM->CR & DMA_SxCR_EN);
+        DMA_MEM2MEM_STREAM_PTR->CR &= ~DMA_SxCR_EN;
+        while(DMA_MEM2MEM_STREAM_PTR->CR & DMA_SxCR_EN);
     }
 
     nOS_MutexUnlock(&MEM2MEM_Mutex);

@@ -39,40 +39,37 @@
 #include "./lib_digini.h"
 #undef  LIB_ST7735_GLOBAL
 
-#if DIGINI_USE_GRAFX == DEF_ENABLED
+//-------------------------------------------------------------------------------------------------
 
+#if (DIGINI_USE_GRAFX == DEF_ENABLED) && (USE_SPI_DRIVER == DEF_ENABLED)
 
-const ST7735_InitCMD_t GrafxDriver::m_InitCMD[GRAFX_NUMBER_OF_INIT_CMD] =
+//-------------------------------------------------------------------------------------------------
+// Const(s)
+//-------------------------------------------------------------------------------------------------
+
+static const ST7735_InitCMD_t InitCMD[] =
 {
-    {ST7735_SWRESET,    nullptr, 0, 50},
-    {,                  SSD2119_OSCILLATOR_ENABLE},          // Enable oscillator
-    {,                  SSD2119_POWER_CONTROL_1_VALUE},      // Power step 1
-    {,                  SSD2119_POWER_CONTROL_2_VALUE},      // Power step 2
-    {ST7735_INVCTR,     0x03, 1,              },      // Power step 3
-    {,                  SSD2119_POWER_CONTROL_4_VALUE},      // Power step 4
-    {,                  SSD2119_POWER_CONTROL_5_VALUE},      // Power step 5
-    {,                   SSD2119_VCOM_OTP_1_VALUE},           // VCOM amplitude
-    {,                   SSD2119_VCOM_OTP_2_VALUE},           // VCOM amplitude
-    {,                   SSD2119_DISPLAY_EXIT_SLEEP_MODE},    // Exit sleep
-    {,                   SSD2119_ENTRY_MODE_VALUE},           // RGB565, normal scan
-    {,               SSD2119_OUTPUT_CONTROL_VALUE},       // Panel type + scan direction
-    {,              0x0000},                             // Start at gate 0
-    {,              SSD2119_FRAME_FREQUENCY_VALUE},      // Frame timing
-    {,    SSD2119_FRAME_FREQUENCY_CONTROL_2_VALUE},
-    {,          SSD2119_FRAME_CYCLE_CONTROL_VALUE},
-    {,         0x0009},
-    {,              0x0000},
-    {,              0x0106},
-    {,              0x0100},
-    {,              0x0303},
-    {,              0x0003},
-    {,              0x0004},
-    {,              0x0203},
-    {,              0x0303},
-    {,              0x0100},
-    {,             0x0504},
-    {,              SSD2119_DISPLAY_ON_VALUE}             // Display ON
-}
+    {ST7735_SWRESET,      {}, 0, 150},
+    {ST7735_SLPOUT,       {}, 0, 500},
+    {ST7735_FRMCTR1,      {0x01, 0x2C, 0x2D}, 3, 0},
+    {ST7735_FRMCTR2,      {0x01, 0x2C, 0x2D}, 3, 0},
+    {ST7735_FRMCTR3,      {0x01, 0x2C, 0x2D, 0x01, 0x2C, 0x2D}, 6, 0},
+    {ST7735_INVCTR,       {0x07}, 1, 0},
+    {ST7735_POWER_CTRL_1, {0xA2, 0x02, 0x84}, 3, 0},
+    {ST7735_POWER_CTRL_2, {0xC5}, 1, 0},
+    {ST7735_POWER_CTRL_3, {0x0A, 0x00}, 2, 0},
+    {ST7735_POWER_CTRL_4, {0x8A, 0x2A}, 2, 0},
+    {ST7735_POWER_CTRL_5, {0x8A, 0xEE}, 2, 0},
+    {ST7735_VMCTR1,       {0x0E}, 1, 0},
+    {ST7735_INVOFF,       {}, 0, 0},
+    {ST7735_MADCTL,       {ST7735_MADCTL_MX | ST7735_MADCTL_MY | ST7735_MADCTL_BGR}, 1, 0},
+    {ST7735_COLMOD,       {ST7735_PIXEL_FORMAT_RGB565}, 1, 0},
+    {ST7735_CASET,        {0x00, GRAFX_DRIVER_OFFSET_X, 0x00, GRAFX_DRIVER_OFFSET_X + GRAFX_DRIVER_SIZE_X - 1}, 4, 0},
+    {ST7735_RASET,        {0x00, GRAFX_DRIVER_OFFSET_Y, 0x00, GRAFX_DRIVER_OFFSET_Y + GRAFX_DRIVER_SIZE_Y - 1}, 4, 0},
+    {ST7735_GMCTRP1,      {0x02, 0x1C, 0x07, 0x12, 0x37, 0x32, 0x29, 0x2D, 0x29, 0x25, 0x2B, 0x39, 0x00, 0x01, 0x03, 0x10}, 16, 0},
+    {ST7735_GMCTRN1,      {0x03, 0x1D, 0x07, 0x06, 0x2E, 0x2C, 0x29, 0x2D, 0x2E, 0x2E, 0x37, 0x3F, 0x00, 0x00, 0x02, 0x10}, 16, 0},
+    {ST7735_NORON,        {}, 0, 10}
+};
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -83,8 +80,8 @@ const ST7735_InitCMD_t GrafxDriver::m_InitCMD[GRAFX_NUMBER_OF_INIT_CMD] =
 //  Return:         None
 //
 //  Description:    Performs the complete initialization sequence of the graphics driver.
-//                  Resets the LCD controller, reads the device identification code, and
-//                  sends the full initialization command table to configure the ST7735.
+//                  Resets the LCD controller and sends the ST7735R green-tab initialization
+//                  sequence adapted from the Adafruit reference below.
 //                  Once the controller is ready, the foreground display layer is cleared
 //                  to a known state.
 //
@@ -94,58 +91,31 @@ const ST7735_InitCMD_t GrafxDriver::m_InitCMD[GRAFX_NUMBER_OF_INIT_CMD] =
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::Initialize(const void* pArg)
 {
-    RCC->AHB1ENR |= RCC_AHB1ENR_DMA2DEN;
-
     m_pSPI = (SPI_Driver*)pArg;
-    m_pSPI->Initialize();                                           // CS(NSS) handle by class
+    m_pBackground = nullptr;
+    m_ConstructPosition.X = 0;
+    m_ConstructPosition.Y = 0;
+    
+    if(m_pSPI == nullptr)
+    {
+        return;
+    }
 
-    // I may need to provide a pointer to the background image for building element to display on the screen (merge)
-    //m_pBackground = (StaticImageInfo_t*)pArg;
-
-    GrafxGenDriver::Initialize(nullptr);
+    m_pSPI->Initialize();
+    IO_SetPinLow(IO_ST7735_BACKLIGHT);
+    IO_SetPinLow(IO_LCD_RESET);
+    LIB_Delay_mSec(10);
     IO_SetPinHigh(IO_LCD_RESET);
-    LIB_Delay_mSec(50);
+    LIB_Delay_mSec(120);
 
-    SendCommand(ST7735_SWRESET, nullptr, 0, 50);            // Software reset
-
-    // Frame Rate
-    const uint8_t Data_FRMCTR[6] = {0x05, 0x3C, 0x3C,0x05, 0x3C, 0x3C};
-    SendCommand(ST7735_FRMCTR1, (uint8_t*)&Data_FRMCTR[0], 3, 1);    // Frame control 1
-    SendCommand(ST7735_FRMCTR2, (uint8_t*)&Data_FRMCTR[0], 3, 1);    // Frame control 2
-    SendCommand(ST7735_FRMCTR3, (uint8_t*)&Data_FRMCTR[0], 6, 1);    // Frame control 2
-
-    SendCommand(ST7735_INVCTR, 0x03, 1);                   // Dot inversion
-
-	// Power Sequence
-
-    const uint8_t Data_PWR_CTRL1[3] = {0x28, 0x08, 0x04};
-    const uint8_t Data_PWR_CTRL3[2] = {0x0D, 0x00};
-    const uint8_t Data_PWR_CTRL4[2] = {0x8D, 0x2A};
-    const uint8_t Data_PWR_CTRL5[2] = {0x8D, 0xEE};
-    SendCommand(ST7735_POWER_CTRL_1, (uint8_t*)&Data_PWR_CTRL1[0], 3, 1);
-    SendCommand(ST7735_POWER_CTRL_2, 0xC0, 1);
-    SendCommand(ST7735_POWER_CTRL_3, (uint8_t*)&Data_PWR_CTRL3[0], 2, 1);
-    SendCommand(ST7735_POWER_CTRL_4, (uint8_t*)&Data_PWR_CTRL4[0], 2, 1);
-    SendCommand(ST7735_POWER_CTRL_5, (uint8_t*)&Data_PWR_CTRL5[0], 2, 1);
-
-    SendCommand(ST7735_VMCTR1, 0x10, 1);                        // VCOM
-    SendCommand(ST7735_MADCTL, 0xC0, 1);                        // MX, MY, RGB mode
-
-	// Gamma Sequence
-    const uint8_t Data_GMCTRP1[16] = {0x04, 0x22, 0x07, 0x0A, 0x2E, 0x30, 0x25, 0x2A,
-                                      0x28, 0x26, 0x2E, 0x3A, 0x00, 0x01, 0x03, 0x13};
-    const uint8_t Data_GMCTRN1[16] = {0x04, 0x16, 0x06, 0x0D, 0x2D, 0x26, 0x23, 0x27,
-                                      0x27, 0x25, 0x2D, 0x3B, 0x00, 0x01, 0x04, 0x13};
-    SendCommand(ST7735_GMCTRP1, (uint8_t*)&Data_GMCTRP1[0], 16, 1);
-    SendCommand(ST7735_GMCTRN1, (uint8_t*)&Data_GMCTRN1[0], 16, 1);
-
-    SendCommand(ST7735_COLMOD, 0x05, 1);                        // 65K mode
-    SendCommand(ST7735_SLPOUT, nullptr, 0, 120);                // Exit Sleep
-    DisplayOn();
-    Clear();
-    IO_SetPinHigh(IO_ST7735_BACKLIGHT);
+    for(const ST7735_InitCMD_t& Command : InitCMD)
+    {
+        SendCommand(Command.Register, Command.Data, Command.Size, Command.Delay);
+    }
 
     ClearLayer(FOREGROUND_DISPLAY_LAYER_0);
+    DisplayOn();
+    IO_SetPinHigh(IO_ST7735_BACKLIGHT);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -166,83 +136,28 @@ void GrafxDriver::Initialize(const void* pArg)
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::ClearLayer(Layer_e Layer)
 {
-   	if(Layer == FOREGROUND_DISPLAY_LAYER_0)
-    {
-        ResetWindow();
+    DisplayLayer* pLayer = &LayerTable[Layer];
+    size_t Count = size_t(pLayer->GetSize().X) * pLayer->GetSize().Y;
 
-        for(uint32_t i = 0; i < GRAFX_DRIVER_SIZE; i++)
-        {
-            WriteData(0x0000);
-        }
+    if(Layer == FOREGROUND_DISPLAY_LAYER_0)
+    {
+        m_pSPI->LockToDevice(IO_ST7735_CS);
+        SetWindow(0, 0, GRAFX_DRIVER_SIZE_X - 1, GRAFX_DRIVER_SIZE_Y - 1);
+        PutColor(0, Count);
+        m_pSPI->UnlockFromDevice(IO_ST7735_CS);
     }
     else
     {
-        GrafxGenDriver::ClearLayer(Layer);
+        uint16_t* pPixels = (uint16_t*)pLayer->GetAddress();
+        if(pPixels != nullptr)
+        {
+            while(Count-- != 0)
+            {
+                *pPixels++ = 0;
+            }
+        }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -276,38 +191,38 @@ void GrafxDriver::CopyWidgetToDevice(ImageID_e Image, Cartesian_t Position)
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::CopyWidgetToDevice(BoxSize_t BoxSize, Cartesian_t Position)
 {
-    DisplayLayer* pLayer   = &LayerTable[DisplayLayer::GetDrawing()];
-    uint32_t      Address = pLayer->GetAddress();
-    uint16_t*     pDataPtr;
-    uint32_t      SizeX = BoxSize.Width;
-    uint32_t      SizeY = BoxSize.Height;
-    uint32_t      ImageSize = SizeX * SizeY;
+    DisplayLayer* pLayer = &LayerTable[DisplayLayer::GetDrawing()];
+    uint16_t* pPixels = (uint16_t*)pLayer->GetAddress();
 
-    uint16_t* pImageDestination = (uint16_t*)pMemoryPool->Alloc(ImageSize * sizeof(uint16_t), MEM_DBG_GRAFX_CL1);
-
-    DMA2D->CR      = DMA2D_M2M_PFC;                                 // Memory-to-Memory with Pixel Format Conversion
-    DMA2D->FGMAR   = Address;                                       // Source address
-    DMA2D->FGOR    = (uint32_t)pLayer->GetSize().X - SizeX;         // Source line offset so none as we are linear
-    DMA2D->FGPFCCR = DMA2D_CONVERSION_ARGB8888;                     // Defines the size of pixel. 0 for format PIXEL_FORMAT_ARGB8888
-    DMA2D->OMAR    = uint32_t(pImageDestination);                   // Destination address
-    DMA2D->OOR     = 0;                                             // Destination line offset none as we are linear
-    DMA2D->OPFCCR  = DMA2D_CONVERSION_RGB565;                       // Defines the size of pixel. 0 for format PIXEL_FORMAT_ARGB8888
-    DMA2D->NLR     = (SizeX << 16) | SizeY;                         // Size configuration of area to be transfered
-
-    SET_BIT(DMA2D->CR, DMA2D_CR_START);                             // Start operation
-    while ((DMA2D->ISR & DMA2D_ISR_ALL_FLAG) == 0);                 // Wait for transfer complete
-    DMA2D->IFCR = DMA2D_IFCR_ALL_FLAG;                              // Clear flag
-
-    SetWindow(Position.X, Position.Y, &BoxSize);
-    pDataPtr = pImageDestination;
-
-    for(uint32_t i = 0; i < ImageSize; i++)
+     if((pPixels == nullptr) || (pLayer->GetPixelFormat() != PIXEL_FORMAT_RGB565) || (Position.X < 0) || (Position.Y < 0) || 
+        (Position.X >= GRAFX_DRIVER_SIZE_X) || (Position.Y >= GRAFX_DRIVER_SIZE_Y) || (BoxSize.Width == 0) || (BoxSize.Height == 0))
     {
-        WriteData(*pDataPtr);
-        pDataPtr++;
+        return;
     }
 
-    pMemoryPool->Free((void**)&pImageDestination);
+    size_t Width = BoxSize.Width;
+    size_t Height = BoxSize.Height;
+    if(Width > size_t(pLayer->GetSize().X)) Width = pLayer->GetSize().X;
+    if(Height > size_t(pLayer->GetSize().Y)) Height = pLayer->GetSize().Y;
+    if(Width > size_t(GRAFX_DRIVER_SIZE_X - Position.X)) Width = GRAFX_DRIVER_SIZE_X - Position.X;
+    if(Height > size_t(GRAFX_DRIVER_SIZE_Y - Position.Y)) Height = GRAFX_DRIVER_SIZE_Y - Position.Y;
+
+    m_pSPI->LockToDevice(IO_ST7735_CS);
+    SetWindow(Position.X, Position.Y, Position.X + Width - 1, Position.Y + Height - 1);
+    uint8_t Data[GRAFX_DRIVER_SIZE_X * sizeof(uint16_t)];
+    
+    for(size_t Row = 0; Row < Height; Row++)
+    {
+        for(size_t Column = 0; Column < Width; Column++)
+        {
+            uint16_t Color = pPixels[Row * pLayer->GetSize().X + Column];
+            Data[Column * 2] = uint8_t(Color >> 8);
+            Data[Column * 2 + 1] = uint8_t(Color);
+        }
+        WriteData(Data, Width * sizeof(uint16_t));
+    }
+
+    m_pSPI->UnlockFromDevice(IO_ST7735_CS);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -325,12 +240,6 @@ void GrafxDriver::CopyWidgetToDevice(BoxSize_t BoxSize, Cartesian_t Position)
 //                  complete the pointer setup before pixel
 //
 //-------------------------------------------------------------------------------------------------
-void GrafxDriver::SetRAM_Pointer(uint16_t PosX, uint16_t PosY)
-{
-	WriteCommand(SSD2119_Y_RAM_ADDRESS_REGISTER, PosY);
-    WriteCommand(SSD2119_X_RAM_ADDRESS_REGISTER, PosX);
-	SetWriteRAM_Ready();
-}
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -346,12 +255,6 @@ void GrafxDriver::SetRAM_Pointer(uint16_t PosX, uint16_t PosY)
 //                  controller is already configured for indexed register access.
 //
 //-------------------------------------------------------------------------------------------------
-uint16_t GrafxDriver::ReadCommand(uint8_t Register)
-{
-    LCD_REG = Register;
-    LIB_Delay_uSec(3);
-    return LCD_RAM;
-}
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -396,11 +299,7 @@ void GrafxDriver::SetWindow(Box_t* pBox)
     uint16_t EndX   = StartX + pBox->Size.Width  - 1;
     uint16_t StartY = pBox->Pos.Y;
     uint16_t EndY   = StartY + pBox->Size.Height - 1;
-    WriteCommand(SSD2119_HORIZONTAL_RAM_START_REGISTER, StartX);        // Horizontal window (X) Start
-    WriteCommand(SSD2119_HORIZONTAL_RAM_END_REGISTER,   EndX);          // Horizontal window (X) End
-    uint16_t Vertical = (EndY << 8) | StartY;
-    WriteCommand(SSD2119_VERTICAL_RAM_POSITION_REGISTER, Vertical);     // Vertical window (Y) packed into one register
-    SetRAM_Pointer(StartX, StartY);                                     // Set GRAM cursor to top-left of window
+    SetWindow(StartX, StartY, EndX, EndY);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -420,20 +319,366 @@ void GrafxDriver::SetWindow(Box_t* pBox)
 void GrafxDriver::SetWindow(uint8_t PosX1, uint8_t PosY1, uint8_t PosX2, uint8_t PosY2)
 {
     uint8_t Data[4] = {0,0,0,0};
+    Data[1] = PosX1 + GRAFX_DRIVER_OFFSET_X;                // X start
+    Data[3] = PosX2 + GRAFX_DRIVER_OFFSET_X;                // X end
+    WriteCommand(ST7735_CASET);
+    WriteData(Data, sizeof(Data));
+    Data[1] = PosY1 + GRAFX_DRIVER_OFFSET_Y;                // Y start
+    Data[3] = PosY2 + GRAFX_DRIVER_OFFSET_Y;                // Y end
+    WriteCommand(ST7735_RASET);
+    WriteData(Data, sizeof(Data));
+    WriteCommand(ST7735_RAM_WRITE);
+    IO_SetPinHigh(IO_ST7735_DC);
+}
 
-    //uint16_t StartX = pBox->Pos.X;
-    //uint16_t EndX   = StartX + pBox->Size.Width  - 1;
-    //uint16_t StartY = pBox->Pos.Y;
-    //uint16_t EndY   = StartY + pBox->Size.Height - 1;
+void GrafxDriver::WriteCommand(uint8_t Register)
+{
+    IO_SetPinLow(IO_ST7735_DC);
+    m_pSPI->Write(Register);
+}
 
-//??
+void GrafxDriver::WriteData(uint16_t Data)
+{
+    uint8_t Bytes[2] = {uint8_t(Data >> 8), uint8_t(Data)};
+    WriteData(Bytes, sizeof(Bytes));
+}
 
-    Data[1] = PosX1;                // X start
-    Data[3] = PosX2;                // X end
-    SendCommand(ST7735_CASET, &Data[0], 4, 1);
-    Data[1] = PosY1;                // Y start
-    Data[3] = PosY2;                // Y end
-    SendCommand(ST7735_RASET, &Data[0], 4, 1);
+void GrafxDriver::WriteData(uint8_t* pData, size_t Size)
+{
+    IO_SetPinHigh(IO_ST7735_DC);
+    m_pSPI->Write(pData, Size);
+}
+
+void GrafxDriver::SendCommand(uint8_t Register, const uint8_t* pData, size_t Size, uint32_t Delay)
+{
+    m_pSPI->LockToDevice(IO_ST7735_CS);
+    WriteCommand(Register);
+
+    if((pData != nullptr) && (Size != 0))
+    {
+        IO_SetPinHigh(IO_ST7735_DC);
+        m_pSPI->Write(const_cast<uint8_t*>(pData), Size);
+    }
+    m_pSPI->UnlockFromDevice(IO_ST7735_CS);
+    
+if(Delay != 0)
+    {
+        LIB_Delay_mSec(Delay);
+    }
+}
+
+void GrafxDriver::SendCommand(uint8_t Register, uint8_t Data, uint32_t Delay)
+{
+    SendCommand(Register, &Data, 1, Delay);
+}
+
+void GrafxDriver::LayerConfig(DisplayLayer* pLayer)
+{
+    VAR_UNUSED(pLayer);
+}
+
+void GrafxDriver::DrawPixel(uint16_t PosX, uint16_t PosY)
+{
+    Box_t Box;
+    Box.Pos.X = PosX;
+    Box.Pos.Y = PosY;
+    Box.Size.Width = 1;
+    Box.Size.Height = 1;
+    DrawRectangle(&Box);
+}
+
+void GrafxDriver::DrawRectangle(Box_t* pBox)
+{
+    DisplayLayer* pLayer = &LayerTable[DisplayLayer::GetDrawing()];
+    
+    if(pBox == nullptr)
+    {
+        return;
+    }
+    
+    Box_t LocalBox = *pBox;
+
+    if(DisplayLayer::GetDrawing() != FOREGROUND_DISPLAY_LAYER_0)
+    {
+        LocalBox.Pos.X -= m_ConstructPosition.X;
+        LocalBox.Pos.Y -= m_ConstructPosition.Y;
+    }
+
+    pBox = &LocalBox;
+
+    if((pBox->Pos.X < 0) || (pBox->Pos.Y < 0) || (pBox->Pos.X >= pLayer->GetSize().X) || (pBox->Pos.Y >= pLayer->GetSize().Y) ||
+       (pBox->Size.Width == 0) || (pBox->Size.Height == 0))
+    {
+        return;
+    }
+
+    size_t Width = pBox->Size.Width;
+    size_t Height = pBox->Size.Height;
+
+    if(Width > size_t(pLayer->GetSize().X - pBox->Pos.X)) Width = pLayer->GetSize().X - pBox->Pos.X;
+    if(Height > size_t(pLayer->GetSize().Y - pBox->Pos.Y)) Height = pLayer->GetSize().Y - pBox->Pos.Y;
+
+    uint16_t Color = uint16_t(pLayer->GetColor());
+
+    if(DisplayLayer::GetDrawing() == FOREGROUND_DISPLAY_LAYER_0)
+    {
+        m_pSPI->LockToDevice(IO_ST7735_CS);
+        SetWindow(pBox->Pos.X, pBox->Pos.Y, pBox->Pos.X + Width - 1, pBox->Pos.Y + Height - 1);
+        PutColor(Color, Width * Height);
+        m_pSPI->UnlockFromDevice(IO_ST7735_CS);
+    }
+    else
+    {
+        uint16_t* pPixels = (uint16_t*)pLayer->GetAddress();
+        if(pPixels == nullptr)
+        {
+            return;
+        }
+
+        for(size_t Row = 0; Row < Height; Row++)
+        {
+            for(size_t Column = 0; Column < Width; Column++)
+            {
+                pPixels[(pBox->Pos.Y + Row) * pLayer->GetSize().X + pBox->Pos.X + Column] = Color;
+            }
+        }
+    }
+}
+
+void GrafxDriver::PutColor(uint16_t Color, size_t Count)
+{
+    constexpr size_t PixelsPerTransfer = 64;
+    uint8_t Data[PixelsPerTransfer * sizeof(uint16_t)];
+    for(size_t Pixel = 0; Pixel < PixelsPerTransfer; Pixel++)
+    {
+        Data[Pixel * 2] = uint8_t(Color >> 8);
+        Data[Pixel * 2 + 1] = uint8_t(Color);
+    }
+    while(Count != 0)
+    {
+        size_t Pixels = (Count > PixelsPerTransfer) ? PixelsPerTransfer : Count;
+        WriteData(Data, Pixels * sizeof(uint16_t));
+        Count -= Pixels;
+    }
+}
+
+void GrafxDriver::DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Thickness, DrawMode_e Direction)
+{
+    Box_t Box;
+    Box.Pos.X = PosX;
+    Box.Pos.Y = PosY;
+    Box.Size.Width = (Direction == DRAW_HORIZONTAL) ? Length : Thickness;
+    Box.Size.Height = (Direction == DRAW_HORIZONTAL) ? Thickness : Length;
+    DrawRectangle(&Box);
+}
+
+void GrafxDriver::DrawBox(uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height, uint16_t Thickness)
+{
+    if(Thickness > Width) Thickness = Width;
+    if(Thickness > Height) Thickness = Height;
+    if(Thickness == 0) return;
+    DrawLine(PosX, PosY, Width, Thickness, DRAW_HORIZONTAL);
+    DrawLine(PosX, PosY + Height - Thickness, Width, Thickness, DRAW_HORIZONTAL);
+    DrawLine(PosX, PosY, Height, Thickness, DRAW_VERTICAL);
+    DrawLine(PosX + Width - Thickness, PosY, Height, Thickness, DRAW_VERTICAL);
+}
+
+void GrafxDriver::DrawHLine(uint16_t PosY, uint16_t PosX1, uint16_t PosX2, uint16_t Thickness)
+{
+    GrafxGenDriver::DrawHLine(PosY, PosX1, PosX2, Thickness);
+}
+
+void GrafxDriver::DrawVLine(uint16_t PosX, uint16_t PosY1, uint16_t PosY2, uint16_t Thickness)
+{
+    GrafxGenDriver::DrawVLine(PosX, PosY1, PosY2, Thickness);
+}
+
+uint16_t GrafxDriver::ConvertColor(uint32_t Color)
+{
+    return uint16_t(((Color >> 8) & 0xF800) | ((Color >> 5) & 0x07E0) | ((Color >> 3) & 0x001F));
+}
+
+uint16_t GrafxDriver::BlendColor(uint16_t Source, uint16_t Background, uint8_t Alpha)
+{
+    uint32_t Inverse = 255 - Alpha;
+    uint32_t Red = (((Source >> 11) * Alpha) + ((Background >> 11) * Inverse)) / 255;
+    uint32_t Green = ((((Source >> 5) & 63) * Alpha) + (((Background >> 5) & 63) * Inverse)) / 255;
+    uint32_t Blue = (((Source & 31) * Alpha) + ((Background & 31) * Inverse)) / 255;
+    return uint16_t((Red << 11) | (Green << 5) | Blue);
+}
+
+void GrafxDriver::PutPixel(int32_t PosX, int32_t PosY, uint16_t Color, uint8_t Alpha)
+{
+    DisplayLayer* pLayer = &LayerTable[DisplayLayer::GetDrawing()];
+    if(DisplayLayer::GetDrawing() != FOREGROUND_DISPLAY_LAYER_0)
+    {
+        PosX -= m_ConstructPosition.X;
+        PosY -= m_ConstructPosition.Y;
+    }
+    if((Alpha == 0) || (PosX < 0) || (PosY < 0) ||
+       (PosX >= pLayer->GetSize().X) || (PosY >= pLayer->GetSize().Y)) return;
+
+    if(DisplayLayer::GetDrawing() == FOREGROUND_DISPLAY_LAYER_0)
+    {
+        m_pSPI->LockToDevice(IO_ST7735_CS);
+        SetWindow(PosX, PosY, PosX, PosY);
+        WriteData(Color);
+        m_pSPI->UnlockFromDevice(IO_ST7735_CS);
+    }
+    else
+    {
+        uint16_t* pPixels = (uint16_t*)pLayer->GetAddress();
+        if(pPixels == nullptr) return;
+        size_t Index = size_t(PosY) * pLayer->GetSize().X + PosX;
+        pPixels[Index] = BlendColor(Color, pPixels[Index], Alpha);
+    }
+}
+
+void GrafxDriver::BlockCopy(void* pSrc, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height,
+                          uint16_t DstX, uint16_t DstY, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)
+{
+    Box_t Box;
+    Box.Pos.X = PosX;
+    Box.Pos.Y = PosY;
+    Box.Size.Width = Width;
+    Box.Size.Height = Height;
+    Cartesian_t Position;
+    Position.X = DstX;
+    Position.Y = DstY;
+    BlockCopy(pSrc, &Box, &Position, SrcPixelFormat, BlendMode);
+}
+
+void GrafxDriver::BlockCopy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)
+{
+    if((pSrc == nullptr) || (pBox == nullptr) || (pDstPos == nullptr) ||
+       (pBox->Pos.X < 0) || (pBox->Pos.Y < 0) ||
+       (pBox->Pos.X + pBox->Size.Width > GRAFX_DRIVER_SIZE_X) ||
+       (pBox->Pos.Y + pBox->Size.Height > GRAFX_DRIVER_SIZE_Y)) return;
+
+    for(size_t Row = 0; Row < pBox->Size.Height; Row++)
+    {
+        for(size_t Column = 0; Column < pBox->Size.Width; Column++)
+        {
+            size_t Index = (pBox->Pos.Y + Row) * GRAFX_DRIVER_SIZE_X + pBox->Pos.X + Column;
+            uint16_t Color;
+            uint8_t Alpha = 255;
+            if(SrcPixelFormat == PIXEL_FORMAT_RGB565)
+            {
+                Color = ((uint16_t*)pSrc)[Index];
+            }
+          #if (GRAFX_COLOR_ARGB8888 == DEF_ENABLED)
+            else if(SrcPixelFormat == PIXEL_FORMAT_ARGB8888)
+            {
+                uint32_t Pixel = ((uint32_t*)pSrc)[Index];
+                Color = ConvertColor(Pixel);
+                if(BlendMode == ALPHA_BLEND) Alpha = uint8_t(Pixel >> 24);
+            }
+          #endif
+            else return;
+            PutPixel(pDstPos->X + Column, pDstPos->Y + Row, Color, Alpha);
+        }
+    }
+}
+
+void GrafxDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
+{
+    if((pDescriptor == nullptr) || (pPos == nullptr) || (pDescriptor->pAddress == nullptr)) return;
+    uint16_t Color = uint16_t(DisplayLayer::GetTextColor());
+    for(size_t Row = 0; Row < pDescriptor->HeightPixel; Row++)
+    {
+        for(size_t Column = 0; Column < pDescriptor->WidthPixel; Column++)
+        {
+            size_t Index = Row * pDescriptor->WidthPixel + Column;
+            if(Index >= pDescriptor->TotalSize) return;
+            PutPixel(int32_t(pPos->X) + Column, int32_t(pPos->Y) + Row, Color, pDescriptor->pAddress[Index]);
+        }
+    }
+}
+
+void GrafxDriver::DrawImage(StaticImageInfo_t* pImage, Cartesian_t Position, BlendMode_e BlendMode)
+{
+    if((pImage == nullptr) || (pImage->Info.pPointer == nullptr) || (pImage->Info.Size.Width == 0)) return;
+    size_t PixelCount = size_t(pImage->Info.Size.Width) * pImage->Info.Size.Height;
+    size_t Output = 0;
+    for(size_t Entry = 0; (Entry < pImage->RawSize) && (Output < PixelCount); Entry++)
+    {
+        size_t Repeat = 1;
+        uint16_t Color;
+        uint8_t Alpha = 255;
+        if(pImage->Compression == COMPX_RLE_16)
+        {
+            StaticImageRLE_16_t* pData = (StaticImageRLE_16_t*)pImage->Info.pPointer;
+            Repeat = size_t(pData[Entry].Repeat) + 1;
+            Color = pData[Entry].Pixel;
+        }
+        else if(pImage->Compression == COMPX_RLE_32)
+        {
+            StaticImageRLE_32_t* pData = (StaticImageRLE_32_t*)pImage->Info.pPointer;
+            Repeat = size_t(pData[Entry].Repeat) + 1;
+            Color = ConvertColor(pData[Entry].Pixel);
+            if(BlendMode == ALPHA_BLEND) Alpha = uint8_t(pData[Entry].Pixel >> 24);
+        }
+        else if(pImage->Compression == COMPX_COMPRESSION_NONE)
+        {
+            if(pImage->Info.PixelFormat == PIXEL_FORMAT_RGB565)
+            {
+                Color = ((uint16_t*)pImage->Info.pPointer)[Entry];
+            }
+          #if (GRAFX_COLOR_ARGB8888 == DEF_ENABLED)
+            else if(pImage->Info.PixelFormat == PIXEL_FORMAT_ARGB8888)
+            {
+                uint32_t Pixel = ((uint32_t*)pImage->Info.pPointer)[Entry];
+                Color = ConvertColor(Pixel);
+                if(BlendMode == ALPHA_BLEND) Alpha = uint8_t(Pixel >> 24);
+            }
+          #endif
+            else return;
+        }
+        else return;
+
+        while((Repeat-- != 0) && (Output < PixelCount))
+        {
+            PutPixel(int32_t(Position.X) + int32_t(Output % pImage->Info.Size.Width),
+                     int32_t(Position.Y) + int32_t(Output / pImage->Info.Size.Width), Color, Alpha);
+            Output++;
+        }
+    }
+}
+
+void GrafxDriver::ImageCopy(ImageID_e Image, uint16_t PosX, uint16_t PosY)
+{
+    Cartesian_t Position;
+    Position.X = PosX;
+    Position.Y = PosY;
+    BlendFromImage(Image, Position, NO_BLEND);
+}
+
+void GrafxDriver::BlendFromImage(ImageID_e Image, Cartesian_t Position, BlendMode_e BlendMode)
+{
+    if(Image == INVALID_IMAGE) return;
+    StaticImageInfo_t* pImage = nullptr;
+    DB_Central.Get(&pImage, GFX_IMAGE_INFO, uint16_t(Image));
+    if(pImage == nullptr) return;
+    if((DisplayLayer::GetDrawing() == FOREGROUND_DISPLAY_LAYER_0) && (Position.X == 0) && (Position.Y == 0) &&
+       (pImage->Info.Size.Width == GRAFX_DRIVER_SIZE_X) && (pImage->Info.Size.Height == GRAFX_DRIVER_SIZE_Y))
+    {
+        m_pBackground = pImage;
+    }
+    DrawImage(pImage, Position, BlendMode);
+}
+
+void GrafxDriver::CopyBackgroundToConstruction(Cartesian_t Position)
+{
+    if(DisplayLayer::GetDrawing() == FOREGROUND_DISPLAY_LAYER_0) return;
+    m_ConstructPosition = Position;
+    ClearLayer(DisplayLayer::GetDrawing());
+    if(m_pBackground != nullptr)
+    {
+        Cartesian_t Origin;
+        Origin.X = 0;
+        Origin.Y = 0;
+        DrawImage(m_pBackground, Origin, NO_BLEND);
+    }
 }
 
 
@@ -1552,3 +1797,393 @@ IO_SetPinHigh(IO_ST7735_CS);
 #endif
 
 
+
+
+#if 0 // adafruit
+
+#include "Adafruit_ST7735.h"
+#include "Adafruit_ST77xx.h"
+
+// CONSTRUCTORS ************************************************************
+
+/*!
+    @brief  Instantiate Adafruit ST7735 driver with software SPI
+    @param  cs    Chip select pin #
+    @param  dc    Data/Command pin #
+    @param  mosi  SPI MOSI pin #
+    @param  sclk  SPI Clock pin #
+    @param  rst   Reset pin # (optional, pass -1 if unused)
+*/
+Adafruit_ST7735::Adafruit_ST7735(int16_t cs, int16_t dc, int16_t mosi,
+                                 int16_t sclk, int16_t rst)
+    : Adafruit_ST77xx(ST7735_TFTWIDTH_128, ST7735_TFTHEIGHT_160, cs, dc, mosi,
+                      sclk, rst) {}
+
+/*!
+    @brief  Instantiate Adafruit ST7735 driver with default hardware SPI
+    @param  cs   Chip select pin #
+    @param  dc   Data/Command pin #
+    @param  rst  Reset pin # (optional, pass -1 if unused)
+*/
+Adafruit_ST7735::Adafruit_ST7735(int16_t cs, int16_t dc, int16_t rst)
+    : Adafruit_ST77xx(ST7735_TFTWIDTH_128, ST7735_TFTHEIGHT_160, cs, dc, rst) {}
+
+#if !defined(ESP8266)
+/*!
+    @brief  Instantiate Adafruit ST7735 driver with selectable hardware SPI
+    @param  spiClass  Pointer to an SPI device to use (e.g. &SPI1)
+    @param  cs        Chip select pin #
+    @param  dc        Data/Command pin #
+    @param  rst       Reset pin # (optional, pass -1 if unused)
+*/
+Adafruit_ST7735::Adafruit_ST7735(SPIClass *spiClass, int16_t cs, int16_t dc,
+                                 int16_t rst)
+    : Adafruit_ST77xx(ST7735_TFTWIDTH_128, ST7735_TFTHEIGHT_160, spiClass, cs,
+                      dc, rst) {}
+#endif // end !ESP8266
+
+// SCREEN INITIALIZATION ***************************************************
+
+// Rather than a bazillion writecommand() and writedata() calls, screen
+// initialization commands and arguments are organized in these tables
+// stored in PROGMEM.  The table may look bulky, but that's mostly the
+// formatting -- storage-wise this is hundreds of bytes more compact
+// than the equivalent code.  Companion function follows.
+
+// clang-format off
+static const uint8_t PROGMEM
+  Bcmd[] = {                        // Init commands for 7735B screens
+    18,                             // 18 commands in list:
+    ST77XX_SWRESET,   ST_CMD_DELAY, //  1: Software reset, no args, w/delay
+      50,                           //     50 ms delay
+    ST77XX_SLPOUT,    ST_CMD_DELAY, //  2: Out of sleep mode, no args, w/delay
+      255,                          //     255 = max (500 ms) delay
+    ST77XX_COLMOD,  1+ST_CMD_DELAY, //  3: Set color mode, 1 arg + delay:
+      0x05,                         //     16-bit color
+      10,                           //     10 ms delay
+    ST7735_FRMCTR1, 3+ST_CMD_DELAY, //  4: Frame rate control, 3 args + delay:
+      0x00,                         //     fastest refresh
+      0x06,                         //     6 lines front porch
+      0x03,                         //     3 lines back porch
+      10,                           //     10 ms delay
+    ST77XX_MADCTL,  1,              //  5: Mem access ctl (directions), 1 arg:
+      0x08,                         //     Row/col addr, bottom-top refresh
+    ST7735_DISSET5, 2,              //  6: Display settings #5, 2 args:
+      0x15,                         //     1 clk cycle nonoverlap, 2 cycle gate
+                                    //     rise, 3 cycle osc equalize
+      0x02,                         //     Fix on VTL
+    ST7735_INVCTR,  1,              //  7: Display inversion control, 1 arg:
+      0x0,                          //     Line inversion
+    ST7735_PWCTR1,  2+ST_CMD_DELAY, //  8: Power control, 2 args + delay:
+      0x02,                         //     GVDD = 4.7V
+      0x70,                         //     1.0uA
+      10,                           //     10 ms delay
+    ST7735_PWCTR2,  1,              //  9: Power control, 1 arg, no delay:
+      0x05,                         //     VGH = 14.7V, VGL = -7.35V
+    ST7735_PWCTR3,  2,              // 10: Power control, 2 args, no delay:
+      0x01,                         //     Opamp current small
+      0x02,                         //     Boost frequency
+    ST7735_VMCTR1,  2+ST_CMD_DELAY, // 11: Power control, 2 args + delay:
+      0x3C,                         //     VCOMH = 4V
+      0x38,                         //     VCOML = -1.1V
+      10,                           //     10 ms delay
+    ST7735_PWCTR6,  2,              // 12: Power control, 2 args, no delay:
+      0x11, 0x15,
+    ST7735_GMCTRP1,16,              // 13: Gamma Adjustments (pos. polarity), 16 args + delay:
+      0x09, 0x16, 0x09, 0x20,       //     (Not entirely necessary, but provides
+      0x21, 0x1B, 0x13, 0x19,       //      accurate colors)
+      0x17, 0x15, 0x1E, 0x2B,
+      0x04, 0x05, 0x02, 0x0E,
+    ST7735_GMCTRN1,16+ST_CMD_DELAY, // 14: Gamma Adjustments (neg. polarity), 16 args + delay:
+      0x0B, 0x14, 0x08, 0x1E,       //     (Not entirely necessary, but provides
+      0x22, 0x1D, 0x18, 0x1E,       //      accurate colors)
+      0x1B, 0x1A, 0x24, 0x2B,
+      0x06, 0x06, 0x02, 0x0F,
+      10,                           //     10 ms delay
+    ST77XX_CASET,   4,              // 15: Column addr set, 4 args, no delay:
+      0x00, 0x02,                   //     XSTART = 2
+      0x00, 0x81,                   //     XEND = 129
+    ST77XX_RASET,   4,              // 16: Row addr set, 4 args, no delay:
+      0x00, 0x02,                   //     XSTART = 1
+      0x00, 0x81,                   //     XEND = 160
+    ST77XX_NORON,     ST_CMD_DELAY, // 17: Normal display on, no args, w/delay
+      10,                           //     10 ms delay
+    ST77XX_DISPON,    ST_CMD_DELAY, // 18: Main screen turn on, no args, delay
+      255 },                        //     255 = max (500 ms) delay
+
+  Rcmd1[] = {                       // 7735R init, part 1 (red or green tab)
+    15,                             // 15 commands in list:
+    ST77XX_SWRESET,   ST_CMD_DELAY, //  1: Software reset, 0 args, w/delay
+      150,                          //     150 ms delay
+    ST77XX_SLPOUT,    ST_CMD_DELAY, //  2: Out of sleep mode, 0 args, w/delay
+      255,                          //     500 ms delay
+    ST7735_FRMCTR1, 3,              //  3: Framerate ctrl - normal mode, 3 arg:
+      0x01, 0x2C, 0x2D,             //     Rate = fosc/(1x2+40) * (LINE+2C+2D)
+    ST7735_FRMCTR2, 3,              //  4: Framerate ctrl - idle mode, 3 args:
+      0x01, 0x2C, 0x2D,             //     Rate = fosc/(1x2+40) * (LINE+2C+2D)
+    ST7735_FRMCTR3, 6,              //  5: Framerate - partial mode, 6 args:
+      0x01, 0x2C, 0x2D,             //     Dot inversion mode
+      0x01, 0x2C, 0x2D,             //     Line inversion mode
+    ST7735_INVCTR,  1,              //  6: Display inversion ctrl, 1 arg:
+      0x07,                         //     No inversion
+    ST7735_PWCTR1,  3,              //  7: Power control, 3 args, no delay:
+      0xA2,
+      0x02,                         //     -4.6V
+      0x84,                         //     AUTO mode
+    ST7735_PWCTR2,  1,              //  8: Power control, 1 arg, no delay:
+      0xC5,                         //     VGH25=2.4C VGSEL=-10 VGH=3 * AVDD
+    ST7735_PWCTR3,  2,              //  9: Power control, 2 args, no delay:
+      0x0A,                         //     Opamp current small
+      0x00,                         //     Boost frequency
+    ST7735_PWCTR4,  2,              // 10: Power control, 2 args, no delay:
+      0x8A,                         //     BCLK/2,
+      0x2A,                         //     opamp current small & medium low
+    ST7735_PWCTR5,  2,              // 11: Power control, 2 args, no delay:
+      0x8A, 0xEE,
+    ST7735_VMCTR1,  1,              // 12: Power control, 1 arg, no delay:
+      0x0E,
+    ST77XX_INVOFF,  0,              // 13: Don't invert display, no args
+    ST77XX_MADCTL,  1,              // 14: Mem access ctl (directions), 1 arg:
+      0xC8,                         //     row/col addr, bottom-top refresh
+    ST77XX_COLMOD,  1,              // 15: set color mode, 1 arg, no delay:
+      0x05 },                       //     16-bit color
+
+  Rcmd2green[] = {                  // 7735R init, part 2 (green tab only)
+    2,                              //  2 commands in list:
+    ST77XX_CASET,   4,              //  1: Column addr set, 4 args, no delay:
+      0x00, 0x02,                   //     XSTART = 0
+      0x00, 0x7F+0x02,              //     XEND = 127
+    ST77XX_RASET,   4,              //  2: Row addr set, 4 args, no delay:
+      0x00, 0x01,                   //     XSTART = 0
+      0x00, 0x9F+0x01 },            //     XEND = 159
+
+  Rcmd2red[] = {                    // 7735R init, part 2 (red tab only)
+    2,                              //  2 commands in list:
+    ST77XX_CASET,   4,              //  1: Column addr set, 4 args, no delay:
+      0x00, 0x00,                   //     XSTART = 0
+      0x00, 0x7F,                   //     XEND = 127
+    ST77XX_RASET,   4,              //  2: Row addr set, 4 args, no delay:
+      0x00, 0x00,                   //     XSTART = 0
+      0x00, 0x9F },                 //     XEND = 159
+
+  Rcmd2green144[] = {               // 7735R init, part 2 (green 1.44 tab)
+    2,                              //  2 commands in list:
+    ST77XX_CASET,   4,              //  1: Column addr set, 4 args, no delay:
+      0x00, 0x00,                   //     XSTART = 0
+      0x00, 0x7F,                   //     XEND = 127
+    ST77XX_RASET,   4,              //  2: Row addr set, 4 args, no delay:
+      0x00, 0x00,                   //     XSTART = 0
+      0x00, 0x7F },                 //     XEND = 127
+
+  Rcmd2green160x80[] = {            // 7735R init, part 2 (mini 160x80)
+    2,                              //  2 commands in list:
+    ST77XX_CASET,   4,              //  1: Column addr set, 4 args, no delay:
+      0x00, 0x00,                   //     XSTART = 0
+      0x00, 0x4F,                   //     XEND = 79
+    ST77XX_RASET,   4,              //  2: Row addr set, 4 args, no delay:
+      0x00, 0x00,                   //     XSTART = 0
+      0x00, 0x9F },                 //     XEND = 159
+
+  Rcmd2green160x80plugin[] = {      // 7735R init, part 2 (mini 160x80 with plugin FPC)
+    3,                              //  3 commands in list:
+    ST77XX_INVON,  0,              //   1: Display is inverted
+    ST77XX_CASET,   4,              //  2: Column addr set, 4 args, no delay:
+      0x00, 0x00,                   //     XSTART = 0
+      0x00, 0x4F,                   //     XEND = 79
+    ST77XX_RASET,   4,              //  3: Row addr set, 4 args, no delay:
+      0x00, 0x00,                   //     XSTART = 0
+      0x00, 0x9F },                 //     XEND = 159
+
+  Rcmd3[] = {                       // 7735R init, part 3 (red or green tab)
+    4,                              //  4 commands in list:
+    ST7735_GMCTRP1, 16      ,       //  1: Gamma Adjustments (pos. polarity), 16 args + delay:
+      0x02, 0x1c, 0x07, 0x12,       //     (Not entirely necessary, but provides
+      0x37, 0x32, 0x29, 0x2d,       //      accurate colors)
+      0x29, 0x25, 0x2B, 0x39,
+      0x00, 0x01, 0x03, 0x10,
+    ST7735_GMCTRN1, 16      ,       //  2: Gamma Adjustments (neg. polarity), 16 args + delay:
+      0x03, 0x1d, 0x07, 0x06,       //     (Not entirely necessary, but provides
+      0x2E, 0x2C, 0x29, 0x2D,       //      accurate colors)
+      0x2E, 0x2E, 0x37, 0x3F,
+      0x00, 0x00, 0x02, 0x10,
+    ST77XX_NORON,     ST_CMD_DELAY, //  3: Normal display on, no args, w/delay
+      10,                           //     10 ms delay
+    ST77XX_DISPON,    ST_CMD_DELAY, //  4: Main screen turn on, no args w/delay
+      100 };                        //     100 ms delay
+
+// clang-format on
+
+/**************************************************************************/
+/*!
+    @brief  Initialization code common to all ST7735B displays
+*/
+/**************************************************************************/
+void Adafruit_ST7735::initB(void) {
+  commonInit(Bcmd);
+  setRotation(0);
+}
+
+/**************************************************************************/
+/*!
+    @brief  Initialization code common to all ST7735R displays
+    @param  options  Tab color from adafruit purchase
+*/
+/**************************************************************************/
+void Adafruit_ST7735::initR(uint8_t options) {
+  commonInit(Rcmd1);
+  if (options == INITR_GREENTAB) {
+    displayInit(Rcmd2green);
+    _colstart = 2;
+    _rowstart = 1;
+  } else if ((options == INITR_144GREENTAB) || (options == INITR_HALLOWING)) {
+    _height = ST7735_TFTHEIGHT_128;
+    _width = ST7735_TFTWIDTH_128;
+    displayInit(Rcmd2green144);
+    _colstart = 2;
+    _rowstart = 3; // For default rotation 0
+  } else if (options == INITR_MINI160x80) {
+    _height = ST7735_TFTWIDTH_80;
+    _width = ST7735_TFTHEIGHT_160;
+    displayInit(Rcmd2green160x80);
+    _colstart = 24;
+    _rowstart = 0;
+  } else if (options == INITR_MINI160x80_PLUGIN) {
+    _height = ST7735_TFTWIDTH_80;
+    _width = ST7735_TFTHEIGHT_160;
+    displayInit(Rcmd2green160x80plugin);
+    _colstart = 26;
+    _rowstart = 1;
+    invertOnCommand = ST77XX_INVOFF;
+    invertOffCommand = ST77XX_INVON;
+  } else {
+    // colstart, rowstart left at default '0' values
+    displayInit(Rcmd2red);
+  }
+  displayInit(Rcmd3);
+
+  // Black tab, change MADCTL color filter
+  if ((options == INITR_BLACKTAB) || (options == INITR_MINI160x80)) {
+    uint8_t data = 0xC0;
+    sendCommand(ST77XX_MADCTL, &data, 1);
+  }
+
+  if (options == INITR_HALLOWING) {
+    // Hallowing is simply a 1.44" green tab upside-down:
+    tabcolor = INITR_144GREENTAB;
+    setRotation(2);
+  } else {
+    tabcolor = options;
+    setRotation(0);
+  }
+}
+
+// OTHER FUNCTIONS *********************************************************
+
+/**************************************************************************/
+/*!
+    @brief  Set origin of (0,0) and orientation of TFT display
+    @param  m  The index for rotation, from 0-3 inclusive
+*/
+/**************************************************************************/
+void Adafruit_ST7735::setRotation(uint8_t m) {
+  uint8_t madctl = 0;
+
+  rotation = m & 3; // can't be higher than 3
+
+  // For ST7735 with GREEN TAB (including HalloWing)...
+  if ((tabcolor == INITR_144GREENTAB) || (tabcolor == INITR_HALLOWING)) {
+    // ..._rowstart is 3 for rotations 0&1, 1 for rotations 2&3
+    _rowstart = (rotation < 2) ? 3 : 1;
+  }
+
+  switch (rotation) {
+  case 0:
+    if ((tabcolor == INITR_BLACKTAB) || (tabcolor == INITR_MINI160x80)) {
+      madctl = ST77XX_MADCTL_MX | ST77XX_MADCTL_MY | ST77XX_MADCTL_RGB;
+    } else {
+      madctl = ST77XX_MADCTL_MX | ST77XX_MADCTL_MY | ST7735_MADCTL_BGR;
+    }
+
+    if (tabcolor == INITR_144GREENTAB) {
+      _height = ST7735_TFTHEIGHT_128;
+      _width = ST7735_TFTWIDTH_128;
+    } else if (tabcolor == INITR_MINI160x80 ||
+               tabcolor == INITR_MINI160x80_PLUGIN) {
+      _height = ST7735_TFTHEIGHT_160;
+      _width = ST7735_TFTWIDTH_80;
+    } else {
+      _height = ST7735_TFTHEIGHT_160;
+      _width = ST7735_TFTWIDTH_128;
+    }
+    _xstart = _colstart;
+    _ystart = _rowstart;
+    break;
+  case 1:
+    if ((tabcolor == INITR_BLACKTAB) || (tabcolor == INITR_MINI160x80)) {
+      madctl = ST77XX_MADCTL_MY | ST77XX_MADCTL_MV | ST77XX_MADCTL_RGB;
+    } else {
+      madctl = ST77XX_MADCTL_MY | ST77XX_MADCTL_MV | ST7735_MADCTL_BGR;
+    }
+
+    if (tabcolor == INITR_144GREENTAB) {
+      _width = ST7735_TFTHEIGHT_128;
+      _height = ST7735_TFTWIDTH_128;
+    } else if (tabcolor == INITR_MINI160x80 ||
+               tabcolor == INITR_MINI160x80_PLUGIN) {
+      _width = ST7735_TFTHEIGHT_160;
+      _height = ST7735_TFTWIDTH_80;
+    } else {
+      _width = ST7735_TFTHEIGHT_160;
+      _height = ST7735_TFTWIDTH_128;
+    }
+    _ystart = _colstart;
+    _xstart = _rowstart;
+    break;
+  case 2:
+    if ((tabcolor == INITR_BLACKTAB) || (tabcolor == INITR_MINI160x80)) {
+      madctl = ST77XX_MADCTL_RGB;
+    } else {
+      madctl = ST7735_MADCTL_BGR;
+    }
+
+    if (tabcolor == INITR_144GREENTAB) {
+      _height = ST7735_TFTHEIGHT_128;
+      _width = ST7735_TFTWIDTH_128;
+    } else if (tabcolor == INITR_MINI160x80 ||
+               tabcolor == INITR_MINI160x80_PLUGIN) {
+      _height = ST7735_TFTHEIGHT_160;
+      _width = ST7735_TFTWIDTH_80;
+    } else {
+      _height = ST7735_TFTHEIGHT_160;
+      _width = ST7735_TFTWIDTH_128;
+    }
+    _xstart = _colstart;
+    _ystart = _rowstart;
+    break;
+  case 3:
+    if ((tabcolor == INITR_BLACKTAB) || (tabcolor == INITR_MINI160x80)) {
+      madctl = ST77XX_MADCTL_MX | ST77XX_MADCTL_MV | ST77XX_MADCTL_RGB;
+    } else {
+      madctl = ST77XX_MADCTL_MX | ST77XX_MADCTL_MV | ST7735_MADCTL_BGR;
+    }
+
+    if (tabcolor == INITR_144GREENTAB) {
+      _width = ST7735_TFTHEIGHT_128;
+      _height = ST7735_TFTWIDTH_128;
+    } else if (tabcolor == INITR_MINI160x80 ||
+               tabcolor == INITR_MINI160x80_PLUGIN) {
+      _width = ST7735_TFTHEIGHT_160;
+      _height = ST7735_TFTWIDTH_80;
+    } else {
+      _width = ST7735_TFTHEIGHT_160;
+      _height = ST7735_TFTWIDTH_128;
+    }
+    _ystart = _colstart;
+    _xstart = _rowstart;
+    break;
+  }
+
+  sendCommand(ST77XX_MADCTL, &madctl, 1);
+}
+
+#endif

@@ -65,6 +65,74 @@
 #define DMA_DISABLED                    (0x8000U)       // To disable DMA if not needed Reserved Bits in the register
 #define DMA_MASK_FOR_DISABLED           ~(0x8000U)
 
+#if (DIGINI_USE_DMA_MEM2MEM_FUNCTION == DEF_ENABLED)
+    #define USE_DMA1                    1
+    #define USE_DMA2                    2
+    #define USE_CHANNEL1                1
+    #define USE_CHANNEL2                2
+    #define USE_CHANNEL3                3
+    #define USE_CHANNEL4                4
+    #define USE_CHANNEL5                5
+    #define USE_CHANNEL6                6
+    #define USE_CHANNEL7                7
+
+    #if !defined(DMA_MEM2MEM_DMA_MODULE) || !defined(DMA_MEM2MEM_CHANNEL)
+        #error DMA memory-to-memory module and channel must be configured
+    #endif
+
+    #if (DMA_MEM2MEM_DMA_MODULE == USE_DMA1)
+        #define DMA_MEM2MEM_MODULE      DMA1
+        #define DMA_MEM2MEM_ENABLE      RCC_AHBENR_DMA1EN
+    #elif (DMA_MEM2MEM_DMA_MODULE == USE_DMA2) && defined(DMA2)
+        #define DMA_MEM2MEM_MODULE      DMA2
+        #define DMA_MEM2MEM_ENABLE      RCC_AHBENR_DMA2EN
+        #if (DMA_MEM2MEM_CHANNEL > USE_CHANNEL5)
+            #error DMA2 supports only channels 1 through 5 on STM32F1
+        #endif
+    #else
+        #error Invalid or unavailable DMA memory-to-memory module
+    #endif
+
+    #define DMA_MEM2MEM_SELECT_CHANNEL_IMPL(Module, Channel) DMA##Module##_Channel##Channel
+    #define DMA_MEM2MEM_SELECT_CHANNEL(Module, Channel) DMA_MEM2MEM_SELECT_CHANNEL_IMPL(Module, Channel)
+    #define DMA_MEM2MEM_CHANNEL_PTR DMA_MEM2MEM_SELECT_CHANNEL(DMA_MEM2MEM_DMA_MODULE, DMA_MEM2MEM_CHANNEL)
+    #define DMA_MEM2MEM_CLOCK_REGISTER RCC->AHBENR
+    #define DMA_ISR                     DMA_MEM2MEM_MODULE->ISR
+    #define DMA_IFCR                    DMA_MEM2MEM_MODULE->IFCR
+
+    #if (DMA_MEM2MEM_CHANNEL == USE_CHANNEL1)
+        #define DMA_TCIF                DMA_ISR_TCIF1
+        #define DMA_ERRIF               DMA_ISR_TEIF1
+        #define DMA_FLAG                DMA_IFCR_CGIF1
+    #elif (DMA_MEM2MEM_CHANNEL == USE_CHANNEL2)
+        #define DMA_TCIF                DMA_ISR_TCIF2
+        #define DMA_ERRIF               DMA_ISR_TEIF2
+        #define DMA_FLAG                DMA_IFCR_CGIF2
+    #elif (DMA_MEM2MEM_CHANNEL == USE_CHANNEL3)
+        #define DMA_TCIF                DMA_ISR_TCIF3
+        #define DMA_ERRIF               DMA_ISR_TEIF3
+        #define DMA_FLAG                DMA_IFCR_CGIF3
+    #elif (DMA_MEM2MEM_CHANNEL == USE_CHANNEL4)
+        #define DMA_TCIF                DMA_ISR_TCIF4
+        #define DMA_ERRIF               DMA_ISR_TEIF4
+        #define DMA_FLAG                DMA_IFCR_CGIF4
+    #elif (DMA_MEM2MEM_CHANNEL == USE_CHANNEL5)
+        #define DMA_TCIF                DMA_ISR_TCIF5
+        #define DMA_ERRIF               DMA_ISR_TEIF5
+        #define DMA_FLAG                DMA_IFCR_CGIF5
+    #elif (DMA_MEM2MEM_CHANNEL == USE_CHANNEL6)
+        #define DMA_TCIF                DMA_ISR_TCIF6
+        #define DMA_ERRIF               DMA_ISR_TEIF6
+        #define DMA_FLAG                DMA_IFCR_CGIF6
+    #elif (DMA_MEM2MEM_CHANNEL == USE_CHANNEL7)
+        #define DMA_TCIF                DMA_ISR_TCIF7
+        #define DMA_ERRIF               DMA_ISR_TEIF7
+        #define DMA_FLAG                DMA_IFCR_CGIF7
+    #else
+        #error Invalid DMA memory-to-memory channel
+    #endif
+#endif
+
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------

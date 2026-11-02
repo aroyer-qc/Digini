@@ -347,12 +347,12 @@ bool MemPoolDriver::Free(void** pBlock)
                 goto Exit;
             }
 
-            uint16_t Index = Offset / m_nOS_MemArray[GroupID].bsize;
             m_LastError = nOS_MemFree(&m_nOS_MemArray[GroupID], *pBlock);               // Free the block in the nOS pool
 
             if(m_LastError == NOS_OK)
             {
               #if (MEMORY_POOL_USE_DEBUG_STAT == DEF_ENABLED)
+                uint16_t Index = Offset / m_nOS_MemArray[GroupID].bsize;
                 m_UsedMemory -= m_nOS_MemArray[GroupID].bsize;                          // Update memory usage
                 MEM_DebugListOfID_e DebugID = m_pDebugInfoArray[GroupID][Index];        // Update debug counters
                 m_pDebugInfoArray[GroupID][Index] = MEM_DBG_FREE;                       // Mark block as free

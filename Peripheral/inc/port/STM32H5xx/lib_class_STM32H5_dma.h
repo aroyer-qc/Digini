@@ -84,6 +84,47 @@
 
 #define DMA_ALL_FLAG                             (DMA_CSR_IDLEF | DMA_CSR_TCF | DMA_CSR_HTF | DMA_CSR_DTEF | DMA_CSR_ULEF | DMA_CSR_USEF | DMA_CSR_SUSPF | DMA_CSR_TOF | DMA_CSR_FIFOL)
 
+#if (DIGINI_USE_DMA_MEM2MEM_FUNCTION == DEF_ENABLED)
+    #define USE_DMA1                    1
+    #define USE_DMA2                    2
+    #define USE_CHANNEL0                0
+    #define USE_CHANNEL1                1
+    #define USE_CHANNEL2                2
+    #define USE_CHANNEL3                3
+    #define USE_CHANNEL4                4
+    #define USE_CHANNEL5                5
+    #define USE_CHANNEL6                6
+    #define USE_CHANNEL7                7
+
+    #if !defined(DMA_MEM2MEM_DMA_MODULE) || !defined(DMA_MEM2MEM_CHANNEL)
+        #error GPDMA memory-to-memory module and channel must be configured
+    #endif
+
+    #if (DMA_MEM2MEM_DMA_MODULE == USE_DMA1) && defined(GPDMA1)
+        #define DMA_MEM2MEM_MODULE      GPDMA1
+        #define DMA_MEM2MEM_ENABLE      RCC_AHB1ENR_GPDMA1EN
+    #elif (DMA_MEM2MEM_DMA_MODULE == USE_DMA2) && defined(GPDMA2)
+        #define DMA_MEM2MEM_MODULE      GPDMA2
+        #define DMA_MEM2MEM_ENABLE      RCC_AHB1ENR_GPDMA2EN
+    #else
+        #error Invalid or unavailable GPDMA memory-to-memory module
+    #endif
+
+    #if (DMA_MEM2MEM_CHANNEL < USE_CHANNEL0) || (DMA_MEM2MEM_CHANNEL > USE_CHANNEL7)
+        #error Invalid GPDMA memory-to-memory channel
+    #endif
+
+    #define DMA_MEM2MEM_SELECT_CHANNEL_IMPL(Module, Channel) GPDMA##Module##_Channel##Channel
+    #define DMA_MEM2MEM_SELECT_CHANNEL(Module, Channel) DMA_MEM2MEM_SELECT_CHANNEL_IMPL(Module, Channel)
+    #define DMA_MEM2MEM_CHANNEL_PTR DMA_MEM2MEM_SELECT_CHANNEL(DMA_MEM2MEM_DMA_MODULE, DMA_MEM2MEM_CHANNEL)
+    #define DMA_MEM2MEM_CLOCK_REGISTER RCC->AHB1ENR
+    #define DMA_ISR                     DMA_MEM2MEM_CHANNEL_PTR->CSR
+    #define DMA_IFCR                    DMA_MEM2MEM_CHANNEL_PTR->CFCR
+    #define DMA_TCIF                    DMA_CSR_TCF
+    #define DMA_ERRIF                   (DMA_CSR_DTEF | DMA_CSR_ULEF | DMA_CSR_USEF | DMA_CSR_TOF)
+    #define DMA_FLAG                    (DMA_CSR_TCF | DMA_CSR_HTF | DMA_CSR_DTEF | DMA_CSR_ULEF | DMA_CSR_USEF | DMA_CSR_SUSPF | DMA_CSR_TOF)
+#endif
+
 #ifdef __cplusplus
 
 // Legacy-compatible callback typedef (pointer)

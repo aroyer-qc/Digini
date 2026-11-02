@@ -352,6 +352,81 @@
 #define DMA_DISABLED                    	(0xF0000000U)       // To disable DMA if not needed Reserved Bits in the register
 #define DMA_MASK_FOR_DISABLED           	~(0xF0000000U)
 
+#if (DIGINI_USE_DMA_MEM2MEM_FUNCTION == DEF_ENABLED)
+  #define USE_DMA1                    1
+  #define USE_DMA2                    2
+  #define USE_STREAM0                 0
+  #define USE_STREAM1                 1
+  #define USE_STREAM2                 2
+  #define USE_STREAM3                 3
+  #define USE_STREAM4                 4
+  #define USE_STREAM5                 5
+  #define USE_STREAM6                 6
+  #define USE_STREAM7                 7
+
+  #if !defined(DMA_MEM2MEM_DMA_MODULE) || !defined(DMA_MEM2MEM_STREAM)
+    #error DMA memory-to-memory module and stream must be configured
+  #endif
+
+  #if (DMA_MEM2MEM_DMA_MODULE == USE_DMA1)
+    #define DMA_MEM2MEM_MODULE      DMA1
+    #define DMA_MEM2MEM_ENABLE      RCC_AHB1ENR_DMA1EN
+  #elif (DMA_MEM2MEM_DMA_MODULE == USE_DMA2)
+    #define DMA_MEM2MEM_MODULE      DMA2
+    #define DMA_MEM2MEM_ENABLE      RCC_AHB1ENR_DMA2EN
+  #else
+    #error Invalid DMA memory-to-memory module
+  #endif
+
+  #define DMA_MEM2MEM_SELECT_STREAM_IMPL(Module, Stream) DMA##Module##_Stream##Stream
+  #define DMA_MEM2MEM_SELECT_STREAM(Module, Stream) DMA_MEM2MEM_SELECT_STREAM_IMPL(Module, Stream)
+  #define DMA_MEM2MEM_STREAM_PTR DMA_MEM2MEM_SELECT_STREAM(DMA_MEM2MEM_DMA_MODULE, DMA_MEM2MEM_STREAM)
+
+  #if (DMA_MEM2MEM_STREAM == USE_STREAM0)
+    #define DMA_TCIF                DMA_LISR_TCIF0
+    #define DMA_ERRIF               (DMA_LISR_TEIF0 | DMA_LISR_DMEIF0 | DMA_LISR_FEIF0)
+    #define DMA_FLAG                (DMA_LIFCR_CTCIF0 | DMA_LIFCR_CHTIF0 | DMA_LIFCR_CTEIF0 | DMA_LIFCR_CDMEIF0 | DMA_LIFCR_CFEIF0)
+  #elif (DMA_MEM2MEM_STREAM == USE_STREAM1)
+    #define DMA_TCIF                DMA_LISR_TCIF1
+    #define DMA_ERRIF               (DMA_LISR_TEIF1 | DMA_LISR_DMEIF1 | DMA_LISR_FEIF1)
+    #define DMA_FLAG                (DMA_LIFCR_CTCIF1 | DMA_LIFCR_CHTIF1 | DMA_LIFCR_CTEIF1 | DMA_LIFCR_CDMEIF1 | DMA_LIFCR_CFEIF1)
+  #elif (DMA_MEM2MEM_STREAM == USE_STREAM2)
+    #define DMA_TCIF                DMA_LISR_TCIF2
+    #define DMA_ERRIF               (DMA_LISR_TEIF2 | DMA_LISR_DMEIF2 | DMA_LISR_FEIF2)
+    #define DMA_FLAG                (DMA_LIFCR_CTCIF2 | DMA_LIFCR_CHTIF2 | DMA_LIFCR_CTEIF2 | DMA_LIFCR_CDMEIF2 | DMA_LIFCR_CFEIF2)
+  #elif (DMA_MEM2MEM_STREAM == USE_STREAM3)
+    #define DMA_TCIF                DMA_LISR_TCIF3
+    #define DMA_ERRIF               (DMA_LISR_TEIF3 | DMA_LISR_DMEIF3 | DMA_LISR_FEIF3)
+    #define DMA_FLAG                (DMA_LIFCR_CTCIF3 | DMA_LIFCR_CHTIF3 | DMA_LIFCR_CTEIF3 | DMA_LIFCR_CDMEIF3 | DMA_LIFCR_CFEIF3)
+  #elif (DMA_MEM2MEM_STREAM == USE_STREAM4)
+    #define DMA_TCIF                DMA_HISR_TCIF4
+    #define DMA_ERRIF               (DMA_HISR_TEIF4 | DMA_HISR_DMEIF4 | DMA_HISR_FEIF4)
+    #define DMA_FLAG                (DMA_HIFCR_CTCIF4 | DMA_HIFCR_CHTIF4 | DMA_HIFCR_CTEIF4 | DMA_HIFCR_CDMEIF4 | DMA_HIFCR_CFEIF4)
+  #elif (DMA_MEM2MEM_STREAM == USE_STREAM5)
+    #define DMA_TCIF                DMA_HISR_TCIF5
+    #define DMA_ERRIF               (DMA_HISR_TEIF5 | DMA_HISR_DMEIF5 | DMA_HISR_FEIF5)
+    #define DMA_FLAG                (DMA_HIFCR_CTCIF5 | DMA_HIFCR_CHTIF5 | DMA_HIFCR_CTEIF5 | DMA_HIFCR_CDMEIF5 | DMA_HIFCR_CFEIF5)
+  #elif (DMA_MEM2MEM_STREAM == USE_STREAM6)
+    #define DMA_TCIF                DMA_HISR_TCIF6
+    #define DMA_ERRIF               (DMA_HISR_TEIF6 | DMA_HISR_DMEIF6 | DMA_HISR_FEIF6)
+    #define DMA_FLAG                (DMA_HIFCR_CTCIF6 | DMA_HIFCR_CHTIF6 | DMA_HIFCR_CTEIF6 | DMA_HIFCR_CDMEIF6 | DMA_HIFCR_CFEIF6)
+  #elif (DMA_MEM2MEM_STREAM == USE_STREAM7)
+    #define DMA_TCIF                DMA_HISR_TCIF7
+    #define DMA_ERRIF               (DMA_HISR_TEIF7 | DMA_HISR_DMEIF7 | DMA_HISR_FEIF7)
+    #define DMA_FLAG                (DMA_HIFCR_CTCIF7 | DMA_HIFCR_CHTIF7 | DMA_HIFCR_CTEIF7 | DMA_HIFCR_CDMEIF7 | DMA_HIFCR_CFEIF7)
+  #else
+    #error Invalid DMA memory-to-memory stream
+  #endif
+
+  #if (DMA_MEM2MEM_STREAM < USE_STREAM4)
+    #define DMA_ISR                 DMA_MEM2MEM_MODULE->LISR
+    #define DMA_IFCR                DMA_MEM2MEM_MODULE->LIFCR
+  #else
+    #define DMA_ISR                 DMA_MEM2MEM_MODULE->HISR
+    #define DMA_IFCR                DMA_MEM2MEM_MODULE->HIFCR
+  #endif
+#endif
+
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------

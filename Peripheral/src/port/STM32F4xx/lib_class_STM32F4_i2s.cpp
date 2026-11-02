@@ -461,7 +461,7 @@ SystemState_e I2S_Driver::GetStatus(void)
 SystemState_e I2S_Driver::Transmit(uint16_t* pBuffer, size_t Size)
 {
     uint32_t            Register;
-    DMA_Stream_TypeDef* pDMA;
+    //DMA_Stream_TypeDef* pDMA;
 
     if((pBuffer == nullptr) || (Size == 0))
     {
